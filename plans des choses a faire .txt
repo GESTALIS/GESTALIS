@@ -1,0 +1,159 @@
+✅ MÉMO GÉNÉRAL – FINALISATION DE GESTALIS
+🎯 OBJECTIF
+Créer une application de gestion complète et moderne dédiée aux entreprises de travaux publics (TP) pour gérer :
+
+Les factures
+
+Les règlements
+
+Le lettrage
+
+Les cessions
+
+Les avenants
+
+Les chantiers
+
+Les synthèses clients
+
+Les alertes
+
+Les dashboards
+
+Les exports PDF
+
+🔧 MODULES PRINCIPAUX À INTÉGRER
+1. 🏠 Accueil et Menu (✅ Fait)
+Menu latéral dynamique
+
+Lien vers tous les modules
+
+Page d'accueil simple et informative
+
+2. 🧾 Factures (À finaliser 🔧)
+Gestion des factures client et factures fournisseur
+
+Ajout manuel ou import CSV
+
+Suivi du statut (payé, en retard, partiellement réglé)
+
+Champs clés : numéro, tiers, chantier, montant, date, échéance
+
+3. 💳 Règlements (✅ Fait)
+Import automatisé d’extraits bancaires Excel
+
+Fusion des colonnes débit/crédit
+
+Reconnaissance automatique des tiers (libellé flou → tiers)
+
+Validation ligne par ligne
+
+Enregistrement dans reglements.csv
+
+4. 🔗 Lettrage (✅ Fait)
+Lettrage manuel par règlement
+
+Affichage dynamique du reste à lettrer
+
+Suivi des lettrages par facture ou règlement
+
+Modification, suppression, historique complet
+
+5. 📄 Cessions (✅ Fait)
+Lien avec une ou plusieurs factures
+
+Montant cédé, document PDF
+
+Calcul automatique du reste à payer
+
+Statut synthétique par cession
+
+6. ➕ Avenants aux cessions (✅ Fait)
+Ajout de montant lié à une cession existante
+
+Gestion claire : ID avenant, date, commentaire
+
+Calcul automatique du total signé
+
+7. 🏗️ Chantiers (🔧 À créer)
+Code chantier, description, client, date début/fin
+
+Liaison automatique avec factures, cessions, règlements
+
+État d’avancement ou statut du chantier
+
+8. 🧑‍💼 Synthèse client (🔧 À créer)
+Vue globale d’un client : factures, règlements, soldes
+
+Filtres par période, statut
+
+Solde dû, factures en retard, encaissements
+
+9. 🚨 Alertes (🔧 À créer)
+Retards de paiement
+
+Factures non lettrées
+
+Écarts entre cédé et réglé
+
+Alertes chantiers bloqués
+
+10. 📊 Dashboard visuel (✅ Fait)
+Graphiques clairs : camemberts, barres, tendances
+
+Chiffre d’affaires, factures dues, encaissements
+
+Filtres dynamiques (chantier, période, client)
+
+11. 🧾 Exports PDF & sauvegarde (🔧 À créer)
+Génération de PDF des synthèses, lettrages, cessions
+
+Sauvegarde mensuelle automatique ou manuelle
+
+🎨 CHARTE GRAPHIQUE VALIDÉE
+Mots-clés : Évasion, Luxe, Famille, Nature, Modernité, Chaleur
+
+Émotions : Détente, Joie, Harmonie
+
+Priorités visuelles : Élégance, Convivialité, Aventure
+
+Icônes & Couleurs : Uniformisées dans tout le système
+
+📁 STRUCTURE DU DOSSIER
+css
+Copier le code
+📁 Gestalis
+├── main.py  ← Accueil général + menu
+├── web/
+│   ├── dashboard.py
+│   ├── lettrage.py
+│   ├── cessions.py
+│   ├── import_reglements.py
+│   ├── [factures.py] 🔧
+│   ├── [chantiers.py] 🔧
+│   ├── [synthese_client.py] 🔧
+│   ├── [alertes.py] 🔧
+│   └── [export_pdf.py] 🔧
+├── data/
+│   ├── factures_vente.csv
+│   ├── factures_achat.csv
+│   ├── reglements.csv
+│   ├── lettrages.csv
+│   ├── cessions/
+│   │   ├── cessions.csv
+│   │   └── avenants_cessions.csv
+└── assets/
+    ├── logo.png
+🚀 OBJECTIF FINAL
+Un logiciel 100% fonctionnel, complet, fluide, robuste, moderne et agréable à utiliser au quotidien pour :
+
+Gérer toute la relation financière et contractuelle des chantiers TP
+
+Avoir un tableau de bord clair à tout moment
+
+Réagir à temps grâce aux alertes intelligentes
+
+Importer simplement les données bancaires et les lettrer en 2 clics
+
+Produire des documents PDF professionnels en 1 clic
+

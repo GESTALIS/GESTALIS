@@ -1,0 +1,3 @@
+id_cession,date_cession,tiers_cessionnaire,code_chantier,montant_cede_total,factures_liees,document_cession_pdf,commentaire
+1,04/06/2025,SOCIETE ABC,CH-001,50000.0,F001,,Test cession
+2,05/06/2025,SOCIETE TESTE,CH-002,10000.0,F002,,Test cession
