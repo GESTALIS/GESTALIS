@@ -1,41 +1,54 @@
-
 import streamlit as st
 import importlib
+from auth import check_auth
 
-st.set_page_config(layout="wide")
+# 🔐 Gestion de la déconnexion
+if "logout" in st.experimental_get_query_params():
+    st.session_state.pop("authenticated", None)
+    st.experimental_set_query_params()  # Nettoie l'URL
 
-# Menu latéral
+# 🔐 Vérification de l'authentification
+if not check_auth():
+    st.stop()
+
+# 🧠 Récupération du paramètre de page dans l’URL
+query_params = st.experimental_get_query_params()
+page = query_params.get("page", ["accueil"])[0]
+
+# ✅ Liste des pages disponibles
+pages = [
+    "accueil", "dashboard", "factures", "lettrage", "import_banque",
+    "cessions", "chantiers", "synthese_client", "alertes", "export"
+]
+
+# 🟧 Marquage dynamique du menu actif
+classes = {p: "active" if p == page else "" for p in pages}
+
+# 🎨 Injection CSS
+st.markdown(f"<style>{open('style.css').read()}</style>", unsafe_allow_html=True)
+
+# 📋 Menu latéral HTML stylisé
 st.markdown(
-    """
-    <link rel="stylesheet" href="style.css">
+    f"""
     <div class="sidebar">
-        <a class="{accueil}" href="?page=accueil">🏠 Accueil</a>
-        <a class="{dashboard}" href="?page=dashboard">📊 Tableau de bord</a>
-        <a class="{factures}" href="?page=factures">🧾 Factures</a>
-        <a class="{lettrage}" href="?page=lettrage">💳 Lettrage bancaire</a>
-        <a class="{import_banque}" href="?page=import_banque">🏦 Import banque</a>
-        <a class="{cessions}" href="?page=cessions">🔁 Cessions + Avenants</a>
-        <a class="{chantiers}" href="?page=chantiers">🏗️ Chantiers</a>
-        <a class="{synthese_client}" href="?page=synthese_client">🧑‍💼 Synthèse client</a>
-        <a class="{alertes}" href="?page=alertes">🚨 Alertes à suivre</a>
-        <a class="{export}" href="?page=export">📤 Export / Archivage</a>
+        <a class="{classes['accueil']}" href="?page=accueil">🏠 Accueil</a>
+        <a class="{classes['dashboard']}" href="?page=dashboard">📊 Tableau de bord</a>
+        <a class="{classes['factures']}" href="?page=factures">🧾 Factures</a>
+        <a class="{classes['lettrage']}" href="?page=lettrage">💳 Lettrage bancaire</a>
+        <a class="{classes['import_banque']}" href="?page=import_banque">🏦 Import banque</a>
+        <a class="{classes['cessions']}" href="?page=cessions">🔁 Cessions + Avenants</a>
+        <a class="{classes['chantiers']}" href="?page=chantiers">🏗️ Chantiers</a>
+        <a class="{classes['synthese_client']}" href="?page=synthese_client">🧑‍💼 Synthèse client</a>
+        <a class="{classes['alertes']}" href="?page=alertes">🚨 Alertes à suivre</a>
+        <a class="{classes['export']}" href="?page=export">📤 Export / Archivage</a>
+
+        <a class="logout" href="?logout=true">🔓 Se déconnecter</a>
     </div>
     """,
     unsafe_allow_html=True
 )
 
-# Récupération du paramètre de page
-query_params = st.experimental_get_query_params()
-page = query_params.get("page", ["accueil"])[0]
-
-# Marquer la page active
-for key in ["accueil", "dashboard", "factures", "lettrage", "import_banque", "cessions", "chantiers", "synthese_client", "alertes", "export"]:
-    st.session_state[key] = "active" if page == key else ""
-
-# Injection CSS
-st.markdown(f"<style>{open('style.css').read()}</style>", unsafe_allow_html=True)
-
-# Import dynamique de la page
+# 📦 Chargement dynamique de la page sélectionnée
 try:
     module = importlib.import_module(f"pages.{page}")
     module.run()
