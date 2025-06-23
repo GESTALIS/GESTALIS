@@ -35,3 +35,46 @@ body {
     margin-left: 270px;
     padding: 20px;
 }
+/* Bouton de déconnexion */
+.logout {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    right: 20px;
+    background-color: #f44336;
+    color: white;
+    padding: 10px;
+    text-align: center;
+    text-decoration: none;
+    border-radius: 5px;
+    display: block;
+    font-size: 16px;
+}
+
+.logout:hover {
+    background-color: #d32f2f;
+    color: #FFD700;
+}
+
+/* Cache la sidebar native Streamlit si besoin */
+[data-testid="stSidebarNav"] {
+    display: none;
+}
+
+section[data-testid="stSidebar"] {
+    background-color: #003366;
+    color: white;
+    padding-top: 20px;
+}
+
+/* Style pour les boutons dans la sidebar */
+.css-1aumxhk, .css-1fcdlh4 {
+    font-size: 17px;
+    padding: 10px;
+    color: white;
+}
+
+.css-1aumxhk:hover, .css-1fcdlh4:hover {
+    background-color: #005599 !important;
+    color: #FFD700 !important;
+}
