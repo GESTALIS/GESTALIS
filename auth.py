@@ -19,8 +19,8 @@ def login_interface():
         users = load_users()
         if username in users and users[username] == password:
             st.session_state.authenticated = True
+            st.query_params["page"] = "accueil"
             st.rerun()
-
         else:
             st.error("Identifiants incorrects")
     st.markdown("</div>", unsafe_allow_html=True)
