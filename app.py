@@ -2,18 +2,13 @@ import streamlit as st
 import importlib
 from auth import check_auth
 
-# 🔐 Gestion de la déconnexion
-if "logout" in st.experimental_get_query_params():
-    st.session_state.pop("authenticated", None)
-    st.experimental_set_query_params()  # Nettoie l'URL
-
 # 🔐 Vérification de l'authentification
 if not check_auth():
     st.stop()
 
 # 🧠 Récupération du paramètre de page dans l’URL
-query_params = st.experimental_get_query_params()
-page = query_params.get("page", ["accueil"])[0]
+params = st.query_params
+page = params.get("page", "accueil")
 
 # ✅ Liste des pages disponibles
 pages = [
@@ -30,6 +25,7 @@ st.markdown(f"<style>{open('style.css').read()}</style>", unsafe_allow_html=True
 # 📋 Menu latéral HTML stylisé
 st.markdown(
     f"""
+    <link rel="stylesheet" href="style.css">
     <div class="sidebar">
         <a class="{classes['accueil']}" href="?page=accueil">🏠 Accueil</a>
         <a class="{classes['dashboard']}" href="?page=dashboard">📊 Tableau de bord</a>
@@ -41,7 +37,6 @@ st.markdown(
         <a class="{classes['synthese_client']}" href="?page=synthese_client">🧑‍💼 Synthèse client</a>
         <a class="{classes['alertes']}" href="?page=alertes">🚨 Alertes à suivre</a>
         <a class="{classes['export']}" href="?page=export">📤 Export / Archivage</a>
-
         <a class="logout" href="?logout=true">🔓 Se déconnecter</a>
     </div>
     """,
