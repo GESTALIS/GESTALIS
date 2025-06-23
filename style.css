@@ -1,0 +1,48 @@
+
+/* Style général */
+body {
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Menu vertical */
+.sidebar {
+    width: 250px;
+    background-color: #003366;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    padding-top: 20px;
+    color: white;
+}
+
+/* Liens du menu */
+.sidebar a {
+    display: block;
+    color: white;
+    padding: 14px 20px;
+    text-decoration: none;
+    font-size: 16px;
+    border-left: 4px solid transparent;
+    transition: all 0.3s ease;
+}
+
+/* Effet hover */
+.sidebar a:hover {
+    background-color: #005599;
+    border-left: 4px solid #FFA500;
+}
+
+/* Élément actif */
+.sidebar a.active {
+    background-color: #FFA500;
+    color: #003366;
+    font-weight: bold;
+}
+
+/* Contenu principal */
+.main {
+    margin-left: 270px;
+    padding: 20px;
+}

@@ -1,41 +1,34 @@
-# 📌 app.py - Application principale GESTALIS
-
 import streamlit as st
-import importlib
 
-from auth import check_auth
-check_auth()  # Protège toute l'app par mot de passe
+# Configuration de la page Streamlit
+st.set_page_config(
+    page_title="GESTALIS",
+    layout="wide"
+)
 
+# Injection du fichier CSS
+with open("style.css") as f:
+    st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
-# 📋 Configuration générale
-st.set_page_config(page_title="GESTALIS – Accueil", layout="wide")
-st.markdown("<h1 style='text-align: center; color: #0558A6;'>💼 GESTALIS – Gestion Intégrée</h1>", unsafe_allow_html=True)
-st.divider()
-
-# 📚 Modules disponibles
-modules = {
-    "🏠 Accueil": None,
-    "📊 Tableau de bord": "dashboard",
-    "🧾 Factures": "factures",
-    "💳 Lettrage bancaire": "lettrage",
-    "🏦 Import banque": "import_banque",
-    "🔁 Cessions + Avenants": "cessions_avenants",
-    "🏗️ Chantiers": "chantiers",
-    "🧑‍💼 Synthèse client": "synthese_client",
-    "🚨 Alertes à suivre": "alertes",
-    "📤 Export / Archivage": "export",
-}
-
-# 📍 Choix du module
-choix = st.sidebar.radio("📁 Menu principal", list(modules.keys()))
-
-# 🔄 Chargement dynamique du module choisi
-if modules[choix]:
-    module = importlib.import_module(f"web.{modules[choix]}")
-    if hasattr(module, "main"):
-        module.main()
-    else:
-        st.error("⚠️ Le module ne contient pas de fonction `main()`.")
-else:
-    st.markdown("### 🎯 Bienvenue dans GESTALIS")
-    st.markdown("Utilisez le menu à gauche pour naviguer entre les fonctionnalités.")
+# Structure de la page HTML
+st.markdown(
+    """
+    <div class="sidebar">
+        <a class="active" href="#">🏠 Accueil</a>
+        <a href="#">📊 Tableau de bord</a>
+        <a href="#">🧾 Factures</a>
+        <a href="#">💳 Lettrage bancaire</a>
+        <a href="#">🏦 Import banque</a>
+        <a href="#">🔁 Cessions + Avenants</a>
+        <a href="#">🏗️ Chantiers</a>
+        <a href="#">🧑‍💼 Synthèse client</a>
+        <a href="#">🚨 Alertes à suivre</a>
+        <a href="#">📤 Export / Archivage</a>
+    </div>
+    <div class="main">
+        <h1>Bienvenue sur GESTALIS</h1>
+        <p>Sélectionnez une section dans le menu à gauche.</p>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
