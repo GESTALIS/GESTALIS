@@ -9,10 +9,16 @@ def load_users(path="users.json"):
         return json.load(f)
 
 def login_interface():
-    st.sidebar.title("🔐 Connexion")
-    username = st.sidebar.text_input("Identifiant")
-    password = st.sidebar.text_input("Mot de passe", type="password")
-    login_button = st.sidebar.button("Se connecter")
+    st.markdown(
+        "<h2 style='text-align: center; color: #0558A6;'>🔐 Connexion à GESTALIS</h2>",
+        unsafe_allow_html=True
+    )
+    st.markdown("<hr>", unsafe_allow_html=True)
+    st.markdown("Veuillez entrer vos identifiants pour accéder à la plateforme.")
+
+    username = st.text_input("👤 Identifiant")
+    password = st.text_input("🔑 Mot de passe", type="password")
+    login_button = st.button("Se connecter ✅")
 
     if login_button:
         users = load_users()
@@ -22,9 +28,17 @@ def login_interface():
             st.success(f"Bienvenue {username} 👋")
             st.rerun()
         else:
-            st.error("Identifiants incorrects.")
+            st.error("❌ Identifiants incorrects.")
 
 def check_auth():
     if "authenticated" not in st.session_state or not st.session_state["authenticated"]:
+        st.sidebar.title("🔒 Connexion requise")
         login_interface()
         st.stop()
+    else:
+        with st.sidebar:
+            st.success(f"✅ Connecté : {st.session_state['username']}")
+            if st.button("🔓 Se déconnecter"):
+                for key in ["authenticated", "username"]:
+                    st.session_state.pop(key, None)
+                st.rerun()
