@@ -2,6 +2,9 @@ import streamlit as st
 import importlib
 from auth import check_auth
 
+st.set_page_config(layout="wide", initial_sidebar_state="collapsed")
+
+
 # 🔐 Vérification de l'authentification
 if not check_auth():
     st.stop()
