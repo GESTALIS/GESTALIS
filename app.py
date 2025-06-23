@@ -3,6 +3,10 @@
 import streamlit as st
 import importlib
 
+from auth import check_auth
+check_auth()  # Protège toute l'app par mot de passe
+
+
 # 📋 Configuration générale
 st.set_page_config(page_title="GESTALIS – Accueil", layout="wide")
 st.markdown("<h1 style='text-align: center; color: #0558A6;'>💼 GESTALIS – Gestion Intégrée</h1>", unsafe_allow_html=True)
