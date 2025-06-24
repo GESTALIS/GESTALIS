@@ -1,45 +1,53 @@
+
 import streamlit as st
 import importlib
 from auth import check_auth
+from pathlib import Path
 
-# Configuration de la page
-st.set_page_config(layout="wide", initial_sidebar_state="collapsed")
-
-# 🔐 Vérification de l'authentification
+# ✅ Authentification
 if not check_auth():
     st.stop()
 
-# 🎨 Injection du CSS customisé
-st.markdown(f"<style>{open('style.css').read()}</style>", unsafe_allow_html=True)
+# ✅ Paramètre d'URL
+params = st.query_params
+page = params.get("page", "accueil")
 
-# ✅ Liste des pages disponibles
-pages = {
-    "🏠 Accueil": "accueil",
-    "📊 Tableau de bord": "dashboard",
-    "🧾 Factures": "factures",
-    "💳 Lettrage bancaire": "lettrage",
-    "🏦 Import banque": "import_banque",
-    "🔁 Cessions + Avenants": "cessions",
-    "🏗️ Chantiers": "chantiers",
-    "🧑‍💼 Synthèse client": "synthese_client",
-    "🚨 Alertes à suivre": "alertes",
-    "📤 Export / Archivage": "export"
-}
+# ✅ Définition des pages
+pages = [
+    "accueil", "dashboard", "factures", "lettrage", "import_banque",
+    "cessions", "chantiers", "synthese_client", "alertes", "export"
+]
 
-# 📋 Affichage du menu latéral avec radio boutons
-st.sidebar.markdown("<h3 style='color:#003366;'>Navigation</h3>", unsafe_allow_html=True)
-selection = st.sidebar.radio("Aller à :", list(pages.keys()), label_visibility="collapsed")
+# ✅ Classe CSS pour onglet actif
+classes = {p: "active" if p == page else "" for p in pages}
 
-# 🔓 Bouton de déconnexion
-if st.sidebar.button("🔓 Se déconnecter", key="logout_btn"):
-    st.session_state.authenticated = False
-    st.rerun()
+# ✅ Injection CSS
+st.markdown(f"<style>{Path('style.css').read_text()}</style>", unsafe_allow_html=True)
 
-# 📦 Import dynamique de la page sélectionnée
-page_key = pages[selection]
+# ✅ Menu latéral HTML
+st.markdown(
+    f"""
+    <div class="sidebar">
+        <a class="{classes['accueil']}" href="/?page=accueil">🏠 Accueil</a>
+        <a class="{classes['dashboard']}" href="/?page=dashboard">📊 Tableau de bord</a>
+        <a class="{classes['factures']}" href="/?page=factures">🧾 Factures</a>
+        <a class="{classes['lettrage']}" href="/?page=lettrage">💳 Lettrage bancaire</a>
+        <a class="{classes['import_banque']}" href="/?page=import_banque">🏦 Import banque</a>
+        <a class="{classes['cessions']}" href="/?page=cessions">🔁 Cessions + Avenants</a>
+        <a class="{classes['chantiers']}" href="/?page=chantiers">🏗️ Chantiers</a>
+        <a class="{classes['synthese_client']}" href="/?page=synthese_client">🧑‍💼 Synthèse client</a>
+        <a class="{classes['alertes']}" href="/?page=alertes">🚨 Alertes à suivre</a>
+        <a class="{classes['export']}" href="/?page=export">📤 Export / Archivage</a>
+        <a class="logout" href="/?logout=true">🔓 Se déconnecter</a>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+# ✅ Chargement dynamique de la page
 try:
-    module = importlib.import_module(f"pages.{page_key}")
+    module = importlib.import_module(f"pages.{page}")
     module.run()
 except Exception as e:
-    st.error(f"Erreur lors du chargement de la page : {page_key}")
+    st.error(f"Erreur lors du chargement de la page : {page}")
     st.exception(e)

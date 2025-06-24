@@ -1,5 +1,5 @@
 
-/* Style global */
+/* ✅ STYLE GLOBAL VALIDÉ */
 body {
     font-family: 'Segoe UI', sans-serif;
 }
@@ -8,8 +8,9 @@ body {
     height: 100%;
     width: 260px;
     position: fixed;
-    background-color: #003366;
+    background-color: #0086BF; /* Bleu clair validé */
     padding-top: 20px;
+    overflow-y: auto;
 }
 
 .sidebar a {
@@ -18,23 +19,25 @@ body {
     font-size: 17px;
     color: white;
     display: block;
-    border-bottom: 1px solid #005599;
+    border-bottom: 1px solid #0070A0;
 }
 
 .sidebar a:hover {
-    background-color: #005599;
+    background-color: #005A87; /* Bleu foncé */
     color: #FFD700;
 }
 
 .sidebar a.active {
-    background-color: #FFA500;
+    background-color: #FFA500; /* Orange pour onglet actif */
     color: white;
+    font-weight: bold;
 }
 
 .main {
     margin-left: 270px;
     padding: 20px;
 }
+
 /* Bouton de déconnexion */
 .logout {
     position: absolute;
@@ -56,25 +59,7 @@ body {
     color: #FFD700;
 }
 
-/* Cache la sidebar native Streamlit si besoin */
-[data-testid="stSidebarNav"] {
-    display: none;
-}
-
+/* Masquage forcé du menu Streamlit */
 section[data-testid="stSidebar"] {
-    background-color: #003366;
-    color: white;
-    padding-top: 20px;
-}
-
-/* Style pour les boutons dans la sidebar */
-.css-1aumxhk, .css-1fcdlh4 {
-    font-size: 17px;
-    padding: 10px;
-    color: white;
-}
-
-.css-1aumxhk:hover, .css-1fcdlh4:hover {
-    background-color: #005599 !important;
-    color: #FFD700 !important;
+    display: none !important;
 }
