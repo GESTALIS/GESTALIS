@@ -2,28 +2,28 @@ import streamlit as st
 import importlib
 from auth import check_auth
 
-# ✅ Masquer le menu latéral Streamlit par défaut (gris)
+# ✅ Masquer le menu latéral Streamlit par défaut
 st.set_page_config(layout="wide", initial_sidebar_state="collapsed")
 
-# 🔐 Authentification
+# 🔐 Vérification de l'authentification
 if not check_auth():
     st.stop()
 
-# 🔄 Navigation
+# 🔄 Récupération du paramètre page
 params = st.query_params
 page = params.get("page", "accueil")
 
-# 📋 Pages disponibles
-pages = [
+# 📋 Liste des modules disponibles
+modules = [
     "accueil", "dashboard", "factures", "lettrage", "import_banque",
     "cessions", "chantiers", "synthese_client", "alertes", "export"
 ]
-classes = {p: "active" if p == page else "" for p in pages}
+classes = {m: "active" if m == page else "" for m in modules}
 
-# 🎨 CSS
+# 🎨 Application du CSS
 st.markdown(f"<style>{open('style.css').read()}</style>", unsafe_allow_html=True)
 
-# 📁 Menu personnalisé
+# 📂 Menu personnalisé
 st.markdown(
     f"""
     <div class="sidebar">
@@ -43,10 +43,10 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# ▶️ Chargement dynamique de la page
+# ▶️ Chargement dynamique du module
 try:
-    module = importlib.import_module(f"pages.{page}")
+    module = importlib.import_module(f"modules.{page}")
     module.run()
 except Exception as e:
-    st.error(f"Erreur lors du chargement de la page : {page}")
+    st.error(f"Erreur lors du chargement du module : {page}")
     st.exception(e)

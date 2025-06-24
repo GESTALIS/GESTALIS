@@ -1,7 +1,8 @@
-
+/* Style global */
 body {
     font-family: 'Segoe UI', sans-serif;
 }
+
 .sidebar {
     height: 100%;
     width: 260px;
@@ -9,6 +10,7 @@ body {
     background-color: #003366;
     padding-top: 20px;
 }
+
 .sidebar a {
     padding: 14px 20px;
     text-decoration: none;
@@ -17,18 +19,22 @@ body {
     display: block;
     border-bottom: 1px solid #005599;
 }
+
 .sidebar a:hover {
     background-color: #005599;
     color: #FFD700;
 }
+
 .sidebar a.active {
     background-color: #FFA500;
     color: white;
 }
+
 .main {
     margin-left: 270px;
     padding: 20px;
 }
+
 .logout {
     position: absolute;
     bottom: 20px;
@@ -43,6 +49,7 @@ body {
     display: block;
     font-size: 16px;
 }
+
 .logout:hover {
     background-color: #d32f2f;
     color: #FFD700;
