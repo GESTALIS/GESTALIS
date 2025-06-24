@@ -1,9 +1,8 @@
-
 import streamlit as st
 import importlib
 from auth import check_auth
 
-# ✅ Masquer le menu latéral Streamlit dès le départ
+# ✅ Masquer le menu latéral Streamlit par défaut (gris)
 st.set_page_config(layout="wide", initial_sidebar_state="collapsed")
 
 # 🔐 Authentification
