@@ -1,3 +1,4 @@
+
 import streamlit as st
 import json
 
@@ -19,19 +20,22 @@ def login_interface():
         users = load_users()
         if username in users and users[username] == password:
             st.session_state.authenticated = True
-            st.query_params["page"] = "accueil"
+            st.session_state["page"] = "accueil"
             st.rerun()
         else:
             st.error("Identifiants incorrects")
     st.markdown("</div>", unsafe_allow_html=True)
 
 def check_auth():
-    params = st.query_params
-    if "logout" in params:
+    if "authenticated" not in st.session_state:
+        st.session_state.authenticated = False
+
+    if "logout" in st.query_params:
         st.session_state.authenticated = False
         st.query_params.clear()
+        st.rerun()
 
-    if "authenticated" not in st.session_state or not st.session_state.authenticated:
+    if not st.session_state.authenticated:
         login_interface()
         return False
     return True

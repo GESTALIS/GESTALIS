@@ -2,29 +2,29 @@
 import streamlit as st
 import importlib
 from auth import check_auth
-from pathlib import Path
 
-# ✅ Authentification
+# ✅ Masquer le menu latéral Streamlit dès le départ
+st.set_page_config(layout="wide", initial_sidebar_state="collapsed")
+
+# 🔐 Authentification
 if not check_auth():
     st.stop()
 
-# ✅ Paramètre d'URL
+# 🔄 Navigation
 params = st.query_params
 page = params.get("page", "accueil")
 
-# ✅ Définition des pages
+# 📋 Pages disponibles
 pages = [
     "accueil", "dashboard", "factures", "lettrage", "import_banque",
     "cessions", "chantiers", "synthese_client", "alertes", "export"
 ]
-
-# ✅ Classe CSS pour onglet actif
 classes = {p: "active" if p == page else "" for p in pages}
 
-# ✅ Injection CSS
-st.markdown(f"<style>{Path('style.css').read_text()}</style>", unsafe_allow_html=True)
+# 🎨 CSS
+st.markdown(f"<style>{open('style.css').read()}</style>", unsafe_allow_html=True)
 
-# ✅ Menu latéral HTML
+# 📁 Menu personnalisé
 st.markdown(
     f"""
     <div class="sidebar">
@@ -44,7 +44,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# ✅ Chargement dynamique de la page
+# ▶️ Chargement dynamique de la page
 try:
     module = importlib.import_module(f"pages.{page}")
     module.run()
