@@ -1,67 +1,85 @@
 import streamlit as st
+import json
+import os
 import importlib
-from auth import check_auth
 
-# ✅ Configuration initiale
-st.set_page_config(layout="wide", initial_sidebar_state="collapsed")
+# ⚙️ DOIT être la toute première commande
+st.set_page_config(page_title="GESTALIS", layout="wide", initial_sidebar_state="expanded")
+
+# 🎨 Chargement du CSS
+css_path = os.path.join(os.path.dirname(__file__), "style.css")
+if os.path.exists(css_path):
+    with open(css_path, "r", encoding="utf-8") as f:
+        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+else:
+    st.error("❌ Fichier style.css introuvable")
 
 # 🔐 Authentification
-if not check_auth():
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+
+if not st.session_state.authenticated:
+    st.title("🔐 Connexion à GESTALIS")
+    try:
+        with open("users.json", "r", encoding="utf-8") as f:
+            users = json.load(f)
+            st.write("Fichier users.json chargé avec succès.")
+    except FileNotFoundError:
+        st.error("❌ Fichier users.json introuvable. Créez-le avec un utilisateur.")
+        st.stop()
+    except json.JSONDecodeError:
+        st.error("❌ Erreur dans le format de users.json. Vérifiez le fichier.")
+        st.stop()
+    except Exception as e:
+        st.error(f"❌ Erreur inattendue : {e}")
+        st.stop()
+
+    with st.form("login_form"):
+        identifiant = st.text_input("Identifiant")
+        mot_de_passe = st.text_input("Mot de passe", type="password")
+        submit = st.form_submit_button("Se connecter")
+
+    if submit:
+        if identifiant in users and users[identifiant] == mot_de_passe:
+            st.session_state.authenticated = True
+            st.rerun()
+        else:
+            st.error("❌ Identifiant ou mot de passe incorrect")
     st.stop()
 
-# Vérifie si logout est demandé
-if st.query_params.get("logout") == "true":
-    st.session_state.clear()
-    st.query_params.clear()
-    st.rerun()
+# 📂 Menu latéral avec boutons
+st.sidebar.title("📂 Menu général")
+if "selected_menu" not in st.session_state:
+    st.session_state.selected_menu = "📊 Tableau de bord"
 
-# 🔄 Navigation par paramètres d'URL
-if "page" not in st.session_state:
-    st.session_state.page = "accueil"
+modules = {
+    "📊 Tableau de bord": "tableau_de_bord",
+    "🧾 Factures": "factures",
+    "🏗️ Chantiers": "chantiers",
+    "💳 Lettrage bancaire": "lettrage",
+    "📥 Import factures": "import_factures",
+    "🏦 Import règlements": "import_reglements",
+    "📊 Import banque Excel": "import_banque",
+    "📋 Cessions + Avenants": "cessions_avenants",
+    "🧑‍💼 Synthèse client": "synthese_client"
+}
 
-query_page = st.query_params.get("page")
-if query_page:
-    st.session_state.page = query_page
+for label, module_name in modules.items():
+    if st.sidebar.button(label, key=f"btn_{module_name}"):
+        st.session_state.selected_menu = label
+        st.rerun()
 
-page = st.session_state.page
-st.query_params["page"] = page
-
-
-# 📋 Liste des modules/pages
-modules = [
-    "accueil", "dashboard", "factures", "lettrage", "import_banque",
-    "cessions", "chantiers", "synthese_client", "alertes", "export"
-]
-classes = {m: "active" if m == page else "" for m in modules}
-
-# 🎨 CSS
-st.markdown(f"<style>{open('style.css').read()}</style>", unsafe_allow_html=True)
-
-# 📂 Menu personnalisé
-if st.session_state.get("authenticated"):
-    st.markdown(
-        f"""
-        <div class="sidebar">
-            <a class="{classes['accueil']}" href="/?page=accueil">🏠 Accueil</a>
-            <a class="{classes['dashboard']}" href="/?page=dashboard">📊 Tableau de bord</a>
-            <a class="{classes['factures']}" href="/?page=factures">🧾 Factures</a>
-            <a class="{classes['lettrage']}" href="/?page=lettrage">💳 Lettrage bancaire</a>
-            <a class="{classes['import_banque']}" href="/?page=import_banque">🏦 Import banque</a>
-            <a class="{classes['cessions']}" href="/?page=cessions">🔁 Cessions + Avenants</a>
-            <a class="{classes['chantiers']}" href="/?page=chantiers">🏗️ Chantiers</a>
-            <a class="{classes['synthese_client']}" href="/?page=synthese_client">🧑‍💼 Synthèse client</a>
-            <a class="{classes['alertes']}" href="/?page=alertes">🚨 Alertes à suivre</a>
-            <a class="{classes['export']}" href="/?page=export">📤 Export / Archivage</a>
-            <a class="logout" href="/?logout=true">🔓 Se déconnecter</a>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-# ▶️ Exécution dynamique du module
+# ▶️ Contenu principal sans bloc blanc
+module_name = modules.get(st.session_state.selected_menu, "tableau_de_bord")
 try:
-    module = importlib.import_module(f"modules.{page}")
+    module = importlib.import_module(f"modules.{module_name}")
     module.run()
-except Exception as e:
-    st.error(f"Erreur lors du chargement du module : {page}")
-    st.exception(e)
+except ImportError as e:
+    st.error(f"❌ Module {module_name} non trouvé : {e}")
+except AttributeError:
+    st.error(f"❌ Module {module_name} manque la fonction 'run()'")
+
+# 🔓 Bouton de déconnexion fonctionnel
+if st.sidebar.button("🔓 Se déconnexion", key="btn_deconnexion"):
+    st.session_state.clear()
+    st.rerun()
