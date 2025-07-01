@@ -9,9 +9,23 @@ st.set_page_config(layout="wide", initial_sidebar_state="collapsed")
 if not check_auth():
     st.stop()
 
+# Vérifie si logout est demandé
+if st.query_params.get("logout") == "true":
+    st.session_state.clear()
+    st.query_params.clear()
+    st.rerun()
+
 # 🔄 Navigation par paramètres d'URL
-params = st.query_params
-page = params.get("page", "accueil")
+if "page" not in st.session_state:
+    st.session_state.page = "accueil"
+
+query_page = st.query_params.get("page")
+if query_page:
+    st.session_state.page = query_page
+
+page = st.session_state.page
+st.query_params["page"] = page
+
 
 # 📋 Liste des modules/pages
 modules = [

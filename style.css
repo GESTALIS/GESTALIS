@@ -1,55 +1,115 @@
-body {
-    font-family: 'Segoe UI', sans-serif;
+/* Fond général */
+html, body {
+    background-color: #f0f4f8 !important;
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 17px !important;
 }
 
-.sidebar {
-    height: 100%;
-    width: 260px;
-    position: fixed;
-    background-color: #003366;
-    padding-top: 20px;
+/* Texte contenu central */
+div[data-testid="stVerticalBlock"] p,
+div[data-testid="stVerticalBlock"] span,
+div[data-testid="stVerticalBlock"] div,
+div[data-testid="stVerticalBlock"] h1,
+div[data-testid="stVerticalBlock"] h2,
+div[data-testid="stVerticalBlock"] h3,
+div.stMarkdown,
+div.stText,
+div.stTitle,
+div.stHeader {
+    color: #333333 !important;
 }
 
-.sidebar a {
-    padding: 14px 20px;
-    text-decoration: none;
-    font-size: 17px;
-    color: white;
-    display: block;
-    border-bottom: 1px solid #005599;
+/* Supprimer l'effet carte du contenu principal */
+div[data-testid="stVerticalBlock"] > div,
+div[data-testid="stHorizontalBlock"] > div,
+div.stBlock,
+div.stContainer {
+    background-color: transparent !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    margin-bottom: 0 !important;
+    box-shadow: none !important;
+    transition: none !important;
 }
 
-.sidebar a:hover {
-    background-color: #005599;
-    color: #FFD700;
+/* Menu latéral */
+section[data-testid="stSidebar"] {
+    background-color: #002B5B !important;
+    color: white !important;
+    padding-top: 20px !important;
 }
 
-.sidebar a.active {
-    background-color: #FFA500;
-    color: white;
+/* Titre de la barre latérale en blanc */
+section[data-testid="stSidebar"] h1,
+section[data-testid="stSidebar"] [data-testid="stHeader"] {
+    color: #FFFFFF !important;
 }
 
-.main-content {
-    margin-left: 270px;
-    padding: 20px;
+/* Style des boutons du menu avec texte blanc ultra-forcé */
+section[data-testid="stSidebar"] button,
+section[data-testid="stSidebar"] button *,
+section[data-testid="stSidebar"] button > span,
+section[data-testid="stSidebar"] button > div,
+section[data-testid="stSidebar"] button [data-testid="stMarkdownContainer"] > *,
+section[data-testid="stSidebar"] button [data-testid="stMarkdown"] > * {
+    color: #FFFFFF !important; /* Spécificité maximale */
 }
 
-.logout {
-    position: absolute;
-    bottom: 20px;
-    left: 20px;
-    right: 20px;
-    background-color: #f44336;
-    color: white;
-    padding: 10px;
-    text-align: center;
-    text-decoration: none;
-    border-radius: 5px;
-    display: block;
-    font-size: 16px;
+section[data-testid="stSidebar"] button {
+    font-size: 1.1rem !important;
+    font-weight: 500 !important;
+    padding: 5px 15px !important;
+    border-radius: 8px !important;
+    margin-bottom: 1px !important;
+    width: 90% !important;
+    background-color: #002B5B !important;
+    border: none !important;
+    text-align: left !important;
+    transition: background-color 0.2s, color 0.2s !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
 }
 
-.logout:hover {
-    background-color: #d32f2f;
-    color: #FFD700;
+section[data-testid="stSidebar"] button span {
+    margin-right: 8px !important;
+    font-size: 1.2rem !important;
+}
+
+section[data-testid="stSidebar"] button:hover {
+    background-color: #1E5A9F !important;
+    color: #FFD700 !important;
+}
+
+/* Bouton déconnexion avec cadre orange */
+button[kind="secondary"] {
+    margin-top: 3px !important;
+    width: 90% !important;
+    background-color: #FF9800 !important;
+    color: white !important;
+    font-weight: bold !important;
+    border-radius: 8px !important;
+    border: 2px solid #FF9800 !important;
+    position: relative !important;
+    box-sizing: border-box !important;
+}
+
+button[kind="secondary"]:hover {
+    background-color: #F57C00 !important;
+    color: #FFD700 !important;
+    border-color: #F57C00 !important;
+}
+
+/* Style pour le tableau de bord */
+div[data-testid="metric-container"] {
+    background-color: #ffffff !important;
+    border-radius: 8px !important;
+    padding: 10px !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+div[data-testid="stPlotlyChart"] {
+    margin-bottom: 20px !important;
+    border-radius: 8px !important;
+    overflow: hidden !important;
 }

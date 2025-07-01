@@ -24,11 +24,6 @@ def login_interface():
     st.markdown("</div>", unsafe_allow_html=True)
 
 def check_auth():
-    params = st.query_params
-    if "logout" in params:
-        st.session_state.authenticated = False
-        st.query_params.clear()
-
     if not st.session_state.get("authenticated", False):
         login_interface()
         return False
