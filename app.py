@@ -3,7 +3,7 @@ import json
 import os
 import importlib
 
-# ⚙️ DOIT être la toute première commande
+# ⚙️ DOIT être la première commande
 st.set_page_config(page_title="GESTALIS", layout="wide", initial_sidebar_state="expanded")
 
 # 🎨 Chargement du CSS
@@ -42,6 +42,7 @@ if not st.session_state.authenticated:
     if submit:
         if identifiant in users and users[identifiant] == mot_de_passe:
             st.session_state.authenticated = True
+            st.session_state.user_id = identifiant  # Stocker l'identifiant utilisateur
             st.rerun()
         else:
             st.error("❌ Identifiant ou mot de passe incorrect")
@@ -69,7 +70,7 @@ for label, module_name in modules.items():
         st.session_state.selected_menu = label
         st.rerun()
 
-# ▶️ Contenu principal sans bloc blanc
+# ▶️ Contenu principal
 module_name = modules.get(st.session_state.selected_menu, "tableau_de_bord")
 try:
     module = importlib.import_module(f"modules.{module_name}")
@@ -79,7 +80,7 @@ except ImportError as e:
 except AttributeError:
     st.error(f"❌ Module {module_name} manque la fonction 'run()'")
 
-# 🔓 Bouton de déconnexion fonctionnel
+# 🔓 Bouton de déconnexion
 if st.sidebar.button("🔓 Se déconnexion", key="btn_deconnexion"):
     st.session_state.clear()
     st.rerun()
