@@ -3,17 +3,23 @@
 const jwt = require('jsonwebtoken');
 
 /**
- * Renseigne req.user si un JWT valide est présent (Authorization: Bearer <token>)
+ * Renseigne req.user si un JWT valide est présent (cookies ou Authorization: Bearer <token>)
  * En DEV, si pas de JWT, lit éventuel header X-Role pour tester (ex: X-Role: admin)
  */
 function requireAuth(req, res, next) {
-  const auth = req.headers.authorization || '';
-  const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
+  // 1. Essayer de lire le token depuis les cookies (priorité)
+  let token = req.cookies?.access;
+  
+  // 2. Fallback: essayer Authorization header
+  if (!token) {
+    const auth = req.headers.authorization || '';
+    token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
+  }
 
   if (token) {
     try {
       const payload = jwt.verify(token, process.env.JWT_SECRET || 'dev-secret');
-      // attendu: payload = { id, email, role, ... }
+      // attendu: payload = { userId, role, ... }
       req.user = payload;
       return next();
     } catch (e) {

@@ -1,6 +1,8 @@
 const express = require('express');
 const { query } = require('../config/database');
 const { requireAuth, requireRole } = require('../middleware/auth');
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 
 const router = express.Router();
 
@@ -13,63 +15,61 @@ const chantierValidation = {
   budget_initial: { required: true }
 };
 
-// GET /api/chantiers - Liste des chantiers
+// GET /api/chantiers - Liste des chantiers avec pagination et filtres
 router.get('/', requireAuth, async (req, res) => {
   try {
-    const { page = 1, limit = 20, statut, search } = req.query;
-    const offset = (page - 1) * limit;
+    const { page = 1, limit = 10, search = '', statut = '' } = req.query;
+    const offset = (parseInt(page) - 1) * parseInt(limit);
 
-    let whereClause = 'WHERE 1=1';
-    let params = [];
-    let paramIndex = 1;
-
-    // Filtre par statut
-    if (statut && statut !== 'all') {
-      whereClause += ` AND c.statut = $${paramIndex}`;
-      params.push(statut);
-      paramIndex++;
-    }
-
-    // Recherche textuelle
+    // Construction des filtres
+    const whereClause = {};
+    
     if (search) {
-      whereClause += ` AND (c.nom ILIKE $${paramIndex} OR c.description ILIKE $${paramIndex} OR cl.nom ILIKE $${paramIndex})`;
-      params.push(`%${search}%`);
-      paramIndex++;
+      whereClause.OR = [
+        { nom: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } }
+      ];
+    }
+    
+    if (statut && statut !== 'all') {
+      whereClause.statut = statut;
     }
 
-    // Requête principale avec jointures
-    const result = await query(
-      `SELECT 
-        c.*,
-        cl.nom as client_nom,
-        cl.telephone as client_telephone,
-        cl.email as client_email,
-        u.username as responsable_username,
-        u.first_name as responsable_first_name,
-        u.last_name as responsable_last_name
-       FROM chantiers c
-       LEFT JOIN clients cl ON c.client_id = cl.id
-       LEFT JOIN users u ON c.responsable_id = u.id
-       ${whereClause}
-       ORDER BY c.created_at DESC
-       LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
-      [...params, limit, offset]
-    );
+    // Requête Prisma avec jointures
+    const [chantiers, total] = await Promise.all([
+      prisma.chantier.findMany({
+        where: whereClause,
+        include: {
+          marches: {
+            include: {
+              client: true
+            }
+          }
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: offset,
+        take: parseInt(limit)
+      }),
+      prisma.chantier.count({ where: whereClause })
+    ]);
 
-    // Compte total pour la pagination
-    const countResult = await query(
-      `SELECT COUNT(*) as total
-       FROM chantiers c
-       LEFT JOIN clients cl ON c.client_id = cl.id
-       ${whereClause}`,
-      params
-    );
+    // Transformation des données pour la compatibilité frontend
+    const results = chantiers.map(chantier => ({
+      ...chantier,
+      client: chantier.marches[0]?.client || null,
+      budget_initial: chantier.budgetInitial,
+      budget_actuel: chantier.budgetActuel,
+      date_debut: chantier.dateDebut,
+      date_fin_prevue: chantier.dateFinPrevue,
+      date_fin_reelle: chantier.dateFinReelle,
+      created_at: chantier.createdAt,
+      updated_at: chantier.updatedAt
+    }));
 
-    const total = parseInt(countResult.rows[0].total);
-    const totalPages = Math.ceil(total / limit);
+    const totalPages = Math.ceil(total / parseInt(limit));
 
     res.json({
-      results: result.rows,
+      results,
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),

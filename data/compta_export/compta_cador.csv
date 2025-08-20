@@ -1,5 +1,0 @@
-date;num_interne;numero_facture;tiers;designation_tiers;code_chantier;montant_ttc;montant_regle_pro97;montant_regle_par_cession;reste_a_payer
-2024-03-01;F001;FAC-001;CLIENT A;Société Alpha;CH01;12000;4000;2000;6000
-2024-03-05;F002;FAC-002;CLIENT B;Société Beta;CH02;8000;8000;0;0
-2024-03-10;F003;FAC-003;CLIENT C;Société Gamma;CH03;5000;0;0;5000
-2024-03-12;F004;FAC-004;FOURNISSEUR Z;Matériaux Z;CH01;6000;2000;1000;3000

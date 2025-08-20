@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { api } from '@/utils/auth';
+import { api } from '@/utils/api';
 import { GestalisCard, GestalisCardHeader, GestalisCardTitle, GestalisCardContent } from '@/components/ui/gestalis-card';
 import { GestalisButton } from '@/components/ui/gestalis-button';
 import { Input } from '@/components/ui/input';
@@ -29,7 +29,8 @@ function Chantiers() {
 
   const fetchChantiers = async () => {
     try {
-      const response = await api.get('/chantiers/');
+      const response = await api.get('/api/chantiers');
+      console.log('Réponse API chantiers:', response.data);
       setChantiers(response.data.results || response.data);
       setLoading(false);
     } catch (error) {

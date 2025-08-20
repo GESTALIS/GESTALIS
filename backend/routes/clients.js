@@ -1,62 +1,58 @@
 const express = require('express');
-const { query } = require('../config/database');
 const { requireAuth, requireRole } = require('../middleware/auth');
+const { PrismaClient } = require('@prisma/client');
 
+const prisma = new PrismaClient();
 const router = express.Router();
 
 // GET /api/clients - Liste des clients
 router.get('/', requireAuth, async (req, res) => {
   try {
-    const { page = 1, limit = 20, search, type } = req.query;
-    const offset = (page - 1) * limit;
+    const { page = 1, limit = 20, search = '', type = 'all' } = req.query;
+    const offset = (parseInt(page) - 1) * parseInt(limit);
 
-    let whereClause = 'WHERE 1=1';
-    let params = [];
-    let paramIndex = 1;
-
-    // Filtre par recherche (nom ou siret)
+    // Construction des filtres
+    const whereClause = {
+      type: 'CLIENT' // Seulement les clients
+    };
+    
     if (search) {
-      whereClause += ` AND (t.nom ILIKE $${paramIndex} OR t.siret ILIKE $${paramIndex})`;
-      params.push(`%${search}%`);
-      paramIndex++;
+      whereClause.OR = [
+        { nom: { contains: search, mode: 'insensitive' } },
+        { siret: { contains: search, mode: 'insensitive' } }
+      ];
     }
 
-    // Filtre par type
-    if (type && type !== 'all') {
-      whereClause += ` AND t.type = $${paramIndex}`;
-      params.push(type);
-      paramIndex++;
-    }
+    // Requête Prisma
+    const [clients, total] = await Promise.all([
+      prisma.tiers.findMany({
+        where: whereClause,
+        include: {
+          marches: {
+            include: {
+              chantier: true
+            }
+          }
+        },
+        orderBy: { nom: 'asc' },
+        skip: offset,
+        take: parseInt(limit)
+      }),
+      prisma.tiers.count({ where: whereClause })
+    ]);
 
-    // Requête principale
-    const result = await query(
-      `SELECT 
-        t.*,
-        COUNT(c.id) as nb_chantiers
-       FROM tiers t
-       LEFT JOIN chantiers c ON t.id = c.client_id
-       ${whereClause}
-       AND t.type = 'client'
-       GROUP BY t.id
-       ORDER BY t.nom
-       LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
-      [...params, limit, offset]
-    );
+    // Transformation des données pour la compatibilité frontend
+    const results = clients.map(client => ({
+      ...client,
+      nb_chantiers: client.marches.length,
+      created_at: client.createdAt,
+      updated_at: client.updatedAt
+    }));
 
-    // Compte total pour la pagination
-    const countResult = await query(
-      `SELECT COUNT(*) as total
-       FROM tiers t
-       ${whereClause}
-       AND t.type = 'client'`,
-      params
-    );
-
-    const total = parseInt(countResult.rows[0].total);
-    const totalPages = Math.ceil(total / limit);
+    const totalPages = Math.ceil(total / parseInt(limit));
 
     res.json({
-      results: result.rows,
+      results,
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
@@ -79,21 +75,36 @@ router.get('/:id', requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
 
-    const result = await query(
-      `SELECT t.*
-       FROM tiers t
-       WHERE t.id = $1 AND t.type = 'client'`,
-      [id]
-    );
+    const client = await prisma.tiers.findUnique({
+      where: { 
+        id: id,
+        type: 'CLIENT'
+      },
+      include: {
+        marches: {
+          include: {
+            chantier: true
+          }
+        }
+      }
+    });
 
-    if (result.rows.length === 0) {
+    if (!client) {
       return res.status(404).json({
         error: 'Client non trouvé',
         code: 'CLIENT_NOT_FOUND'
       });
     }
 
-    res.json(result.rows[0]);
+    // Transformation des données pour la compatibilité frontend
+    const result = {
+      ...client,
+      nb_chantiers: client.marches.length,
+      created_at: client.createdAt,
+      updated_at: client.updatedAt
+    };
+
+    res.json(result);
 
   } catch (error) {
     console.error('Erreur lors de la récupération du client:', error);
@@ -117,17 +128,22 @@ router.post('/', requireAuth, requireRole(['admin', 'manager']), async (req, res
       notes
     } = req.body;
 
-    const result = await query(
-      `INSERT INTO tiers (
-        nom, siret, adresse, telephone, email, contact_principal, notes, type
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'client')
-      RETURNING *`,
-      [nom, siret, adresse, telephone, email, contact_principal, notes]
-    );
+    const result = await prisma.tiers.create({
+      data: {
+        nom,
+        siret,
+        adresse,
+        telephone,
+        email,
+        contact_principal,
+        notes,
+        type: 'CLIENT'
+      }
+    });
 
     res.status(201).json({
       message: 'Client créé avec succès',
-      client: result.rows[0]
+      client: result
     });
 
   } catch (error) {
@@ -154,8 +170,13 @@ router.put('/:id', requireAuth, requireRole(['admin', 'manager']), async (req, r
     } = req.body;
 
     // Vérification que le client existe
-    const existingClient = await query('SELECT id FROM tiers WHERE id = $1 AND type = $2', [id, 'client']);
-    if (existingClient.rows.length === 0) {
+    const existingClient = await prisma.tiers.findUnique({
+      where: {
+        id: id,
+        type: 'CLIENT'
+      }
+    });
+    if (!existingClient) {
       return res.status(404).json({
         error: 'Client non trouvé',
         code: 'CLIENT_NOT_FOUND'
@@ -163,24 +184,26 @@ router.put('/:id', requireAuth, requireRole(['admin', 'manager']), async (req, r
     }
 
     // Mise à jour du client
-    const result = await query(
-      `UPDATE tiers SET
-        nom = COALESCE($1, nom),
-        siret = COALESCE($2, siret),
-        adresse = COALESCE($3, adresse),
-        telephone = COALESCE($4, telephone),
-        email = COALESCE($5, email),
-        contact_principal = COALESCE($6, contact_principal),
-        notes = COALESCE($7, notes),
-        updated_at = NOW()
-       WHERE id = $8 AND type = 'client'
-       RETURNING *`,
-      [nom, siret, adresse, telephone, email, contact_principal, notes, id]
-    );
+    const result = await prisma.tiers.update({
+      where: {
+        id: id,
+        type: 'CLIENT'
+      },
+      data: {
+        nom: nom || existingClient.nom,
+        siret: siret || existingClient.siret,
+        adresse: adresse || existingClient.adresse,
+        telephone: telephone || existingClient.telephone,
+        email: email || existingClient.email,
+        contact_principal: contact_principal || existingClient.contact_principal,
+        notes: notes || existingClient.notes,
+        updated_at: new Date()
+      }
+    });
 
     res.json({
       message: 'Client mis à jour avec succès',
-      client: result.rows[0]
+      client: result
     });
 
   } catch (error) {
@@ -198,8 +221,13 @@ router.delete('/:id', requireAuth, requireRole(['admin']), async (req, res) => {
     const { id } = req.params;
 
     // Vérification que le client existe
-    const existingClient = await query('SELECT id FROM tiers WHERE id = $1 AND type = $2', [id, 'client']);
-    if (existingClient.rows.length === 0) {
+    const existingClient = await prisma.tiers.findUnique({
+      where: {
+        id: id,
+        type: 'CLIENT'
+      }
+    });
+    if (!existingClient) {
       return res.status(404).json({
         error: 'Client non trouvé',
         code: 'CLIENT_NOT_FOUND'
@@ -207,8 +235,10 @@ router.delete('/:id', requireAuth, requireRole(['admin']), async (req, res) => {
     }
 
     // Vérification que le client n'a pas de chantiers associés
-    const chantiersResult = await query('SELECT id FROM chantiers WHERE client_id = $1', [id]);
-    if (chantiersResult.rows.length > 0) {
+    const chantiersResult = await prisma.chantiers.findMany({
+      where: { client_id: id }
+    });
+    if (chantiersResult.length > 0) {
       return res.status(400).json({
         error: 'Impossible de supprimer un client ayant des chantiers associés',
         code: 'CLIENT_HAS_CHANTIERS'
@@ -216,7 +246,12 @@ router.delete('/:id', requireAuth, requireRole(['admin']), async (req, res) => {
     }
 
     // Suppression du client
-    await query('DELETE FROM tiers WHERE id = $1 AND type = $2', [id, 'client']);
+    await prisma.tiers.delete({
+      where: {
+        id: id,
+        type: 'CLIENT'
+      }
+    });
 
     res.json({
       message: 'Client supprimé avec succès'

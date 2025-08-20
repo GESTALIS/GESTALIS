@@ -50,18 +50,16 @@ const poles = [
   },
   {
     id: 'vente',
-    name: 'VENTE & DEVIS',
+    name: 'VENTE',
     icon: FileText,
     color: 'gestalis-secondary',
     route: '/vente',
     subModules: [
-      { name: 'Gestion des devis', route: '/vente/devis' },
-      { name: 'Bons de commande clients', route: '/vente/commandes' },
-      { name: 'Factures de vente', route: '/vente/factures' },
-      { name: 'Situations de travaux', route: '/vente/situations' },
-      { name: 'Avenants clients', route: '/vente/avenants' },
-      { name: 'Cessions de créance', route: '/vente/cessions' },
-      { name: 'Envoi automatisé', route: '/vente/automatisation' }
+      { name: 'Devis', route: '/vente/devis' },
+      { name: 'Factures', route: '/vente/factures' },
+      { name: 'Suivi commercial', route: '/vente/suivi' },
+      { name: 'Relances', route: '/vente/relances' },
+      { name: 'Rapports', route: '/vente/rapports' }
     ]
   },
   {
@@ -109,18 +107,18 @@ const poles = [
     ]
   },
   {
-    id: 'clients',
-    name: 'CLIENTS/FOURNISSEURS',
+    id: 'tiers',
+    name: 'TIERS',
     icon: Users,
     color: 'gestalis-secondary',
-    route: '/clients',
+    route: '/tiers',
     subModules: [
-      { name: 'Fiches complètes', route: '/clients/fiches' },
-      { name: 'Synthèses financières', route: '/clients/syntheses' },
-      { name: 'Communication intégrée', route: '/clients/communication' },
-      { name: 'Signature électronique', route: '/clients/signature' },
-      { name: 'Historique relationnel', route: '/clients/historique' },
-      { name: 'Gestion avoirs', route: '/clients/avoirs' }
+      { name: 'Fiches complètes', route: '/tiers/fiches' },
+      { name: 'Synthèses financières', route: '/tiers/syntheses' },
+      { name: 'Communication intégrée', route: '/tiers/communication' },
+      { name: 'Signature électronique', route: '/tiers/signature' },
+      { name: 'Historique relationnel', route: '/tiers/historique' },
+      { name: 'Gestion avoirs', route: '/tiers/avoirs' }
     ]
   },
   {

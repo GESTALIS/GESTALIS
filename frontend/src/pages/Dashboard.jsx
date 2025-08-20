@@ -94,13 +94,13 @@ const Dashboard = () => {
     },
     {
       id: 'vente',
-      name: 'VENTE & DEVIS',
+      name: 'VENTE',
       icon: FileText,
       color: 'gestalis-secondary-dark',
-      description: 'Gestion commerciale et facturation',
+      description: 'Gestion des devis, factures et suivi commercial',
       metrics: {
-        devis: '15 en cours',
-        factures: '€180K'
+        devis: '2 en cours',
+        factures: '€23.5K'
       },
       route: '/vente'
     },
@@ -141,16 +141,16 @@ const Dashboard = () => {
       route: '/tresorerie'
     },
     {
-      id: 'clients',
-      name: 'CLIENTS/FOURNISSEURS',
+      id: 'tiers',
+      name: 'TIERS',
       icon: Users,
       color: 'gestalis-quinary-dark',
-      description: 'Gestion des relations clients',
+      description: 'Gestion des relations commerciales et administratives',
       metrics: {
         clients: '25 actifs',
         fournisseurs: '18 actifs'
       },
-      route: '/clients'
+      route: '/tiers'
     },
     {
       id: 'rh',
