@@ -1,0 +1,688 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id            String         @id @default(cuid())
+  email         String         @unique
+  passwordHash  String
+  role          String // admin|manager|user|viewer
+  active        Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  refreshTokens RefreshToken[]
+  auditLogs     AuditLog[]
+}
+
+model RefreshToken {
+  id                String    @id @default(cuid())
+  userId            String
+  tokenHash         String
+  deviceFingerprint String?
+  expiresAt         DateTime
+  revokedAt         DateTime?
+  user              User      @relation(fields: [userId], references: [id])
+  createdAt         DateTime  @default(now())
+
+  @@index([userId])
+}
+
+model Chantier {
+  id            String    @id @default(cuid())
+  nom           String
+  description   String?
+  statut        String    @default("en_preparation")
+  budgetInitial Decimal   @db.Decimal(18, 2)
+  budgetActuel  Decimal   @db.Decimal(18, 2)
+  dateDebut     DateTime?
+  dateFinPrevue DateTime?
+  dateFinReelle DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  facturesClients       FactureClient[]
+  facturesFournisseurs  FactureFournisseur[]
+  marches               MarcheClient[]
+  sousTraitanceContrats SousTraitanceContrat[]
+  EcritureComptable     EcritureComptable[]
+}
+
+// === MODÈLE TIERS ÉTENDU POUR FOURNISSEURS ===
+
+model Tiers {
+  id          String   @id @default(cuid())
+  nom         String
+  type        String // CLIENT|FOURNISSEUR|SOUSTRAITANT|ORGANISME_SOCIAL|ASSURANCE|BANQUE|ADMINISTRATION
+  siret       String?
+  adresse     String?
+  codePostal  String?
+  ville       String?
+  telephone   String?
+  email       String?
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  facturesClients       FactureClient[]
+  facturesFournisseurs  FactureFournisseur[]
+  marches               MarcheClient[]
+  sousTraitanceContrats SousTraitanceContrat[]
+
+  // NOUVELLES RELATIONS FOURNISSEUR
+  fournisseurDetails     FournisseurDetails?
+  contacts               ContactFournisseur[]
+  documents              DocumentFournisseur[]
+  conditionsCommerciales ConditionsCommerciales?
+  historiqueQualite      HistoriqueQualite[]
+  litiges                LitigeFournisseur[]
+  journalActions         JournalActionFournisseur[]
+  ecrituresComptables    EcritureComptable[]
+
+  @@index([nom])
+  @@index([type])
+  @@index([siret])
+}
+
+// === NOUVEAU : MODÈLE FOURNISSEUR DÉTAILLÉ ===
+
+model FournisseurDetails {
+  id                    String   @id @default(cuid())
+  tiersId               String   @unique
+  codeFournisseur       String   @unique // FR001, FR002...
+  compteComptable       String   @unique // F0001, F0002...
+  raisonSociale         String
+  formeJuridique        String?
+  capitalSocial         Decimal? @db.Decimal(18, 2)
+  tvaIntracommunautaire String?
+  codeApeNaf            String?
+  rcs                   String?
+  greffe                String?
+  adresseSiege          String?
+  adresseLivraison      String?
+  statut                String   @default("ACTIF") // ACTIF|SUSPENDU|ARCHIVE
+  estSousTraitant       Boolean  @default(false)
+  dateEntreeRelation    DateTime @default(now())
+  plafondCredit         Decimal? @db.Decimal(18, 2)
+  devise                String   @default("EUR")
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  // Relations
+  tiers                Tiers                @relation(fields: [tiersId], references: [id], onDelete: Cascade)
+  ribs                 RibFournisseur[]
+  planComptable        PlanComptable        @relation("CompteFournisseur", fields: [compteComptable], references: [numeroCompte])
+  conditionsPaiement   ConditionsPaiement?  @relation(fields: [conditionsPaiementId], references: [id])
+  factures             FactureFournisseur[]
+  conditionsPaiementId String?
+  EcritureComptable    EcritureComptable[]
+
+  @@index([codeFournisseur])
+  @@index([compteComptable])
+  @@index([statut])
+}
+
+// === NOUVEAU : CONTACTS MULTIPLES ===
+
+model ContactFournisseur {
+  id                  String   @id @default(cuid())
+  tiersId             String
+  type                String // COMMERCIAL|TECHNIQUE|COMPTABILITE|AUTRE
+  nom                 String
+  prenom              String?
+  telephone           String?
+  email               String?
+  fonction            String?
+  estContactPrincipal Boolean  @default(false)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  // Relations
+  tiers Tiers @relation(fields: [tiersId], references: [id], onDelete: Cascade)
+
+  @@index([tiersId])
+  @@index([type])
+}
+
+// === NOUVEAU : DOCUMENTS & CONFORMITÉ ===
+
+model DocumentFournisseur {
+  id             String    @id @default(cuid())
+  tiersId        String
+  type           String // KBIS|URSSAF|RC_PRO|QUALIBAT|ISO|AUTRE
+  nom            String
+  pieceUrl       String?
+  dateEmission   DateTime?
+  dateExpiration DateTime?
+  statut         String    @default("EN_COURS") // EN_COURS|VALIDE|EXPIRE
+  version        String?
+  commentaires   String?
+  ajoutePar      String // userId
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  // Relations
+  tiers Tiers @relation(fields: [tiersId], references: [id], onDelete: Cascade)
+
+  @@index([tiersId])
+  @@index([type])
+  @@index([dateExpiration])
+  @@index([statut])
+}
+
+// === NOUVEAU : CONDITIONS COMMERCIALES AVEC RELATION ===
+
+model ConditionsCommerciales {
+  id                   String   @id @default(cuid())
+  tiersId              String   @unique
+  conditionsPaiementId String?
+  escompte             Decimal? @db.Decimal(5, 2) // pourcentage
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  // Relations
+  tiers              Tiers               @relation(fields: [tiersId], references: [id], onDelete: Cascade)
+  conditionsPaiement ConditionsPaiement? @relation(fields: [conditionsPaiementId], references: [id])
+
+  @@index([tiersId])
+}
+
+// === NOUVEAU : RIB/IBAN MULTIPLES ===
+
+model RibFournisseur {
+  id                   String   @id @default(cuid())
+  fournisseurDetailsId String
+  iban                 String
+  bic                  String
+  titulaire            String
+  estParDefaut         Boolean  @default(false)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  // Relations
+  fournisseurDetails FournisseurDetails @relation(fields: [fournisseurDetailsId], references: [id], onDelete: Cascade)
+
+  @@index([fournisseurDetailsId])
+  @@index([iban])
+}
+
+// === NOUVEAU : SUIVI QUALITÉ ===
+
+model HistoriqueQualite {
+  id             String   @id @default(cuid())
+  tiersId        String
+  dateEvaluation DateTime @default(now())
+  notePrix       Int // 1-5
+  noteQualite    Int // 1-5
+  noteDelais     Int // 1-5
+  noteReactivite Int // 1-5
+  scoreGlobal    Decimal  @db.Decimal(3, 2) // moyenne pondérée
+  commentaires   String?
+  evaluePar      String // userId
+  createdAt      DateTime @default(now())
+
+  // Relations
+  tiers Tiers @relation(fields: [tiersId], references: [id], onDelete: Cascade)
+
+  @@index([tiersId])
+  @@index([dateEvaluation])
+}
+
+// === NOUVEAU : LITIGES ===
+
+model LitigeFournisseur {
+  id             String    @id @default(cuid())
+  tiersId        String
+  type           String // RETARD|ERREUR|NON_CONFORMITE|AUTRE
+  description    String
+  statut         String    @default("OUVERT") // OUVERT|EN_COURS|CLOS
+  dateLitige     DateTime  @default(now())
+  dateResolution DateTime?
+  responsable    String // userId
+  commentaires   String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  // Relations
+  tiers Tiers @relation(fields: [tiersId], references: [id], onDelete: Cascade)
+
+  @@index([tiersId])
+  @@index([statut])
+  @@index([dateLitige])
+}
+
+// === NOUVEAU : JOURNAL DES ACTIONS ===
+
+model JournalActionFournisseur {
+  id        String   @id @default(cuid())
+  tiersId   String
+  action    String // CREATION|MODIFICATION|SUSPENSION|ARCHIVAGE|ALERTE
+  details   Json? // détails de l'action
+  userId    String // qui a fait l'action
+  createdAt DateTime @default(now())
+
+  // Relations
+  tiers Tiers @relation(fields: [tiersId], references: [id], onDelete: Cascade)
+
+  @@index([tiersId])
+  @@index([action])
+  @@index([createdAt])
+}
+
+// === S1 - SITUATIONS & MARCHÉS ===
+
+model MarcheClient {
+  id                 String   @id @default(cuid())
+  chantierId         String
+  clientId           String
+  reference          String // N° marché/commande
+  devise             String   @default("EUR")
+  tvaMode            String   @default("STANDARD") // STANDARD|EXONERE
+  retenueGarantiePct Decimal  @default(5.00) @db.Decimal(5, 2)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  // Relations
+  chantier     Chantier      @relation(fields: [chantierId], references: [id])
+  client       Tiers         @relation(fields: [clientId], references: [id])
+  bpuPostes    BpuPoste[]
+  situations   Situation[]
+  attachements Attachement[]
+
+  @@unique([chantierId, reference])
+  @@index([chantierId])
+}
+
+model BpuPoste {
+  id           String  @id @default(cuid())
+  marcheId     String
+  code         String
+  libelle      String
+  unite        String
+  prixUnitaire Decimal @db.Decimal(18, 4)
+  qtePrevue    Decimal @db.Decimal(18, 4)
+
+  // Relations
+  marche          MarcheClient     @relation(fields: [marcheId], references: [id])
+  situationLignes SituationLigne[]
+  attachements    Attachement[]
+
+  @@unique([marcheId, code])
+  @@index([marcheId])
+}
+
+model Situation {
+  id           String   @id @default(cuid())
+  marcheId     String
+  numero       Int
+  periodeDebut DateTime
+  periodeFin   DateTime
+  penalites    Decimal  @default(0) @db.Decimal(18, 2)
+  retenuePct   Decimal  @default(0) @db.Decimal(5, 2)
+  statut       String   @default("brouillon") // brouillon|validee|facturee
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  marche MarcheClient     @relation(fields: [marcheId], references: [id])
+  lignes SituationLigne[]
+
+  @@unique([marcheId, numero])
+  @@index([marcheId, statut])
+}
+
+model SituationLigne {
+  id            String  @id @default(cuid())
+  situationId   String
+  posteId       String
+  qteMois       Decimal @db.Decimal(18, 4)
+  qteCumulAvant Decimal @db.Decimal(18, 4)
+  qteCumulApres Decimal @db.Decimal(18, 4)
+  prixUnitaire  Decimal @db.Decimal(18, 4)
+  montantMois   Decimal @db.Decimal(18, 2)
+
+  // Relations
+  situation Situation @relation(fields: [situationId], references: [id])
+  poste     BpuPoste  @relation(fields: [posteId], references: [id])
+
+  @@index([situationId])
+}
+
+model Attachement {
+  id          String   @id @default(cuid())
+  marcheId    String
+  posteId     String
+  date        DateTime
+  qte         Decimal  @db.Decimal(18, 4)
+  commentaire String?
+  pieceUrl    String?
+  createdBy   String
+
+  // Relations
+  marche MarcheClient @relation(fields: [marcheId], references: [id])
+  poste  BpuPoste     @relation(fields: [posteId], references: [id])
+
+  @@index([marcheId, posteId, date])
+}
+
+// === S3 - SOUS-TRAITANCE & DAILY ===
+
+model SousTraitanceContrat {
+  id                  String   @id @default(cuid())
+  chantierId          String
+  sousTraitantId      String
+  reference           String
+  montantTtc          Decimal  @db.Decimal(18, 2)
+  retenueGarantiePct  Decimal  @default(5.00) @db.Decimal(5, 2)
+  cautionRemplacement Boolean  @default(false)
+  statut              String   @default("actif") // actif|clos|suspendu
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  // Relations
+  chantier     Chantier                 @relation(fields: [chantierId], references: [id])
+  sousTraitant Tiers                    @relation(fields: [sousTraitantId], references: [id])
+  situations   SousTraitanceSituation[]
+
+  @@unique([chantierId, reference])
+  @@index([chantierId, statut])
+}
+
+model SousTraitanceSituation {
+  id           String   @id @default(cuid())
+  contratId    String
+  numero       Int
+  periodeDebut DateTime
+  periodeFin   DateTime
+  montantMois  Decimal  @db.Decimal(18, 2)
+  retenueMois  Decimal  @default(0) @db.Decimal(18, 2)
+  penalites    Decimal  @default(0) @db.Decimal(18, 2)
+  statut       String   @default("brouillon") // brouillon|validee|facturee
+
+  // Relations
+  contrat SousTraitanceContrat @relation(fields: [contratId], references: [id])
+
+  @@unique([contratId, numero])
+  @@index([contratId, statut])
+}
+
+model CessionCreance {
+  id              String   @id @default(cuid())
+  factureClientId String
+  cessionnaire    String // banque / bénéficiaire
+  reference       String
+  dateCession     DateTime
+  montantCede     Decimal  @db.Decimal(18, 2)
+  statut          String   @default("active") // active|levee|annulee
+  pieceUrl        String?
+  createdAt       DateTime @default(now())
+
+  // Relations
+  factureClient FactureClient @relation(fields: [factureClientId], references: [id])
+
+  @@unique([factureClientId])
+  @@index([statut])
+}
+
+// === COMPTABILITÉ - MULTI-SOCIÉTÉS & EXPORTS ===
+
+model Societe {
+  id            String   @id @default(cuid())
+  raisonSociale String
+  siret         String?
+  tvaIntra      String?
+  planComptable Json // mapping comptes (706/60/401/411/445*…)
+  journals      Json // codes journaux (VEN/ACH/BQ)
+  tvaMode       String   @default("STANDARD") // STANDARD|EXONERE
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  exports ExportComptable[]
+}
+
+model ExportComptable {
+  id           String   @id @default(cuid())
+  societeId    String
+  type         String // FEC|OD|JOURNAL_VENTES|JOURNAL_ACHATS|REGLEMENTS
+  exercice     Int
+  periodeDebut DateTime
+  periodeFin   DateTime
+  statut       String   @default("en_cours") // en_cours|pret|echec
+  fichierUrl   String?
+  checksum     String?
+  createdAt    DateTime @default(now())
+
+  // Relations
+  societe Societe @relation(fields: [societeId], references: [id])
+
+  @@index([societeId, type, statut])
+}
+
+// === CŒUR EXISTANT ===
+
+model FactureClient {
+  id           String    @id @default(cuid())
+  numero       String    @unique
+  montantHT    Decimal   @db.Decimal(18, 2)
+  montantTVA   Decimal   @db.Decimal(18, 2)
+  montantTotal Decimal   @db.Decimal(18, 2)
+  dateFacture  DateTime
+  dateEcheance DateTime?
+  statut       String    @default("emise")
+  resteALetrer Decimal   @db.Decimal(18, 2)
+  chantierId   String
+  tiersId      String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // Relations
+  chantier   Chantier        @relation(fields: [chantierId], references: [id])
+  tiers      Tiers           @relation(fields: [tiersId], references: [id])
+  reglements Reglement[]
+  lettrages  Lettrage[]
+  cession    CessionCreance?
+
+  @@index([chantierId, statut])
+  @@index([tiersId])
+}
+
+// === NOUVEAU : FACTURE FOURNISSEUR AVEC CONDITIONS ===
+
+model FactureFournisseur {
+  id                   String   @id @default(cuid())
+  numero               String   @unique
+  dateFacture          DateTime
+  dateEcheance         DateTime
+  montantHT            Decimal  @db.Decimal(18, 2)
+  montantTTC           Decimal  @db.Decimal(18, 2)
+  statut               String   @default("EN_ATTENTE") // EN_ATTENTE|PAYEE|PARTIELLEMENT_PAYEE|ANNULEE
+  conditionsPaiementId String?
+  fournisseurId        String
+  chantierId           String?
+  compteComptableId    String
+  dateCreation         DateTime @default(now())
+  dateModification     DateTime @updatedAt
+
+  // Relations
+  fournisseur        FournisseurDetails  @relation(fields: [fournisseurId], references: [id])
+  chantier           Chantier?           @relation(fields: [chantierId], references: [id])
+  conditionsPaiement ConditionsPaiement? @relation(fields: [conditionsPaiementId], references: [id])
+  compteComptable    PlanComptable       @relation(fields: [compteComptableId], references: [id])
+  Tiers              Tiers?              @relation(fields: [tiersId], references: [id])
+  tiersId            String?
+  Reglement          Reglement[]
+  Lettrage           Lettrage[]
+
+  @@index([numero])
+  @@index([dateFacture])
+  @@index([fournisseurId])
+  @@index([chantierId])
+  @@index([statut])
+}
+
+model Reglement {
+  id                   String   @id @default(cuid())
+  montant              Decimal  @db.Decimal(18, 2)
+  dateReglement        DateTime
+  modeReglement        String
+  reference            String?
+  referenceBancaire    String? // pour Dailly
+  factureClientId      String?
+  factureFournisseurId String?
+  sourceImportId       String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  // Relations
+  factureClient      FactureClient?      @relation(fields: [factureClientId], references: [id])
+  factureFournisseur FactureFournisseur? @relation(fields: [factureFournisseurId], references: [id])
+  importBanque       ImportBanque?       @relation(fields: [sourceImportId], references: [id])
+  lettrages          Lettrage[]
+
+  @@index([factureClientId])
+  @@index([factureFournisseurId])
+  @@index([sourceImportId])
+}
+
+model ImportBanque {
+  id         String              @id @default(cuid())
+  nomFichier String
+  dateImport DateTime            @default(now())
+  statut     String              @default("preview")
+  checksum   String
+  lignes     ImportBanqueLigne[]
+  reglements Reglement[]
+
+  @@index([statut])
+  @@index([checksum])
+}
+
+model ImportBanqueLigne {
+  id             String   @id @default(cuid())
+  importBanqueId String
+  dateOperation  DateTime
+  montant        Decimal  @db.Decimal(18, 2)
+  libelle        String
+  reference      String?
+
+  // Relations
+  importBanque ImportBanque @relation(fields: [importBanqueId], references: [id])
+
+  @@index([importBanqueId])
+  @@index([dateOperation])
+}
+
+model Lettrage {
+  id                   String   @id @default(cuid())
+  montant              Decimal  @db.Decimal(18, 2)
+  factureClientId      String?
+  factureFournisseurId String?
+  reglementId          String
+  createdAt            DateTime @default(now())
+
+  // Relations
+  factureClient              FactureClient?      @relation(fields: [factureClientId], references: [id])
+  lettrageFactureFournisseur FactureFournisseur? @relation(fields: [factureFournisseurId], references: [id])
+  reglement                  Reglement           @relation(fields: [reglementId], references: [id])
+
+  @@index([reglementId])
+  @@index([factureClientId])
+  @@index([factureFournisseurId])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String
+  action     String
+  resource   String
+  resourceId String?
+  details    Json?
+  createdAt  DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([resource, resourceId])
+  @@index([createdAt])
+}
+
+// === NOUVEAU : PLAN COMPTABLE ===
+
+model PlanComptable {
+  id               String   @id @default(cuid())
+  numeroCompte     String   @unique // 401000, 401001, F0001, F0002...
+  intitule         String // "Fournisseurs - Général", "Fournisseurs - Matériaux"
+  typeCompte       String // ACTIF|PASSIF|CHARGE|PRODUIT
+  categorie        String // FOURNISSEUR|CLIENT|BANQUE|CAISSE|etc.
+  compteParent     String? // 401000 pour les sous-comptes
+  niveau           Int      @default(1) // 1 = compte principal, 2 = sous-compte
+  actif            Boolean  @default(true)
+  dateCreation     DateTime @default(now())
+  dateModification DateTime @updatedAt
+
+  // Relations
+  fournisseurs         FournisseurDetails[] @relation("CompteFournisseur")
+  facturesFournisseurs FactureFournisseur[]
+  ecrituresComptables  EcritureComptable[]
+
+  @@index([numeroCompte])
+  @@index([categorie])
+  @@index([compteParent])
+}
+
+// === NOUVEAU : CONDITIONS DE PAIEMENT ===
+
+model ConditionsPaiement {
+  id               String   @id @default(cuid())
+  code             String   @unique // COMPTANT, 30J, 45J_FM, 60J
+  libelle          String // "Comptant", "30 jours", "45 jours fin de mois"
+  delaiJours       Int      @default(0) // 0 = comptant, 30 = 30 jours
+  finDeMois        Boolean  @default(false) // true = fin de mois
+  escompte         Decimal? @db.Decimal(5, 2) // Pourcentage d'escompte
+  actif            Boolean  @default(true)
+  ordre            Int      @default(0) // Ordre d'affichage
+  dateCreation     DateTime @default(now())
+  dateModification DateTime @updatedAt
+
+  // Relations
+  fournisseurs           FournisseurDetails[]
+  facturesFournisseurs   FactureFournisseur[]
+  ConditionsCommerciales ConditionsCommerciales[]
+
+  @@index([code])
+  @@index([ordre])
+}
+
+// === NOUVEAU : ÉCRITURES COMPTABLES ===
+
+model EcritureComptable {
+  id                String   @id @default(cuid())
+  dateEcriture      DateTime
+  numeroPiece       String // Numéro de facture ou référence
+  libelle           String // Description de l'opération
+  montant           Decimal  @db.Decimal(18, 2)
+  sens              String // DEBIT|CREDIT
+  compteComptableId String
+  fournisseurId     String?
+  clientId          String?
+  chantierId        String?
+  dateCreation      DateTime @default(now())
+
+  // Relations
+  compteComptable PlanComptable       @relation(fields: [compteComptableId], references: [id])
+  fournisseur     FournisseurDetails? @relation(fields: [fournisseurId], references: [id])
+  client          Tiers?              @relation(fields: [clientId], references: [id])
+  chantier        Chantier?           @relation(fields: [chantierId], references: [id])
+
+  @@index([dateEcriture])
+  @@index([numeroPiece])
+  @@index([compteComptableId])
+}

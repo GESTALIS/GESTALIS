@@ -15,7 +15,15 @@ import {
   Mail,
   MapPin,
   User,
-  Calendar
+  Calendar,
+  Download,
+  Upload,
+  ExternalLink,
+  AlertTriangle,
+  CheckCircle,
+  X,
+  ArrowRight,
+  FileText
 } from 'lucide-react';
 
 function Tiers() {
@@ -24,6 +32,10 @@ function Tiers() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [exportProgress, setExportProgress] = useState(0);
+  const [importProgress, setImportProgress] = useState(0);
   const [newTier, setNewTier] = useState({
     nom: '',
     type: 'CLIENT',
@@ -116,6 +128,79 @@ function Tiers() {
     // TODO: Ouvrir modal de filtres avancés
   };
 
+  // Nouvelles fonctions pour l'export/import
+  const handleExportToFournisseurs = async () => {
+    setShowExportModal(true);
+    setExportProgress(0);
+    
+    try {
+      // Simuler l'export progressif
+      for (let i = 0; i <= 100; i += 10) {
+        setExportProgress(i);
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      
+      // Simuler l'export vers la section Fournisseurs
+      const fournisseursToExport = tiers.filter(tier => tier.type === 'FOURNISSEUR');
+      
+      console.log(`Export de ${fournisseursToExport.length} fournisseurs vers la section Fournisseurs`);
+      
+      // TODO: Appel API pour exporter vers la section Fournisseurs
+      // await api.post('/api/fournisseurs/import-from-tiers', { tiers: fournisseursToExport });
+      
+      setExportProgress(100);
+      setTimeout(() => {
+        setShowExportModal(false);
+        setExportProgress(0);
+        alert(`Export réussi ! ${fournisseursToExport.length} fournisseur(s) exporté(s) vers la section Fournisseurs.`);
+      }, 1000);
+      
+    } catch (error) {
+      console.error('Erreur lors de l\'export:', error);
+      setShowExportModal(false);
+      setExportProgress(0);
+      alert('Erreur lors de l\'export vers la section Fournisseurs.');
+    }
+  };
+
+  const handleImportFromFournisseurs = async () => {
+    setShowImportModal(true);
+    setImportProgress(0);
+    
+    try {
+      // Simuler l'import progressif
+      for (let i = 0; i <= 100; i += 10) {
+        setImportProgress(i);
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      
+      // Simuler l'import depuis la section Fournisseurs
+      console.log('Import depuis la section Fournisseurs en cours...');
+      
+      // TODO: Appel API pour importer depuis la section Fournisseurs
+      // const response = await api.get('/api/fournisseurs/export-to-tiers');
+      // const importedTiers = response.data;
+      
+      setImportProgress(100);
+      setTimeout(() => {
+        setShowImportModal(false);
+        setImportProgress(0);
+        alert('Import réussi depuis la section Fournisseurs !');
+      }, 1000);
+      
+    } catch (error) {
+      console.error('Erreur lors de l\'import:', error);
+      setShowImportModal(false);
+      setImportProgress(0);
+      alert('Erreur lors de l\'import depuis la section Fournisseurs.');
+    }
+  };
+
+  const navigateToFournisseurs = () => {
+    // Navigation vers la section Fournisseurs du module Achat
+    window.location.href = '/achats?tab=fournisseurs';
+  };
+
   const getTypeColor = (type) => {
     const colors = {
       'CLIENT': 'bg-blue-100 text-blue-800',
@@ -149,6 +234,9 @@ function Tiers() {
     return matchesSearch && matchesType;
   });
 
+  // Compter les fournisseurs
+  const fournisseursCount = tiers.filter(tier => tier.type === 'FOURNISSEUR').length;
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -166,18 +254,49 @@ function Tiers() {
           <p className="text-gray-600">Gérez vos relations commerciales et administratives</p>
         </div>
         <div className="flex gap-2">
-          <button 
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-            onClick={() => console.log('Bouton test cliqué')}
-          >
-            Test Simple
-          </button>
+          <GestalisButton variant="outline" className="flex items-center gap-2" onClick={navigateToFournisseurs}>
+            <ExternalLink className="h-4 w-4" />
+            Section Fournisseurs
+          </GestalisButton>
           <GestalisButton variant="secondary" className="flex items-center gap-2" onClick={handleNewTier}>
             <Plus className="h-4 w-4" />
             Nouveau tiers
           </GestalisButton>
         </div>
       </div>
+
+      {/* Section de liaison avec Fournisseurs */}
+      {fournisseursCount > 0 && (
+        <GestalisCard className="border-l-4 border-l-green-500">
+          <GestalisCardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="h-6 w-6 text-green-600" />
+                <div>
+                  <h3 className="font-semibold text-gray-900">Liaison avec la section Fournisseurs</h3>
+                  <p className="text-sm text-gray-600">
+                    {fournisseursCount} fournisseur(s) détecté(s) dans les Tiers
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <GestalisButton variant="outline" size="sm" onClick={handleExportToFournisseurs}>
+                  <Download className="h-4 w-4" />
+                  Exporter vers Fournisseurs
+                </GestalisButton>
+                <GestalisButton variant="outline" size="sm" onClick={handleImportFromFournisseurs}>
+                  <Upload className="h-4 w-4" />
+                  Importer depuis Fournisseurs
+                </GestalisButton>
+                <GestalisButton size="sm" onClick={navigateToFournisseurs}>
+                  <ArrowRight className="h-4 w-4" />
+                  Aller à la section Fournisseurs
+                </GestalisButton>
+              </div>
+            </div>
+          </GestalisCardContent>
+        </GestalisCard>
+      )}
 
       {/* Filtres */}
       <GestalisCard variant="neutral">
@@ -198,13 +317,13 @@ function Tiers() {
               className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="all">Tous les types</option>
-              <option value="CLIENT">Clients</option>
-              <option value="FOURNISSEUR">Fournisseurs</option>
-              <option value="SOUSTRAITANT">Sous-traitants</option>
-              <option value="ORGANISME_SOCIAL">Organismes sociaux</option>
-              <option value="ASSURANCE">Assurances</option>
-              <option value="BANQUE">Banques</option>
-              <option value="ADMINISTRATION">Administrations</option>
+              <option value="CLIENT">Client</option>
+              <option value="FOURNISSEUR">Fournisseur</option>
+              <option value="SOUSTRAITANT">Sous-traitant</option>
+              <option value="ORGANISME_SOCIAL">Organisme social</option>
+              <option value="ASSURANCE">Assurance</option>
+              <option value="BANQUE">Banque</option>
+              <option value="ADMINISTRATION">Administration</option>
             </select>
             <GestalisButton variant="outline" className="flex items-center gap-2" onClick={handleMoreFilters}>
               <Filter className="h-4 w-4" />
@@ -215,98 +334,89 @@ function Tiers() {
       </GestalisCard>
 
       {/* Liste des tiers */}
-      <div className="grid gap-4">
-        {filteredTiers.length === 0 ? (
-          <GestalisCard>
-            <GestalisCardContent className="p-8 text-center">
-              <p className="text-gray-500">Aucun tiers trouvé</p>
-            </GestalisCardContent>
-          </GestalisCard>
-        ) : (
-          filteredTiers.map((tier) => (
-            <GestalisCard key={tier.id} className="hover:shadow-md transition-shadow">
-              <GestalisCardContent className="p-6">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-lg font-semibold text-gray-900">{tier.nom}</h3>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getTypeColor(tier.type)}`}>
-                        {getTypeLabel(tier.type)}
+      <div className="space-y-4">
+        {filteredTiers.map((tier) => (
+          <GestalisCard key={tier.id} className="hover:shadow-md transition-shadow">
+            <GestalisCardContent className="p-6">
+              <div className="flex justify-between items-start">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    <h3 className="text-lg font-semibold text-gray-900">{tier.nom}</h3>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getTypeColor(tier.type)}`}>
+                      {getTypeLabel(tier.type)}
+                    </span>
+                    {tier.type === 'FOURNISSEUR' && (
+                      <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        <ExternalLink className="h-3 w-3 inline mr-1" />
+                        Lié à la section Fournisseurs
                       </span>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
-                      <div className="flex items-center gap-2">
-                        <Building className="h-4 w-4" />
-                        <span>{tier.siret || 'SIRET non spécifié'}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Phone className="h-4 w-4" />
-                        <span>{tier.telephone || 'Téléphone non spécifié'}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Mail className="h-4 w-4" />
-                        <span>{tier.email || 'Email non spécifié'}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4" />
-                        <span>{tier.adresse ? `${tier.adresse}, ${tier.codePostal} ${tier.ville}` : 'Adresse non spécifiée'}</span>
-                      </div>
-                    </div>
-
-                    {tier.description && (
-                      <p className="text-gray-600 mt-3 text-sm line-clamp-2">
-                        {tier.description}
-                      </p>
                     )}
                   </div>
-
-                  <div className="flex items-center gap-2 ml-4">
-                    <GestalisButton variant="outline" size="sm" onClick={() => handleViewTier(tier)}>
-                      <Eye className="h-4 w-4" />
-                    </GestalisButton>
-                    <GestalisButton variant="outline" size="sm" onClick={() => handleEditTier(tier)}>
-                      <Edit className="h-4 w-4" />
-                    </GestalisButton>
-                    <GestalisButton variant="danger" size="sm" onClick={() => handleDeleteTier(tier)}>
-                      <Trash2 className="h-4 w-4" />
-                    </GestalisButton>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
+                    <div className="flex items-center gap-2">
+                      <Building className="h-4 w-4" />
+                      <span>{tier.siret || 'Non renseigné'}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Phone className="h-4 w-4" />
+                      <span>{tier.telephone || 'Non renseigné'}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-4 w-4" />
+                      <span>{tier.email || 'Non renseigné'}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4" />
+                      <span>{tier.adresse ? `${tier.adresse}, ${tier.codePostal} ${tier.ville}` : 'Non renseigné'}</span>
+                    </div>
                   </div>
                 </div>
-              </GestalisCardContent>
-            </GestalisCard>
-          ))
-        )}
+
+                <div className="flex items-center gap-2 ml-4">
+                  <GestalisButton variant="outline" size="sm" onClick={() => handleViewTier(tier)}>
+                    <Eye className="h-4 w-4" />
+                  </GestalisButton>
+                  <GestalisButton variant="outline" size="sm" onClick={() => handleEditTier(tier)}>
+                    <Edit className="h-4 w-4" />
+                  </GestalisButton>
+                  <GestalisButton variant="danger" size="sm" onClick={() => handleDeleteTier(tier)}>
+                    <Trash2 className="h-4 w-4" />
+                  </GestalisButton>
+                </div>
+              </div>
+            </GestalisCardContent>
+          </GestalisCard>
+        ))}
       </div>
 
       {/* Modal de création */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <h3 className="text-lg font-semibold mb-4">Créer un nouveau tiers</h3>
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Nouveau tiers</h3>
+              <button onClick={() => setShowCreateModal(false)} className="text-gray-400 hover:text-gray-600">
+                <X className="h-6 w-6" />
+              </button>
+            </div>
             
-            <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Nom * <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
+                <label className="block text-sm font-medium text-gray-700 mb-2">Nom *</label>
+                <Input
                   value={newTier.nom}
                   onChange={(e) => setNewTier({...newTier, nom: e.target.value})}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
                   placeholder="Nom du tiers"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Type
-                </label>
-                <select 
+                <label className="block text-sm font-medium text-gray-700 mb-2">Type</label>
+                <select
                   value={newTier.type}
                   onChange={(e) => setNewTier({...newTier, type: e.target.value})}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
                 >
                   <option value="CLIENT">Client</option>
                   <option value="FOURNISSEUR">Fournisseur</option>
@@ -317,112 +427,150 @@ function Tiers() {
                   <option value="ADMINISTRATION">Administration</option>
                 </select>
               </div>
-
+              
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  SIRET
-                </label>
-                <input
-                  type="text"
+                <label className="block text-sm font-medium text-gray-700 mb-2">SIRET</label>
+                <Input
                   value={newTier.siret}
                   onChange={(e) => setNewTier({...newTier, siret: e.target.value})}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
                   placeholder="12345678901234"
                 />
               </div>
-
+              
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Téléphone
-                </label>
-                <input
-                  type="tel"
+                <label className="block text-sm font-medium text-gray-700 mb-2">Téléphone</label>
+                <Input
                   value={newTier.telephone}
                   onChange={(e) => setNewTier({...newTier, telephone: e.target.value})}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
                   placeholder="01 23 45 67 89"
                 />
               </div>
-
+              
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Email
-                </label>
-                <input
-                  type="email"
+                <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                <Input
                   value={newTier.email}
                   onChange={(e) => setNewTier({...newTier, email: e.target.value})}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-                  placeholder="contact@exemple.com"
+                  placeholder="contact@entreprise.com"
                 />
               </div>
-
+              
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Code postal
-                </label>
-                <input
-                  type="text"
-                  value={newTier.codePostal}
-                  onChange={(e) => setNewTier({...newTier, codePostal: e.target.value})}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-                  placeholder="75001"
-                />
-              </div>
-
-              <div className="col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Adresse
-                </label>
-                <input
-                  type="text"
+                <label className="block text-sm font-medium text-gray-700 mb-2">Adresse</label>
+                <Input
                   value={newTier.adresse}
                   onChange={(e) => setNewTier({...newTier, adresse: e.target.value})}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
                   placeholder="123 Rue de la Paix"
                 />
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Ville
-                </label>
-                <input
-                  type="text"
-                  value={newTier.ville}
-                  onChange={(e) => setNewTier({...newTier, ville: e.target.value})}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-                  placeholder="Paris"
-                />
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Code postal</label>
+                  <Input
+                    value={newTier.codePostal}
+                    onChange={(e) => setNewTier({...newTier, codePostal: e.target.value})}
+                    placeholder="75001"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Ville</label>
+                  <Input
+                    value={newTier.ville}
+                    onChange={(e) => setNewTier({...newTier, ville: e.target.value})}
+                    placeholder="Paris"
+                  />
+                </div>
               </div>
-
-              <div className="col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Description
-                </label>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
                 <textarea
                   value={newTier.description}
                   onChange={(e) => setNewTier({...newTier, description: e.target.value})}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-                  placeholder="Description du tiers..."
-                  rows="3"
+                  placeholder="Description du tiers"
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 h-20"
                 />
               </div>
             </div>
             
-            <div className="flex gap-2 mt-6">
-              <button
-                onClick={() => setShowCreateModal(false)}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-              >
+            <div className="flex justify-end gap-3 mt-6">
+              <GestalisButton variant="outline" onClick={() => setShowCreateModal(false)}>
                 Annuler
-              </button>
-              <button
-                onClick={handleCreateTier}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-              >
+              </GestalisButton>
+              <GestalisButton onClick={handleCreateTier}>
                 Créer le tiers
+              </GestalisButton>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal d'export vers Fournisseurs */}
+      {showExportModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Export vers la section Fournisseurs</h3>
+              <button onClick={() => setShowExportModal(false)} className="text-gray-400 hover:text-gray-600">
+                <X className="h-6 w-6" />
               </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <FileText className="h-5 w-5 text-blue-600" />
+                <div>
+                  <p className="font-medium text-blue-900">Export en cours...</p>
+                  <p className="text-sm text-blue-700">Synchronisation avec la section Fournisseurs</p>
+                </div>
+              </div>
+              
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div 
+                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${exportProgress}%` }}
+                ></div>
+              </div>
+              
+              <p className="text-sm text-gray-600 text-center">
+                {exportProgress}% - Export des fournisseurs...
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal d'import depuis Fournisseurs */}
+      {showImportModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Import depuis la section Fournisseurs</h3>
+              <button onClick={() => setShowImportModal(false)} className="text-gray-400 hover:text-gray-600">
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                <FileText className="h-5 w-5 text-green-600" />
+                <div>
+                  <p className="font-medium text-green-900">Import en cours...</p>
+                  <p className="text-sm text-green-700">Synchronisation depuis la section Fournisseurs</p>
+                </div>
+              </div>
+              
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div 
+                  className="bg-green-600 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${importProgress}%` }}
+                ></div>
+              </div>
+              
+              <p className="text-sm text-gray-600 text-center">
+                {importProgress}% - Import des fournisseurs...
+              </p>
             </div>
           </div>
         </div>

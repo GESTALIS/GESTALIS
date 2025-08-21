@@ -1,22 +1,22 @@
-datasource db { 
-  provider = "postgresql" 
-  url = env("DATABASE_URL") 
+generator client {
+  provider = "prisma-client-js"
 }
 
-generator client { 
-  provider = "prisma-client-js" 
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
   id            String         @id @default(cuid())
   email         String         @unique
   passwordHash  String
-  role          String         // admin|manager|user|viewer
+  role          String
   active        Boolean        @default(true)
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
-  refreshTokens RefreshToken[]
   auditLogs     AuditLog[]
+  refreshTokens RefreshToken[]
 }
 
 model RefreshToken {
@@ -26,26 +26,24 @@ model RefreshToken {
   deviceFingerprint String?
   expiresAt         DateTime
   revokedAt         DateTime?
-  user              User      @relation(fields: [userId], references: [id])
   createdAt         DateTime  @default(now())
-  
+  user              User      @relation(fields: [userId], references: [id])
+
   @@index([userId])
 }
 
 model Chantier {
-  id                    String   @id @default(cuid())
+  id                    String                 @id @default(cuid())
   nom                   String
   description           String?
-  statut                String   @default("en_preparation")
-  budgetInitial         Decimal  @db.Decimal(18,2)
-  budgetActuel          Decimal  @db.Decimal(18,2)
+  statut                String                 @default("en_preparation")
+  budgetInitial         Decimal                @db.Decimal(18, 2)
+  budgetActuel          Decimal                @db.Decimal(18, 2)
   dateDebut             DateTime?
   dateFinPrevue         DateTime?
   dateFinReelle         DateTime?
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
-  
-  // Relations
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
   facturesClients       FactureClient[]
   facturesFournisseurs  FactureFournisseur[]
   marches               MarcheClient[]
@@ -53,353 +51,500 @@ model Chantier {
 }
 
 model Tiers {
-  id                    String   @id @default(cuid())
-  nom                   String
-  type                  String   // CLIENT|FOURNISSEUR|SOUSTRAITANT
-  siret                 String?
-  adresse               String?
-  codePostal            String?
-  ville                 String?
-  telephone             String?
-  email                 String?
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
-  
-  // Relations
-  facturesClients       FactureClient[]
-  facturesFournisseurs  FactureFournisseur[]
-  marches               MarcheClient[]
-  sousTraitanceContrats SousTraitanceContrat[]
-  
+  id                     String                     @id @default(cuid())
+  nom                    String
+  type                   String
+  siret                  String?
+  adresse                String?
+  codePostal             String?
+  ville                  String?
+  telephone              String?
+  email                  String?
+  createdAt              DateTime                   @default(now())
+  updatedAt              DateTime                   @updatedAt
+  description            String?
+  conditionsCommerciales ConditionsCommerciales?
+  contacts               ContactFournisseur[]
+  documents              DocumentFournisseur[]
+  facturesClients        FactureClient[]
+  facturesFournisseurs   FactureFournisseur[]
+  fournisseurDetails     FournisseurDetails?
+  historiqueQualite      HistoriqueQualite[]
+  journalActions         JournalActionFournisseur[]
+  litiges                LitigeFournisseur[]
+  marches                MarcheClient[]
+  sousTraitanceContrats  SousTraitanceContrat[]
+
   @@index([nom])
+  @@index([type])
+  @@index([siret])
 }
 
-// === S1 - SITUATIONS & MARCHÉS ===
+model FournisseurDetails {
+  id                    String              @id @default(cuid())
+  tiersId               String              @unique
+  codeFournisseur       String              @unique
+  compteComptable       String              @unique
+  raisonSociale         String
+  formeJuridique        String?
+  capitalSocial         Decimal?            @db.Decimal(18, 2)
+  tvaIntracommunautaire String?
+  codeApeNaf            String?
+  rcs                   String?
+  greffe                String?
+  adresseSiege          String?
+  adresseLivraison      String?
+  statut                String              @default("ACTIF")
+  estSousTraitant       Boolean             @default(false)
+  dateEntreeRelation    DateTime            @default(now())
+  plafondCredit         Decimal?            @db.Decimal(18, 2)
+  devise                String              @default("EUR")
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+  compteComptableId     String?
+  conditionsPaiementId  String?
+  compteComptableRef    PlanComptable?      @relation(fields: [compteComptableId], references: [id])
+  conditionsPaiementRef ConditionsPaiement? @relation(fields: [conditionsPaiementId], references: [id])
+  tiers                 Tiers               @relation(fields: [tiersId], references: [id], onDelete: Cascade)
+  ribs                  RibFournisseur[]
+
+  @@index([codeFournisseur])
+  @@index([compteComptable])
+  @@index([statut])
+}
+
+model ContactFournisseur {
+  id                  String   @id @default(cuid())
+  tiersId             String
+  type                String
+  nom                 String
+  prenom              String?
+  telephone           String?
+  email               String?
+  fonction            String?
+  estContactPrincipal Boolean  @default(false)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  tiers               Tiers    @relation(fields: [tiersId], references: [id], onDelete: Cascade)
+
+  @@index([tiersId])
+  @@index([type])
+}
+
+model DocumentFournisseur {
+  id             String    @id @default(cuid())
+  tiersId        String
+  type           String
+  nom            String
+  pieceUrl       String?
+  dateEmission   DateTime?
+  dateExpiration DateTime?
+  statut         String    @default("EN_COURS")
+  version        String?
+  commentaires   String?
+  ajoutePar      String
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  tiers          Tiers     @relation(fields: [tiersId], references: [id], onDelete: Cascade)
+
+  @@index([tiersId])
+  @@index([type])
+  @@index([dateExpiration])
+  @@index([statut])
+}
+
+model ConditionsCommerciales {
+  id                   String              @id @default(cuid())
+  tiersId              String              @unique
+  escompte             Decimal?            @db.Decimal(5, 2)
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  conditionsPaiementId String?
+  conditionsPaiement   ConditionsPaiement? @relation(fields: [conditionsPaiementId], references: [id])
+  tiers                Tiers               @relation(fields: [tiersId], references: [id], onDelete: Cascade)
+}
+
+model RibFournisseur {
+  id                   String             @id @default(cuid())
+  fournisseurDetailsId String
+  iban                 String
+  bic                  String
+  titulaire            String
+  estParDefaut         Boolean            @default(false)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  fournisseurDetails   FournisseurDetails @relation(fields: [fournisseurDetailsId], references: [id], onDelete: Cascade)
+
+  @@index([fournisseurDetailsId])
+  @@index([iban])
+}
+
+model HistoriqueQualite {
+  id             String   @id @default(cuid())
+  tiersId        String
+  dateEvaluation DateTime @default(now())
+  notePrix       Int
+  noteQualite    Int
+  noteDelais     Int
+  noteReactivite Int
+  scoreGlobal    Decimal  @db.Decimal(3, 2)
+  commentaires   String?
+  evaluePar      String
+  createdAt      DateTime @default(now())
+  tiers          Tiers    @relation(fields: [tiersId], references: [id], onDelete: Cascade)
+
+  @@index([tiersId])
+  @@index([dateEvaluation])
+}
+
+model LitigeFournisseur {
+  id             String    @id @default(cuid())
+  tiersId        String
+  type           String
+  description    String
+  statut         String    @default("OUVERT")
+  dateLitige     DateTime  @default(now())
+  dateResolution DateTime?
+  responsable    String
+  commentaires   String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  tiers          Tiers     @relation(fields: [tiersId], references: [id], onDelete: Cascade)
+
+  @@index([tiersId])
+  @@index([statut])
+  @@index([dateLitige])
+}
+
+model JournalActionFournisseur {
+  id        String   @id @default(cuid())
+  tiersId   String
+  action    String
+  details   Json?
+  userId    String
+  createdAt DateTime @default(now())
+  tiers     Tiers    @relation(fields: [tiersId], references: [id], onDelete: Cascade)
+
+  @@index([tiersId])
+  @@index([action])
+  @@index([createdAt])
+}
 
 model MarcheClient {
-  id         String   @id @default(cuid())
-  chantierId String
-  clientId   String
-  reference  String   // N° marché/commande
-  devise     String   @default("EUR")
-  tvaMode    String   @default("STANDARD") // STANDARD|EXONERE
-  retenueGarantiePct Decimal @db.Decimal(5,2) @default(5.00)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  
-  // Relations
-  chantier   Chantier @relation(fields: [chantierId], references: [id])
-  client     Tiers    @relation(fields: [clientId], references: [id])
-  bpuPostes  BpuPoste[]
-  situations Situation[]
-  attachements Attachement[]
-  
+  id                 String        @id @default(cuid())
+  chantierId         String
+  clientId           String
+  reference          String
+  devise             String        @default("EUR")
+  tvaMode            String        @default("STANDARD")
+  retenueGarantiePct Decimal       @default(5.00) @db.Decimal(5, 2)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  attachements       Attachement[]
+  bpuPostes          BpuPoste[]
+  chantier           Chantier      @relation(fields: [chantierId], references: [id])
+  client             Tiers         @relation(fields: [clientId], references: [id])
+  situations         Situation[]
+
   @@unique([chantierId, reference])
   @@index([chantierId])
 }
 
 model BpuPoste {
-  id         String   @id @default(cuid())
-  marcheId   String
-  code       String
-  libelle    String
-  unite      String
-  prixUnitaire Decimal @db.Decimal(18,4)
-  qtePrevue  Decimal  @db.Decimal(18,4)
-  
-  // Relations
-  marche     MarcheClient @relation(fields: [marcheId], references: [id])
+  id              String           @id @default(cuid())
+  marcheId        String
+  code            String
+  libelle         String
+  unite           String
+  prixUnitaire    Decimal          @db.Decimal(18, 4)
+  qtePrevue       Decimal          @db.Decimal(18, 4)
+  attachements    Attachement[]
+  marche          MarcheClient     @relation(fields: [marcheId], references: [id])
   situationLignes SituationLigne[]
-  attachements Attachement[]
-  
+
   @@unique([marcheId, code])
   @@index([marcheId])
 }
 
 model Situation {
-  id          String   @id @default(cuid())
-  marcheId    String
-  numero      Int
+  id           String           @id @default(cuid())
+  marcheId     String
+  numero       Int
   periodeDebut DateTime
   periodeFin   DateTime
-  penalites    Decimal @db.Decimal(18,2) @default(0)
-  retenuePct   Decimal @db.Decimal(5,2) @default(0)
-  statut       String   @default("brouillon") // brouillon|validee|facturee
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  
-  // Relations
-  marche      MarcheClient @relation(fields: [marcheId], references: [id])
-  lignes      SituationLigne[]
-  
+  penalites    Decimal          @default(0) @db.Decimal(18, 2)
+  retenuePct   Decimal          @default(0) @db.Decimal(5, 2)
+  statut       String           @default("brouillon")
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  marche       MarcheClient     @relation(fields: [marcheId], references: [id])
+  lignes       SituationLigne[]
+
   @@unique([marcheId, numero])
   @@index([marcheId, statut])
 }
 
 model SituationLigne {
-  id             String   @id @default(cuid())
-  situationId    String
-  posteId        String
-  qteMois        Decimal  @db.Decimal(18,4)
-  qteCumulAvant  Decimal  @db.Decimal(18,4)
-  qteCumulApres  Decimal  @db.Decimal(18,4)
-  prixUnitaire   Decimal  @db.Decimal(18,4)
-  montantMois    Decimal  @db.Decimal(18,2)
-  
-  // Relations
-  situation      Situation @relation(fields: [situationId], references: [id])
+  id            String    @id @default(cuid())
+  situationId   String
+  posteId       String
+  qteMois       Decimal   @db.Decimal(18, 4)
+  qteCumulAvant Decimal   @db.Decimal(18, 4)
+  qteCumulApres Decimal   @db.Decimal(18, 4)
+  prixUnitaire  Decimal   @db.Decimal(18, 4)
+  montantMois   Decimal   @db.Decimal(18, 2)
   poste         BpuPoste  @relation(fields: [posteId], references: [id])
-  
+  situation     Situation @relation(fields: [situationId], references: [id])
+
   @@index([situationId])
 }
 
 model Attachement {
-  id           String   @id @default(cuid())
-  marcheId     String
-  posteId      String
-  date         DateTime
-  qte          Decimal  @db.Decimal(18,4)
-  commentaire  String?
-  pieceUrl     String?
-  createdBy    String
-  
-  // Relations
-  marche       MarcheClient @relation(fields: [marcheId], references: [id])
-  poste        BpuPoste     @relation(fields: [posteId], references: [id])
-  
+  id          String       @id @default(cuid())
+  marcheId    String
+  posteId     String
+  date        DateTime
+  qte         Decimal      @db.Decimal(18, 4)
+  commentaire String?
+  pieceUrl    String?
+  createdBy   String
+  marche      MarcheClient @relation(fields: [marcheId], references: [id])
+  poste       BpuPoste     @relation(fields: [posteId], references: [id])
+
   @@index([marcheId, posteId, date])
 }
 
-// === S3 - SOUS-TRAITANCE & DAILY ===
-
 model SousTraitanceContrat {
-  id         String   @id @default(cuid())
-  chantierId String
-  sousTraitantId String
-  reference  String
-  montantTtc Decimal @db.Decimal(18,2)
-  retenueGarantiePct Decimal @db.Decimal(5,2) @default(5.00)
-  cautionRemplacement Boolean @default(false)
-  statut     String @default("actif") // actif|clos|suspendu
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  
-  // Relations
-  chantier       Chantier @relation(fields: [chantierId], references: [id])
-  sousTraitant   Tiers    @relation(fields: [sousTraitantId], references: [id])
-  situations     SousTraitanceSituation[]
-  
+  id                  String                   @id @default(cuid())
+  chantierId          String
+  sousTraitantId      String
+  reference           String
+  montantTtc          Decimal                  @db.Decimal(18, 2)
+  retenueGarantiePct  Decimal                  @default(5.00) @db.Decimal(5, 2)
+  cautionRemplacement Boolean                  @default(false)
+  statut              String                   @default("actif")
+  createdAt           DateTime                 @default(now())
+  updatedAt           DateTime                 @updatedAt
+  chantier            Chantier                 @relation(fields: [chantierId], references: [id])
+  sousTraitant        Tiers                    @relation(fields: [sousTraitantId], references: [id])
+  situations          SousTraitanceSituation[]
+
   @@unique([chantierId, reference])
   @@index([chantierId, statut])
 }
 
 model SousTraitanceSituation {
-  id         String   @id @default(cuid())
-  contratId  String
-  numero     Int
+  id           String               @id @default(cuid())
+  contratId    String
+  numero       Int
   periodeDebut DateTime
   periodeFin   DateTime
-  montantMois Decimal @db.Decimal(18,2)
-  retenueMois Decimal @db.Decimal(18,2) @default(0)
-  penalites   Decimal @db.Decimal(18,2) @default(0)
-  statut      String @default("brouillon") // brouillon|validee|facturee
-  
-  // Relations
-  contrat    SousTraitanceContrat @relation(fields: [contratId], references: [id])
-  
+  montantMois  Decimal              @db.Decimal(18, 2)
+  retenueMois  Decimal              @default(0) @db.Decimal(18, 2)
+  penalites    Decimal              @default(0) @db.Decimal(18, 2)
+  statut       String               @default("brouillon")
+  contrat      SousTraitanceContrat @relation(fields: [contratId], references: [id])
+
   @@unique([contratId, numero])
   @@index([contratId, statut])
 }
 
 model CessionCreance {
-  id            String   @id @default(cuid())
-  factureClientId String
-  cessionnaire   String  // banque / bénéficiaire
-  reference      String
-  dateCession    DateTime
-  montantCede    Decimal  @db.Decimal(18,2)
-  statut         String   @default("active") // active|levee|annulee
-  pieceUrl       String?
-  createdAt      DateTime @default(now())
-  
-  // Relations
-  factureClient FactureClient @relation(fields: [factureClientId], references: [id])
-  
-  @@unique([factureClientId])
+  id              String        @id @default(cuid())
+  factureClientId String        @unique
+  cessionnaire    String
+  reference       String
+  dateCession     DateTime
+  montantCede     Decimal       @db.Decimal(18, 2)
+  statut          String        @default("active")
+  pieceUrl        String?
+  createdAt       DateTime      @default(now())
+  factureClient   FactureClient @relation(fields: [factureClientId], references: [id])
+
   @@index([statut])
 }
 
-// === COMPTABILITÉ - MULTI-SOCIÉTÉS & EXPORTS ===
-
 model Societe {
-  id        String   @id @default(cuid())
+  id            String            @id @default(cuid())
   raisonSociale String
-  siret     String?
-  tvaIntra  String?
-  planComptable Json    // mapping comptes (706/60/401/411/445*…)
-  journals  Json        // codes journaux (VEN/ACH/BQ)
-  tvaMode   String @default("STANDARD") // STANDARD|EXONERE
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  // Relations
-  exports   ExportComptable[]
+  siret         String?
+  tvaIntra      String?
+  planComptable Json
+  journals      Json
+  tvaMode       String            @default("STANDARD")
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  exports       ExportComptable[]
 }
 
 model ExportComptable {
-  id         String   @id @default(cuid())
-  societeId  String
-  type       String   // FEC|OD|JOURNAL_VENTES|JOURNAL_ACHATS|REGLEMENTS
-  exercice   Int
+  id           String   @id @default(cuid())
+  societeId    String
+  type         String
+  exercice     Int
   periodeDebut DateTime
   periodeFin   DateTime
-  statut     String   @default("en_cours") // en_cours|pret|echec
-  fichierUrl String?
-  checksum   String?
-  createdAt  DateTime @default(now())
-  
-  // Relations
-  societe    Societe @relation(fields: [societeId], references: [id])
-  
+  statut       String   @default("en_cours")
+  fichierUrl   String?
+  checksum     String?
+  createdAt    DateTime @default(now())
+  societe      Societe  @relation(fields: [societeId], references: [id])
+
   @@index([societeId, type, statut])
 }
 
-// === CŒUR EXISTANT ===
-
 model FactureClient {
-  id            String   @id @default(cuid())
-  numero        String   @unique
-  montantHT     Decimal  @db.Decimal(18,2)
-  montantTVA    Decimal  @db.Decimal(18,2)
-  montantTotal  Decimal  @db.Decimal(18,2)
-  dateFacture   DateTime
-  dateEcheance  DateTime?
-  statut        String   @default("emise")
-  resteALetrer  Decimal  @db.Decimal(18,2)
-  chantierId    String
-  tiersId       String
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  
-  // Relations
-  chantier      Chantier @relation(fields: [chantierId], references: [id])
-  tiers         Tiers    @relation(fields: [tiersId], references: [id])
-  reglements    Reglement[]
-  lettrages     Lettrage[]
-  cession       CessionCreance?
-  
+  id           String          @id @default(cuid())
+  numero       String          @unique
+  montantHT    Decimal         @db.Decimal(18, 2)
+  montantTVA   Decimal         @db.Decimal(18, 2)
+  montantTotal Decimal         @db.Decimal(18, 2)
+  dateFacture  DateTime
+  dateEcheance DateTime?
+  statut       String          @default("emise")
+  resteALetrer Decimal         @db.Decimal(18, 2)
+  chantierId   String
+  tiersId      String
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  cession      CessionCreance?
+  chantier     Chantier        @relation(fields: [chantierId], references: [id])
+  tiers        Tiers           @relation(fields: [tiersId], references: [id])
+  lettrages    Lettrage[]
+  reglements   Reglement[]
+
   @@index([chantierId, statut])
   @@index([tiersId])
 }
 
 model FactureFournisseur {
-  id            String   @id @default(cuid())
-  numero        String   @unique
-  montantHT     Decimal  @db.Decimal(18,2)
-  montantTVA    Decimal  @db.Decimal(18,2)
-  montantTotal  Decimal  @db.Decimal(18,2)
-  dateFacture   DateTime
-  dateEcheance  DateTime?
-  statut        String   @default("emise")
-  resteALetrer  Decimal  @db.Decimal(18,2)
-  chantierId    String
-  tiersId       String
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  
-  // Relations
-  chantier      Chantier @relation(fields: [chantierId], references: [id])
-  tiers         Tiers    @relation(fields: [tiersId], references: [id])
-  reglements    Reglement[]
-  lettrages     Lettrage[]
-  
+  id           String      @id @default(cuid())
+  numero       String      @unique
+  montantHT    Decimal     @db.Decimal(18, 2)
+  montantTVA   Decimal     @db.Decimal(18, 2)
+  montantTotal Decimal     @db.Decimal(18, 2)
+  dateFacture  DateTime
+  dateEcheance DateTime?
+  statut       String      @default("emise")
+  resteALetrer Decimal     @db.Decimal(18, 2)
+  chantierId   String
+  tiersId      String
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  chantier     Chantier    @relation(fields: [chantierId], references: [id])
+  tiers        Tiers       @relation(fields: [tiersId], references: [id])
+  lettrages    Lettrage[]
+  reglements   Reglement[]
+
   @@index([chantierId, statut])
   @@index([tiersId])
 }
 
 model Reglement {
-  id                    String   @id @default(cuid())
-  montant               Decimal  @db.Decimal(18,2)
-  dateReglement         DateTime
-  modeReglement         String
-  reference             String?
-  referenceBancaire     String?  // pour Dailly
-  factureClientId       String?
-  factureFournisseurId  String?
-  sourceImportId         String?
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
-  
-  // Relations
-  factureClient         FactureClient?      @relation(fields: [factureClientId], references: [id])
-  factureFournisseur    FactureFournisseur? @relation(fields: [factureFournisseurId], references: [id])
-  importBanque          ImportBanque?       @relation(fields: [sourceImportId], references: [id])
-  lettrages             Lettrage[]
-  
+  id                   String              @id @default(cuid())
+  montant              Decimal             @db.Decimal(18, 2)
+  dateReglement        DateTime
+  modeReglement        String
+  reference            String?
+  referenceBancaire    String?
+  factureClientId      String?
+  factureFournisseurId String?
+  sourceImportId       String?
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  lettrages            Lettrage[]
+  factureClient        FactureClient?      @relation(fields: [factureClientId], references: [id])
+  factureFournisseur   FactureFournisseur? @relation(fields: [factureFournisseurId], references: [id])
+  importBanque         ImportBanque?       @relation(fields: [sourceImportId], references: [id])
+
   @@index([factureClientId])
   @@index([factureFournisseurId])
   @@index([sourceImportId])
 }
 
 model ImportBanque {
-  id            String   @id @default(cuid())
-  nomFichier    String
-  dateImport    DateTime @default(now())
-  statut        String   @default("preview")
-  checksum      String
-  lignes        ImportBanqueLigne[]
-  reglements    Reglement[]
-  
+  id         String              @id @default(cuid())
+  nomFichier String
+  dateImport DateTime            @default(now())
+  statut     String              @default("preview")
+  checksum   String
+  lignes     ImportBanqueLigne[]
+  reglements Reglement[]
+
   @@index([statut])
   @@index([checksum])
 }
 
 model ImportBanqueLigne {
-  id            String   @id @default(cuid())
+  id             String       @id @default(cuid())
   importBanqueId String
-  dateOperation DateTime
-  montant       Decimal  @db.Decimal(18,2)
-  libelle       String
-  reference     String?
-  
-  // Relations
-  importBanque  ImportBanque @relation(fields: [importBanqueId], references: [id])
-  
+  dateOperation  DateTime
+  montant        Decimal      @db.Decimal(18, 2)
+  libelle        String
+  reference      String?
+  importBanque   ImportBanque @relation(fields: [importBanqueId], references: [id])
+
   @@index([importBanqueId])
   @@index([dateOperation])
 }
 
 model Lettrage {
-  id                    String   @id @default(cuid())
-  montant               Decimal  @db.Decimal(18,2)
-  factureClientId       String?
-  factureFournisseurId  String?
-  reglementId            String
-  createdAt             DateTime @default(now())
-  
-  // Relations
-  factureClient         FactureClient?      @relation(fields: [factureClientId], references: [id])
+  id                         String              @id @default(cuid())
+  montant                    Decimal             @db.Decimal(18, 2)
+  factureClientId            String?
+  factureFournisseurId       String?
+  reglementId                String
+  createdAt                  DateTime            @default(now())
+  factureClient              FactureClient?      @relation(fields: [factureClientId], references: [id])
   lettrageFactureFournisseur FactureFournisseur? @relation(fields: [factureFournisseurId], references: [id])
-  reglement             Reglement           @relation(fields: [reglementId], references: [id])
-  
+  reglement                  Reglement           @relation(fields: [reglementId], references: [id])
+
   @@index([reglementId])
   @@index([factureClientId])
   @@index([factureFournisseurId])
 }
 
 model AuditLog {
-  id          String   @id @default(cuid())
-  userId      String
-  action      String
-  resource    String
-  resourceId  String?
-  details     Json?
-  createdAt   DateTime @default(now())
-  
-  // Relations
-  user        User     @relation(fields: [userId], references: [id])
-  
+  id         String   @id @default(cuid())
+  userId     String
+  action     String
+  resource   String
+  resourceId String?
+  details    Json?
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id])
+
   @@index([userId])
   @@index([resource, resourceId])
   @@index([createdAt])
+}
+
+model PlanComptable {
+  id           String               @id @default(cuid())
+  numeroCompte String               @unique
+  intitule     String
+  categorie    String
+  description  String?
+  actif        Boolean              @default(true)
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  fournisseurs FournisseurDetails[]
+
+  @@index([numeroCompte])
+  @@index([categorie])
+}
+
+model ConditionsPaiement {
+  id                     String                   @id @default(cuid())
+  libelle                String                   @unique
+  delai                  Int                      @default(0)
+  description            String?
+  actif                  Boolean                  @default(true)
+  createdAt              DateTime                 @default(now())
+  updatedAt              DateTime                 @updatedAt
+  ConditionsCommerciales ConditionsCommerciales[]
+  fournisseurs           FournisseurDetails[]
+
+  @@index([libelle])
+  @@index([actif])
 }

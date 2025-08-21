@@ -9,7 +9,7 @@ const redis = require('redis');
 require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 3003;
+const PORT = 3003; // PORT FIXE - IGNORE process.env.PORT
 
 // Client Redis
 const redisClient = redis.createClient({
@@ -69,6 +69,8 @@ app.use('/api/chantiers', require('./routes/chantiers'));
 app.use('/api/achats', require('./routes/achats'));
 app.use('/api/clients', require('./routes/clients'));
 app.use('/api/fournisseurs', require('./routes/fournisseurs'));
+app.use('/api/plan-comptable', require('./routes/plan-comptable'));
+app.use('/api/conditions-paiement', require('./routes/conditions-paiement'));
 app.use('/api/imports-banque', require('./routes/imports-banque'));
 app.use('/api/lettrages', require('./routes/lettrages'));
 
@@ -186,12 +188,12 @@ const startServer = async () => {
     // Diagnostic des routes avant démarrage
     listRoutes(app);
     
-    app.listen(PORT, () => {
-      console.log(`🚀 GESTALIS Backend démarré sur le port ${PORT}`);
+    app.listen(3003, () => { // PORT FORCÉ ICI AUSSI
+      console.log(`🚀 GESTALIS Backend démarré sur le port 3003`);
       console.log(`📊 Mode: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`🌐 URL: http://localhost:${PORT}`);
+      console.log(`🌐 URL: http://localhost:3003`);
       console.log(`🔒 CORS autorisé depuis: ${process.env.CORS_ORIGIN || 'http://localhost:5175'}`);
-      console.log(`🗄️  Base de données: PostgreSQL`);
+      console.log(`️  Base de données: PostgreSQL`);
       console.log(`🔴 Redis: Connecté`);
     });
   } catch (error) {
