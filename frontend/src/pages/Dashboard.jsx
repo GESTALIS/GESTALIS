@@ -123,7 +123,7 @@ const Dashboard = () => {
       id: 'achats',
       name: 'ACHAT',
       icon: ShoppingCart,
-      color: 'gestalis-accent',
+      color: 'blue-teal',
       description: 'Gestion des achats et fournisseurs',
       metrics: {
         commandes: '12 en cours',
@@ -132,8 +132,8 @@ const Dashboard = () => {
       },
       route: '/achats',
       priority: 'medium',
-      bgGradient: 'from-gestalis-accent/10 via-gestalis-accent/5 to-transparent',
-      borderColor: 'border-gestalis-accent/20'
+      bgGradient: 'from-blue-500/10 via-teal-500/5 to-transparent',
+      borderColor: 'border-blue-500/20'
     },
     {
       id: 'commercial',
