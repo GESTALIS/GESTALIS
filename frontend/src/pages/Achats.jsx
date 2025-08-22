@@ -400,26 +400,17 @@ const Achats = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
-      {/* En-tête du module */}
-      <div className="bg-white border-b border-gray-200 px-6 py-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Module Achats</h1>
-              <p className="text-gray-600 text-lg">Gestion des fournisseurs, commandes et factures</p>
-            </div>
-            <div className="flex items-center gap-4">
-              <GestalisButton 
-                onClick={() => setShowCreateModal(true)}
-                className="bg-gradient-to-r from-blue-500 to-teal-600 hover:from-blue-600 hover:to-teal-700 text-white px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
-              >
-                <Plus className="h-5 w-5 mr-2" />
-                Nouveau Fournisseur
-              </GestalisButton>
-            </div>
-          </div>
-        </div>
-      </div>
+             {/* En-tête du module */}
+       <div className="bg-gradient-to-r from-blue-500 to-teal-600 px-6 py-8 text-white">
+         <div className="max-w-7xl mx-auto">
+           <div className="flex items-center justify-between">
+             <div>
+               <h1 className="text-3xl font-bold text-white mb-2">Module Achats</h1>
+               <p className="text-blue-100 text-lg">Gestion des fournisseurs, commandes et factures</p>
+             </div>
+           </div>
+         </div>
+       </div>
 
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Navigation par onglets */}
