@@ -6,10 +6,7 @@
   "scripts": {
     "build": "cd frontend && npm install && npm run build",
     "start": "cd frontend && npm start",
-    "dev": "cd frontend && npm run dev",
-    "install-deps": "cd frontend && npm install",
-    "postinstall": "npm run install-deps",
-    "render-build": "cd frontend && npm install && npm run build"
+    "dev": "cd frontend && npm run dev"
   },
   "keywords": [
     "gestalis",
