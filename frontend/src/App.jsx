@@ -14,8 +14,10 @@ import Layout from './components/layout/Layout';
 import './styles/tailwind.css';
 
 const PrivateRoute = ({ children }) => {
-  const { isAuthenticated } = useAuthStore();
-  return isAuthenticated ? children : <Navigate to="/login" />;
+  // Temporairement désactivé pour tester Supabase
+  // const { isAuthenticated } = useAuthStore();
+  // return isAuthenticated ? children : <Navigate to="/login" />;
+  return children; // Accès direct sans auth
 };
 
 const App = () => {

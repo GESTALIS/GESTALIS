@@ -23,15 +23,6 @@ model Fournisseur {
   estSousTraitant       Boolean   @default(false)
   pasDeTvaGuyane        Boolean   @default(false)
   compteComptable       String?
-  
-  // Conditions de règlement
-  modeReglement         String    @default("VIR")
-  echeanceType          String    @default("30J")
-  respectEcheance       Boolean   @default(true)
-  joursDecalage         Int       @default(30)
-  finDeMois             Boolean   @default(false)
-  jourPaiement          Int       @default(0)
-  
   createdAt             DateTime  @default(now())
   
   // Relations
@@ -78,19 +69,4 @@ model ConditionsPaiement {
   
   @@index([libelle])
   @@index([actif])
-}
-
-model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  nom       String
-  prenom    String
-  role      String   @default("USER") // ADMIN, USER, MANAGER, COMPTABLE, ACHATS, VENTE
-  actif     Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([email])
-  @@index([role])
 }

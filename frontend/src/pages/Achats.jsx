@@ -64,8 +64,51 @@ const Achats = () => {
     adresseLivraison: '',
     plafondCredit: '',
     devise: 'EUR',
-    estSousTraitant: false
+    estSousTraitant: false,
+    // Conditions de règlement
+    modeReglement: 'VIR',
+    echeanceType: '30J',
+    respectEcheance: true,
+    joursDecalage: 30,
+    finDeMois: false,
+    jourPaiement: 0
   });
+
+  // Charger les fournisseurs depuis Supabase
+  useEffect(() => {
+    fetchFournisseurs();
+    fetchPlanComptable();
+  }, []);
+
+  const fetchFournisseurs = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('http://localhost:3001/api/fournisseurs');
+      if (response.ok) {
+        const data = await response.json();
+        setFournisseurs(data);
+      } else {
+        console.error('Erreur lors du chargement des fournisseurs');
+      }
+    } catch (error) {
+      console.error('Erreur réseau:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchPlanComptable = async () => {
+    try {
+      const response = await fetch('http://localhost:3001/api/plan-comptable');
+      if (response.ok) {
+        const data = await response.json();
+        setPlanComptable(data);
+        setFilteredPlanComptable(data);
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement du plan comptable:', error);
+    }
+  };
 
   // États pour la création de fournisseur moderne
   const [activeCreateTab, setActiveCreateTab] = useState('coordonnees');
@@ -214,66 +257,101 @@ const Achats = () => {
     };
   }, []);
 
-  const handleCreateFournisseur = () => {
+  const handleCreateFournisseur = async () => {
     // Validation des champs obligatoires
     if (!newFournisseur.raisonSociale || !newFournisseur.siret) {
       alert('Veuillez remplir au minimum la raison sociale et le SIRET');
       return;
     }
 
-    // Logique de création
-    console.log('Création fournisseur:', newFournisseur);
-    console.log('Contacts:', contacts);
-    console.log('Pas de TVA Guyane:', pasDeTvaGuyane);
-    
-    // Créer le fournisseur avec toutes les données
-    const fournisseurComplet = {
-      ...newFournisseur,
-      codeFournisseur: nextFournisseurCode,
-      contacts: contacts,
-      pasDeTvaGuyane: pasDeTvaGuyane,
-      dateCreation: new Date().toISOString()
-    };
-    
-    console.log('Fournisseur complet créé:', fournisseurComplet);
-    
-    // Ajouter à la liste des fournisseurs (simulation)
-    const nouveauFournisseur = {
-      id: Date.now(),
-      ...fournisseurComplet,
-      statut: 'ACTIF'
-    };
-    
-    setFournisseurs(prev => [...prev, nouveauFournisseur]);
-    
-    // Générer le prochain code fournisseur
-    const currentNumber = parseInt(nextFournisseurCode.split('-')[1]);
-    const nextNumber = currentNumber + 1;
-    setNextFournisseurCode(`FPRO97-${String(nextNumber).padStart(4, '0')}`);
-    
-    // Réinitialiser le formulaire
-    setNewFournisseur({
-      raisonSociale: '',
-      siret: '',
-      tvaIntracommunautaire: '',
-      codeApeNaf: '',
-      formeJuridique: '',
-      capitalSocial: '',
-      adresseSiege: '',
-      adresseLivraison: '',
-      plafondCredit: '',
-      devise: 'EUR',
-      estSousTraitant: false
-    });
-    setContacts([]);
-    setPasDeTvaGuyane(false);
-    setActiveCreateTab('coordonnees');
-    
-    // Fermer le modal
-    setShowCreateModal(false);
-    
-    // Notification de succès
-    alert(`✅ Fournisseur ${fournisseurComplet.raisonSociale} créé avec succès !\nCode: ${fournisseurComplet.codeFournisseur}`);
+    try {
+      setLoading(true);
+      
+      // Préparer les données pour l'API Supabase
+      const fournisseurData = {
+        fournisseur: {
+          codeFournisseur: nextFournisseurCode,
+          raisonSociale: newFournisseur.raisonSociale,
+          siret: newFournisseur.siret,
+          tvaIntracommunautaire: newFournisseur.tvaIntracommunautaire || null,
+          codeApeNaf: newFournisseur.codeApeNaf || null,
+          formeJuridique: newFournisseur.formeJuridique || null,
+          capitalSocial: newFournisseur.capitalSocial || null,
+          adresseSiege: newFournisseur.adresseSiege || null,
+          adresseLivraison: newFournisseur.adresseLivraison || null,
+          plafondCredit: newFournisseur.plafondCredit || null,
+          devise: newFournisseur.devise,
+          estSousTraitant: newFournisseur.estSousTraitant,
+          pasDeTvaGuyane: pasDeTvaGuyane,
+          compteComptable: newFournisseur.compteComptable || null
+        },
+        contacts: contacts.map(contact => ({
+          nom: contact.nom,
+          prenom: contact.prenom || null,
+          email: contact.email || null,
+          telephone: contact.telephone || null,
+          fonction: contact.fonction || null
+        }))
+      };
+
+      console.log('Envoi vers Supabase:', fournisseurData);
+
+      const response = await fetch('http://localhost:3001/api/fournisseurs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(fournisseurData)
+      });
+
+      if (response.ok) {
+        const nouveauFournisseur = await response.json();
+        setFournisseurs(prev => [...prev, nouveauFournisseur]);
+        
+        // Générer le prochain code fournisseur
+        const currentNumber = parseInt(nextFournisseurCode.split('-')[1]);
+        const nextNumber = currentNumber + 1;
+        setNextFournisseurCode(`FPRO97-${String(nextNumber).padStart(4, '0')}`);
+        
+        // Réinitialiser le formulaire
+        setNewFournisseur({
+          raisonSociale: '',
+          siret: '',
+          tvaIntracommunautaire: '',
+          codeApeNaf: '',
+          formeJuridique: '',
+          capitalSocial: '',
+          adresseSiege: '',
+          adresseLivraison: '',
+          plafondCredit: '',
+          devise: 'EUR',
+          estSousTraitant: false,
+          // Conditions de règlement
+          modeReglement: 'VIR',
+          echeanceType: '30J',
+          respectEcheance: true,
+          joursDecalage: 30,
+          finDeMois: false,
+          jourPaiement: 0
+        });
+        setContacts([]);
+        setPasDeTvaGuyane(false);
+        setActiveCreateTab('coordonnees');
+        
+        // Fermer le modal
+        setShowCreateModal(false);
+        
+        // Notification de succès
+        alert(`✅ Fournisseur ${fournisseurData.fournisseur.raisonSociale} créé avec succès dans Supabase !\nCode: ${fournisseurData.fournisseur.codeFournisseur}`);
+      } else {
+        throw new Error('Erreur lors de la création');
+      }
+    } catch (error) {
+      console.error('Erreur:', error);
+      alert('Erreur lors de la création du fournisseur dans Supabase');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const addContact = () => {
@@ -298,11 +376,22 @@ const Achats = () => {
     setContacts(contacts.filter(contact => contact.id !== id));
   };
 
-  const handleDeleteFournisseur = (id) => {
-    // Logique de suppression
-    console.log('Suppression fournisseur:', id);
-    setFournisseurs(prev => prev.filter(f => f.id !== id));
-    alert('Fournisseur supprimé avec succès !');
+  const handleDeleteFournisseur = async (id) => {
+    try {
+      const response = await fetch(`http://localhost:3001/api/fournisseurs/${id}`, {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        setFournisseurs(prev => prev.filter(f => f.id !== id));
+        alert('Fournisseur supprimé avec succès de Supabase !');
+      } else {
+        throw new Error('Erreur lors de la suppression');
+      }
+    } catch (error) {
+      console.error('Erreur:', error);
+      alert('Erreur lors de la suppression du fournisseur');
+    }
   };
 
   const handleViewFournisseur = (fournisseur) => {
@@ -396,6 +485,37 @@ const Achats = () => {
       case 'ARCHIVE': return 'Archivé';
       default: return 'Inconnu';
     }
+  };
+
+  const [showCreateEcheanceModal, setShowCreateEcheanceModal] = useState(false);
+  const [newEcheance, setNewEcheance] = useState({ libelle: '', delai: '', description: '' });
+  const [echeances, setEcheances] = useState([
+    { id: 'COMPTANT', libelle: 'COMPTANT - 0 jour', delai: 0, description: 'Paiement immédiat' },
+    { id: '30J', libelle: '30J - 30 Jours date de facture', delai: 30, description: '30 jours après facture' },
+    { id: '45J', libelle: '45J - 45 Jours date de facture', delai: 45, description: '45 jours après facture' },
+    { id: '60J', libelle: '60J - 60 Jours date de facture', delai: 60, description: '60 jours après facture' },
+    { id: 'FINMOIS30J', libelle: 'Fin de mois + 30J', delai: 30, description: 'Fin de mois + 30 jours' }
+  ]);
+
+  const handleCreateEcheance = () => {
+    if (!newEcheance.libelle || !newEcheance.delai) {
+      alert('Veuillez remplir le libellé et le délai');
+      return;
+    }
+    
+    const newEcheanceData = {
+      id: `CUSTOM_${Date.now()}`,
+      libelle: newEcheance.libelle,
+      delai: parseInt(newEcheance.delai),
+      description: newEcheance.description || ''
+    };
+    
+    setEcheances([...echeances, newEcheanceData]);
+    setShowCreateEcheanceModal(false);
+    setNewEcheance({ libelle: '', delai: '', description: '' });
+    
+    // Notification de succès
+    alert(`✅ Échéance créée avec succès !\nLibellé: ${newEcheanceData.libelle}\nDélai: ${newEcheanceData.delai} jours`);
   };
 
   return (
@@ -1353,6 +1473,135 @@ const Achats = () => {
                        className="w-full"
                      />
                    </div>
+
+                   {/* Conditions de Règlement */}
+                   <div className="border-t pt-6">
+                     <h3 className="text-lg font-medium text-gray-900 mb-4">Conditions de Règlement</h3>
+                     
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                       {/* Mode de Règlement */}
+                       <div>
+                         <label className="block text-sm font-medium text-gray-700 mb-2">
+                           Mode de Règlement
+                         </label>
+                         <select
+                           value={newFournisseur.modeReglement || 'VIR'}
+                           onChange={(e) => {
+                             const mode = e.target.value;
+                             setNewFournisseur({
+                               ...newFournisseur, 
+                               modeReglement: mode,
+                               // Logique métier : si COMPTANT, jours de décalage = 0
+                               joursDecalage: mode === 'COMPTANT' ? 0 : (newFournisseur.joursDecalage || 30)
+                             });
+                           }}
+                           className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
+                         >
+                           <option value="COMPTANT">COMPTANT - Paiement immédiat</option>
+                           <option value="VIR">VIR - Virement</option>
+                           <option value="CHQ">CHQ - Chèque</option>
+                           <option value="ESP">ESP - Espèces</option>
+                           <option value="CARTE">CARTE - Carte bancaire</option>
+                         </select>
+                       </div>
+
+                       {/* Échéance type */}
+                       <div>
+                         <label className="block text-sm font-medium text-gray-700 mb-2">
+                           Échéance type
+                         </label>
+                         <div className="flex gap-2">
+                           <select
+                             value={newFournisseur.echeanceType || '30J'}
+                             onChange={(e) => {
+                               const echeance = e.target.value;
+                               const selectedEcheance = echeances.find(e => e.id === echeance);
+                               setNewFournisseur({
+                                 ...newFournisseur, 
+                                 echeanceType: echeance,
+                                 // Logique métier : si COMPTANT, jours de décalage = 0
+                                 joursDecalage: echeance === 'COMPTANT' ? 0 : (selectedEcheance?.delai || 30)
+                               });
+                             }}
+                             className="flex-1 rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
+                           >
+                             {echeances.map((echeance) => (
+                               <option key={echeance.id} value={echeance.id}>
+                                 {echeance.libelle}
+                               </option>
+                             ))}
+                           </select>
+                           
+                           <button
+                             type="button"
+                             onClick={() => setShowCreateEcheanceModal(true)}
+                             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center gap-2"
+                             title="Créer une nouvelle échéance"
+                           >
+                             <Plus className="h-4 w-4" />
+                             <span className="text-sm font-medium">Nouvelle</span>
+                           </button>
+                         </div>
+                       </div>
+
+                       {/* Respect Échéance */}
+                       <div className="flex items-center">
+                         <input
+                           type="checkbox"
+                           id="respectEcheance"
+                           checked={newFournisseur.respectEcheance !== undefined ? newFournisseur.respectEcheance : true}
+                           onChange={(e) => setNewFournisseur({...newFournisseur, respectEcheance: e.target.checked})}
+                           className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                         />
+                         <label htmlFor="respectEcheance" className="ml-2 block text-sm text-gray-900">
+                           Respect Échéance type
+                         </label>
+                       </div>
+
+                       {/* Jours de décalage */}
+                       <div>
+                         <label className="block text-sm font-medium text-gray-700 mb-2">
+                           Jours de décalage
+                         </label>
+                         <input
+                           type="number"
+                           value={newFournisseur.joursDecalage !== undefined ? newFournisseur.joursDecalage : 30}
+                           onChange={(e) => setNewFournisseur({...newFournisseur, joursDecalage: parseInt(e.target.value) || 0})}
+                           className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
+                           min="0"
+                         />
+                       </div>
+
+                       {/* Fin de mois */}
+                       <div className="flex items-center">
+                         <input
+                           type="checkbox"
+                           id="finDeMois"
+                           checked={newFournisseur.finDeMois !== undefined ? newFournisseur.finDeMois : false}
+                           onChange={(e) => setNewFournisseur({...newFournisseur, finDeMois: e.target.checked})}
+                           className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                         />
+                         <label htmlFor="finDeMois" className="ml-2 block text-sm text-gray-900">
+                           Fin de mois
+                         </label>
+                       </div>
+
+                       {/* Jour de paiement */}
+                       <div>
+                         <label className="block text-sm font-medium text-gray-700 mb-2">
+                           Jour de paiement
+                         </label>
+                         <input
+                           type="number"
+                           value={newFournisseur.jourPaiement !== undefined ? newFournisseur.jourPaiement : 0}
+                           onChange={(e) => setNewFournisseur({...newFournisseur, jourPaiement: parseInt(e.target.value) || 0})}
+                           className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
+                           min="0"
+                           max="31"
+                         />
+                       </div>
+                     </div>
+                   </div>
                  </div>
                )}
 
@@ -1573,6 +1822,81 @@ const Achats = () => {
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
               >
                 Créer la condition
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de création d'échéance */}
+      {showCreateEcheanceModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-medium text-gray-900">Créer une nouvelle échéance</h3>
+              <button
+                onClick={() => setShowCreateEcheanceModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Libellé de l'échéance
+                </label>
+                <input
+                  type="text"
+                  value={newEcheance.libelle}
+                  onChange={(e) => setNewEcheance({...newEcheance, libelle: e.target.value})}
+                  placeholder="ex: 15J - 15 Jours"
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Délai en jours
+                </label>
+                <input
+                  type="number"
+                  value={newEcheance.delai}
+                  onChange={(e) => setNewEcheance({...newEcheance, delai: e.target.value})}
+                  placeholder="15"
+                  min="0"
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Description (optionnel)
+                </label>
+                <textarea
+                  value={newEcheance.description}
+                  onChange={(e) => setNewEcheance({...newEcheance, description: e.target.value})}
+                  placeholder="ex: 15 jours après la date de facture"
+                  rows="2"
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
+                />
+              </div>
+            </div>
+            
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setShowCreateEcheanceModal(false)}
+                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleCreateEcheance}
+                disabled={!newEcheance.libelle || !newEcheance.delai}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+              >
+                Créer l'échéance
               </button>
             </div>
           </div>

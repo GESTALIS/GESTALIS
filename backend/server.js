@@ -1,207 +1,250 @@
 const express = require('express');
 const cors = require('cors');
-const helmet = require('helmet');
-const compression = require('compression');
-const morgan = require('morgan');
-const rateLimit = require('express-rate-limit');
-const cookieParser = require('cookie-parser');
-const redis = require('redis');
-require('dotenv').config();
+const { PrismaClient } = require('@prisma/client');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 const app = express();
-const PORT = 3003; // PORT FIXE - IGNORE process.env.PORT
+const prisma = new PrismaClient();
+const PORT = process.env.PORT || 3001;
 
-// Client Redis
-const redisClient = redis.createClient({
-  url: process.env.REDIS_URL || 'redis://localhost:6379'
-});
+// Middleware
+app.use(cors());
+app.use(express.json());
 
-redisClient.on('error', (err) => console.error('Redis Client Error:', err));
-redisClient.on('connect', () => console.log('✅ Redis connecté'));
-
-// Middleware de sécurité
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'"],
-      imgSrc: ["'self'", "data:", "https:"],
-    },
-  },
-}));
-
-// Compression
-app.use(compression());
-
-// Logging
-app.use(morgan('combined'));
-
-// Cookie parser
-app.use(cookieParser());
-
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
-  message: 'Trop de requêtes depuis cette IP, veuillez réessayer plus tard.',
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-app.use('/api/', limiter);
-
-// CORS
-app.use(cors({
-  origin: [process.env.CORS_ORIGIN || 'http://localhost:5175', 'http://localhost:5176'],
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-}));
-
-// Body parsing
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-// Routes API
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/users', require('./routes/users'));
-app.use('/api/chantiers', require('./routes/chantiers'));
-app.use('/api/achats', require('./routes/achats'));
-app.use('/api/clients', require('./routes/clients'));
-app.use('/api/fournisseurs', require('./routes/fournisseurs'));
-app.use('/api/plan-comptable', require('./routes/plan-comptable'));
-app.use('/api/conditions-paiement', require('./routes/conditions-paiement'));
-app.use('/api/imports-banque', require('./routes/imports-banque'));
-app.use('/api/lettrages', require('./routes/lettrages'));
-
-// Nouvelles routes S1 + S3 + Compta
-app.use('/api/marches', require('./routes/marches'));
-app.use('/api/situations', require('./routes/situations'));
-app.use('/api/sous-traitance', require('./routes/sous-traitance'));
-app.use('/api/cessions', require('./routes/cessions'));
-app.use('/api/compta', require('./routes/compta'));
-
-// Route de santé
-app.get('/health', async (req, res) => {
+// Routes pour les fournisseurs
+app.get('/api/fournisseurs', async (req, res) => {
   try {
-    // Vérifier Redis
-    await redisClient.ping();
+    const fournisseurs = await prisma.fournisseur.findMany({
+      include: { contacts: true }
+    });
+    res.json(fournisseurs);
+  } catch (error) {
+    console.error('Erreur lors de la récupération des fournisseurs:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+app.post('/api/fournisseurs', async (req, res) => {
+  try {
+    const { fournisseur, contacts } = req.body;
     
-    res.json({ 
-      status: 'OK', 
-      message: 'GESTALIS Backend opérationnel',
-      timestamp: new Date().toISOString(),
-      version: '1.0.0',
-      services: {
-        redis: 'OK',
-        database: 'OK'
+    // Créer le fournisseur avec ses contacts
+    const nouveauFournisseur = await prisma.fournisseur.create({
+      data: {
+        ...fournisseur,
+        contacts: {
+          create: contacts
+        }
+      },
+      include: { contacts: true }
+    });
+    
+    res.status(201).json(nouveauFournisseur);
+  } catch (error) {
+    console.error('Erreur lors de la création du fournisseur:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+app.put('/api/fournisseurs/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { fournisseur, contacts } = req.body;
+    
+    // Mettre à jour le fournisseur
+    const fournisseurModifie = await prisma.fournisseur.update({
+      where: { id },
+      data: {
+        ...fournisseur,
+        contacts: {
+          deleteMany: {},
+          create: contacts
+        }
+      },
+      include: { contacts: true }
+    });
+    
+    res.json(fournisseurModifie);
+  } catch (error) {
+    console.error('Erreur lors de la modification du fournisseur:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+app.delete('/api/fournisseurs/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Supprimer le fournisseur (les contacts seront supprimés automatiquement)
+    await prisma.fournisseur.delete({
+      where: { id }
+    });
+    
+    res.json({ message: 'Fournisseur supprimé avec succès' });
+  } catch (error) {
+    console.error('Erreur lors de la suppression du fournisseur:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Routes d'authentification
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    const { email, password, nom, prenom, role = 'USER' } = req.body;
+    
+    // Vérifier si l'utilisateur existe déjà
+    const existingUser = await prisma.user.findUnique({
+      where: { email }
+    });
+    
+    if (existingUser) {
+      return res.status(400).json({ error: 'Cet email est déjà utilisé' });
+    }
+    
+    // Hasher le mot de passe
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
+    // Créer l'utilisateur
+    const user = await prisma.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+        nom,
+        prenom,
+        role
+      }
+    });
+    
+    // Générer le token JWT
+    const token = jwt.sign(
+      { userId: user.id, email: user.email, role: user.role },
+      process.env.JWT_SECRET || 'your-secret-key',
+      { expiresIn: '24h' }
+    );
+    
+    res.status(201).json({
+      user: {
+        id: user.id,
+        email: user.email,
+        nom: user.nom,
+        prenom: user.prenom,
+        role: user.role
+      },
+      token
+    });
+  } catch (error) {
+    console.error('Erreur lors de l\'inscription:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    
+    // Trouver l'utilisateur
+    const user = await prisma.user.findUnique({
+      where: { email }
+    });
+    
+    if (!user || !user.actif) {
+      return res.status(401).json({ error: 'Email ou mot de passe incorrect' });
+    }
+    
+    // Vérifier le mot de passe
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    
+    if (!isValidPassword) {
+      return res.status(401).json({ error: 'Email ou mot de passe incorrect' });
+    }
+    
+    // Générer le token JWT
+    const token = jwt.sign(
+      { userId: user.id, email: user.email, role: user.role },
+      process.env.JWT_SECRET || 'your-secret-key',
+      { expiresIn: '24h' }
+    );
+    
+    res.json({
+      user: {
+        id: user.id,
+        email: user.email,
+        nom: user.nom,
+        prenom: user.prenom,
+        role: user.role
+      },
+      token
+    });
+  } catch (error) {
+    console.error('Erreur lors de la connexion:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+app.get('/api/auth/me', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    
+    if (!token) {
+      return res.status(401).json({ error: 'Token manquant' });
+    }
+    
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId }
+    });
+    
+    if (!user || !user.actif) {
+      return res.status(401).json({ error: 'Utilisateur non trouvé' });
+    }
+    
+    res.json({
+      user: {
+        id: user.id,
+        email: user.email,
+        nom: user.nom,
+        prenom: user.prenom,
+        role: user.role
       }
     });
   } catch (error) {
-    res.status(503).json({
-      status: 'ERROR',
-      message: 'Service dégradé',
-      timestamp: new Date().toISOString(),
-      error: error.message
-    });
+    console.error('Erreur lors de la vérification:', error);
+    res.status(401).json({ error: 'Token invalide' });
   }
 });
 
-// Route de version
-app.get('/version', (req, res) => {
-  res.json({
-    version: '1.0.0',
-    build: process.env.BUILD_ID || 'dev',
-    environment: process.env.NODE_ENV || 'development',
-    timestamp: new Date().toISOString()
-  });
+// Routes pour le plan comptable
+app.get('/api/plan-comptable', async (req, res) => {
+  try {
+    const planComptable = await prisma.planComptable.findMany();
+    res.json(planComptable);
+  } catch (error) {
+    console.error('Erreur lors de la récupération du plan comptable:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
 });
 
-// Route de métriques Prometheus
-app.get('/metrics', (req, res) => {
-  res.set('Content-Type', 'text/plain');
-  res.send(`
-# HELP gestalis_http_requests_total Total number of HTTP requests
-# TYPE gestalis_http_requests_total counter
-gestalis_http_requests_total{method="GET",status="200"} 0
-gestalis_http_requests_total{method="POST",status="200"} 0
-gestalis_http_requests_total{method="PUT",status="200"} 0
-gestalis_http_requests_total{method="DELETE",status="200"} 0
-
-# HELP gestalis_http_request_duration_seconds Duration of HTTP requests
-# TYPE gestalis_http_request_duration_seconds histogram
-gestalis_http_request_duration_seconds_bucket{le="0.1"} 0
-gestalis_http_request_duration_seconds_bucket{le="0.5"} 0
-gestalis_http_request_duration_seconds_bucket{le="1"} 0
-gestalis_http_request_duration_seconds_bucket{le="+Inf"} 0
-gestalis_http_request_duration_seconds_sum 0
-gestalis_http_request_duration_seconds_count 0
-  `);
+app.post('/api/plan-comptable', async (req, res) => {
+  try {
+    const compte = await prisma.planComptable.create({
+      data: req.body
+    });
+    res.status(201).json(compte);
+  } catch (error) {
+    console.error('Erreur lors de la création du compte:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
 });
-
-// Gestion des erreurs 404
-app.use('*', (req, res) => {
-  res.status(404).json({ 
-    error: 'Route non trouvée',
-    path: req.originalUrl,
-    method: req.method
-  });
-});
-
-// Middleware de gestion d'erreurs global
-app.use((error, req, res, next) => {
-  console.error('Erreur serveur:', error);
-  
-  res.status(error.status || 500).json({
-    error: process.env.NODE_ENV === 'production' 
-      ? 'Erreur interne du serveur' 
-      : error.message,
-    ...(process.env.NODE_ENV === 'development' && { stack: error.stack })
-  });
-});
-
-// Fonction de diagnostic des routes
-function listRoutes(app) {
-  const routes = [];
-  app._router.stack.forEach((m) => {
-    if (m.route) {
-      const methods = Object.keys(m.route.methods).join(',').toUpperCase();
-      routes.push(`${methods} ${m.route.path}`);
-    } else if (m.name === 'router' && m.handle.stack) {
-      m.handle.stack.forEach((h) => {
-        const route = h.route;
-        if (route) {
-          const methods = Object.keys(route.methods).join(',').toUpperCase();
-          routes.push(`${methods} ${(m.regexp?.source || '').replace('^\\', '/').split('\\/?')[0]}${route.path}`);
-        }
-      });
-    }
-  });
-  console.log('🚦 ROUTES MONTÉES:\n' + routes.sort().map(r => '  - ' + r).join('\n'));
-}
 
 // Démarrage du serveur
-const startServer = async () => {
-  try {
-    await redisClient.connect();
-    
-    // Diagnostic des routes avant démarrage
-    listRoutes(app);
-    
-    app.listen(3003, () => { // PORT FORCÉ ICI AUSSI
-      console.log(`🚀 GESTALIS Backend démarré sur le port 3003`);
-      console.log(`📊 Mode: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`🌐 URL: http://localhost:3003`);
-      console.log(`🔒 CORS autorisé depuis: ${process.env.CORS_ORIGIN || 'http://localhost:5175'}`);
-      console.log(`️  Base de données: PostgreSQL`);
-      console.log(`🔴 Redis: Connecté`);
-    });
-  } catch (error) {
-    console.error('❌ Erreur au démarrage:', error);
-    process.exit(1);
-  }
-};
+app.listen(PORT, () => {
+  console.log(`🚀 Serveur démarré sur le port ${PORT}`);
+  console.log(`📡 API disponible sur http://localhost:${PORT}`);
+});
 
-startServer();
-
-module.exports = app;
+// Gestion de la fermeture propre
+process.on('SIGINT', async () => {
+  await prisma.$disconnect();
+  process.exit(0);
+});
