@@ -5,8 +5,13 @@ import path from 'path'
 export default defineConfig({
   plugins: [react()],
   server: {
-    port: 5175,  // Changé de 5174 à 5175 pour éviter le conflit avec Hostaly
+    port: 5175,
     host: '0.0.0.0'
+  },
+  preview: {
+    host: '0.0.0.0',
+    port: process.env.PORT || 4173,
+    allowedHosts: ['gestalis.onrender.com', 'localhost', '127.0.0.1']
   },
   resolve: {
     alias: {
