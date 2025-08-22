@@ -8,7 +8,8 @@
     "start": "cd frontend && npm start",
     "dev": "cd frontend && npm run dev",
     "install-deps": "cd frontend && npm install",
-    "postinstall": "npm run install-deps"
+    "postinstall": "npm run install-deps",
+    "render-build": "cd frontend && npm install && npm run build"
   },
   "keywords": [
     "gestalis",
