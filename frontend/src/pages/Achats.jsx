@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { 
   Building2, 
   FileText, 
@@ -40,10 +41,47 @@ import {
 import { GestalisCard, GestalisCardContent, GestalisCardHeader, GestalisCardTitle } from '../components/ui/GestalisCard';
 import { GestalisButton } from '../components/ui/gestalis-button';
 import { Input } from '../components/ui/input';
+import Commandes from './achats/Commandes';
 
 const Achats = () => {
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState('overview');
   
+  // Gérer les paramètres d'URL pour l'onglet et la création
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const tabParam = searchParams.get('tab');
+    const createParam = searchParams.get('create');
+    
+    if (tabParam) {
+      setActiveTab(tabParam);
+      
+      // Si on doit créer quelque chose, ouvrir le modal approprié
+      if (createParam === 'true') {
+        // Récupérer les données du localStorage
+        const createData = localStorage.getItem('createFromSearch');
+        if (createData) {
+          try {
+            const { type, searchTerm } = JSON.parse(createData);
+            console.log('🚀 Ouverture automatique du modal de création:', type, searchTerm);
+            
+            // Pré-remplir les champs selon le type
+            if (type === 'fournisseur') {
+              setNewFournisseur(prev => ({ ...prev, raisonSociale: searchTerm || '' }));
+              setShowCreateModal(true);
+            }
+            // Note: Les chantiers et utilisateurs sont gérés dans leurs pages respectives
+            
+            // Nettoyer le localStorage
+            localStorage.removeItem('createFromSearch');
+          } catch (error) {
+            console.error('Erreur lors du parsing des données de création:', error);
+          }
+        }
+      }
+    }
+  }, [location.search]);
+
   // États pour la gestion des fournisseurs
   const [fournisseurs, setFournisseurs] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -338,8 +376,11 @@ const Achats = () => {
         setPasDeTvaGuyane(false);
         setActiveCreateTab('coordonnees');
         
-        // Fermer le modal
+        // Fermer le modal et réinitialiser
         setShowCreateModal(false);
+        
+        // S'assurer qu'on est dans l'onglet Fournisseurs
+        setActiveTab('fournisseurs');
         
         // Notification de succès
         alert(`✅ Fournisseur ${fournisseurData.fournisseur.raisonSociale} créé avec succès dans Supabase !\nCode: ${fournisseurData.fournisseur.codeFournisseur}`);
@@ -524,13 +565,13 @@ const Achats = () => {
        <div className="bg-gradient-to-r from-blue-500 to-teal-600 px-6 py-8 text-white">
          <div className="max-w-7xl mx-auto">
            <div className="flex items-center justify-between">
-             <div>
+            <div>
                <h1 className="text-3xl font-bold text-white mb-2">Module Achats</h1>
                <p className="text-blue-100 text-lg">Gestion des fournisseurs, commandes et factures</p>
-             </div>
+            </div>
            </div>
-         </div>
-       </div>
+        </div>
+      </div>
 
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Navigation par onglets */}
@@ -562,27 +603,27 @@ const Achats = () => {
         {/* Statistiques - UNIQUEMENT dans Vue d'ensemble */}
         {activeTab === 'overview' && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            {stats.map((stat, index) => (
+        {stats.map((stat, index) => (
               <div key={index} className="group">
                 <div className={`${stat.bgColor} ${stat.color} p-1 rounded-2xl transition-all duration-300 group-hover:shadow-lg`}>
                   <div className="bg-white rounded-xl p-6 h-full">
-                    <div className="flex items-center justify-between">
-                      <div>
+              <div className="flex items-center justify-between">
+                <div>
                         <p className="text-sm font-medium text-gray-600 mb-1">{stat.title}</p>
-                        <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+                  <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
                         <p className={`text-sm font-medium ${stat.textColor}`}>
                           {stat.change} ce mois
                         </p>
-                      </div>
+                </div>
                       <div className={`${stat.color} p-3 rounded-xl text-white`}>
                         <stat.icon className="h-6 w-6" />
-                      </div>
-                    </div>
+                </div>
+              </div>
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
+        ))}
+      </div>
         )}
 
         {/* Contenu principal selon l'onglet actif */}
@@ -592,13 +633,13 @@ const Achats = () => {
             <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-semibold text-gray-900">Fournisseurs récents</h2>
-                <button 
+        <button
                   onClick={() => setActiveTab('fournisseurs')}
                   className="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-2 transition-colors"
                 >
                   Voir tous
                   <TrendingUp className="h-4 w-4" />
-                </button>
+        </button>
               </div>
               
               {loading ? (
@@ -642,12 +683,12 @@ const Achats = () => {
                    </div>
                    {fournisseurs.length > 3 && (
                      <div className="text-center pt-2">
-                       <button 
-                         onClick={() => setActiveTab('fournisseurs')}
+        <button
+          onClick={() => setActiveTab('fournisseurs')}
                          className="text-blue-600 hover:text-blue-700 text-sm font-medium"
                        >
                          Voir tous les {fournisseurs.length} fournisseurs →
-                       </button>
+        </button>
                      </div>
                    )}
                  </div>
@@ -916,13 +957,13 @@ const Achats = () => {
         )}
 
         {/* Autres onglets (Commandes, Factures, Analytics) - SANS les statistiques */}
+
+
         {activeTab === 'commandes' && (
-          <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">
-            <ShoppingCart className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-medium text-gray-900 mb-2">Module Commandes</h3>
-            <p className="text-gray-500">Fonctionnalité en cours de développement</p>
-          </div>
+          <Commandes />
         )}
+
+
 
         {activeTab === 'factures' && (
           <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">
@@ -949,7 +990,7 @@ const Achats = () => {
               <h3 className="text-xl font-semibold">Gestion des contacts</h3>
               <button onClick={() => setShowContactModal(false)} className="text-gray-400 hover:text-gray-600">
                 <X className="h-6 w-6" />
-              </button>
+        </button>
             </div>
             <p className="text-gray-600 mb-4">Fonctionnalité en cours de développement</p>
             <div className="flex justify-end">
@@ -999,7 +1040,7 @@ const Achats = () => {
                   { id: 'conditionsCommerciales', label: 'Informations bancaires', icon: CreditCard },
                   { id: 'compta', label: 'Compta', icon: Calculator }
                 ].map((tab) => (
-                  <button
+        <button
                     key={tab.id}
                     onClick={() => setActiveCreateTab(tab.id)}
                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-200 ${
@@ -1010,7 +1051,7 @@ const Achats = () => {
                   >
                     <tab.icon className="h-5 w-5" />
                     {tab.label}
-                  </button>
+        </button>
                 ))}
               </nav>
             </div>
@@ -1025,17 +1066,17 @@ const Achats = () => {
                   {activeCreateTab === 'conditionsCommerciales' && 'Informations bancaires'}
                   {activeCreateTab === 'compta' && 'Informations comptables'}
                 </h3>
-                <button
+        <button
                   onClick={() => setShowCreateModal(false)}
                   className="text-gray-400 hover:text-gray-600"
                 >
                   <X className="h-6 w-6" />
-                </button>
-              </div>
+        </button>
+      </div>
 
               {/* Onglet Coordonnées */}
               {activeCreateTab === 'coordonnees' && (
-                <div className="space-y-6">
+      <div className="space-y-6">
                   <div className="grid grid-cols-2 gap-6">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Code fournisseur</label>
@@ -1045,8 +1086,8 @@ const Achats = () => {
                         className="w-full bg-gray-100"
                       />
                       <p className="text-sm text-gray-500 mt-1">Code généré automatiquement</p>
-                    </div>
-                    <div>
+                          </div>
+                          <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Raison sociale *</label>
                       <Input
                         value={newFournisseur.raisonSociale}
@@ -1054,8 +1095,8 @@ const Achats = () => {
                         placeholder="Nom de l'entreprise"
                         className="w-full"
                       />
-                    </div>
-                  </div>
+                          </div>
+                        </div>
                   
                   <div className="grid grid-cols-2 gap-6">
                     <div>
@@ -1066,7 +1107,7 @@ const Achats = () => {
                         placeholder="12345678901234"
                         className="w-full"
                       />
-                    </div>
+                          </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Code APE/NAF</label>
                       <Input
@@ -1075,8 +1116,8 @@ const Achats = () => {
                         placeholder="4321A"
                         className="w-full"
                       />
-                    </div>
-                  </div>
+                        </div>
+                      </div>
 
                   <div className="grid grid-cols-2 gap-6">
                     <div>
@@ -1186,7 +1227,7 @@ const Achats = () => {
                         placeholder="Jean Dupont"
                         className="w-full"
                       />
-                    </div>
+                </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Fonction</label>
                       <Input
@@ -1225,7 +1266,7 @@ const Achats = () => {
                         placeholder="06 12 34 56 78"
                         className="w-full"
                       />
-                    </div>
+                  </div>
                   </div>
 
                   <div>
@@ -1240,7 +1281,7 @@ const Achats = () => {
                       placeholder="contact@entreprise.com"
                       className="w-full"
                     />
-                  </div>
+                        </div>
 
                   {/* Contacts supplémentaires */}
                   {contacts.map((contact, index) => (
@@ -1293,7 +1334,7 @@ const Achats = () => {
               {activeCreateTab === 'conditionsCommerciales' && (
                 <div className="space-y-6">
                   <div className="grid grid-cols-2 gap-6">
-                    <div>
+                        <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">RIB/IBAN</label>
                       <Input
                         value={newFournisseur.ribIban || ''}
@@ -1301,7 +1342,7 @@ const Achats = () => {
                         placeholder="FR76 1234 5678 9012 3456 7890 123"
                         className="w-full"
                       />
-                    </div>
+                        </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">BIC/SWIFT</label>
                       <Input
@@ -1310,8 +1351,8 @@ const Achats = () => {
                         placeholder="BNPAFRPP123"
                         className="w-full"
                       />
+                      </div>
                     </div>
-                  </div>
 
                   <div className="grid grid-cols-2 gap-6">
                     <div>
@@ -1322,8 +1363,8 @@ const Achats = () => {
                         placeholder="Banque Populaire"
                         className="w-full"
                       />
-                    </div>
-                    <div>
+                        </div>
+                        <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Code banque</label>
                       <Input
                         value={newFournisseur.codeBanque || ''}
@@ -1331,8 +1372,8 @@ const Achats = () => {
                         placeholder="12345"
                         className="w-full"
                       />
-                    </div>
-                  </div>
+                        </div>
+                      </div>
 
                   <div className="grid grid-cols-2 gap-6">
                     <div>
@@ -1352,10 +1393,10 @@ const Achats = () => {
                         placeholder="12345678901"
                         className="w-full"
                       />
-                    </div>
+                        </div>
                   </div>
 
-                  <div>
+                        <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Clé RIB</label>
                     <Input
                       value={newFournisseur.cleRib || ''}
@@ -1363,8 +1404,8 @@ const Achats = () => {
                       placeholder="12"
                       className="w-full"
                     />
-                  </div>
-                </div>
+                        </div>
+                      </div>
               )}
 
                              {/* Onglet Compta */}
@@ -1423,14 +1464,14 @@ const Achats = () => {
                                      >
                                        <div className="font-medium text-gray-900">{compte.numeroCompte}</div>
                                        <div className="text-sm text-gray-600">{compte.intitule}</div>
-                                     </div>
+                    </div>
                                    ))
                                  ) : (
                                    <div className="px-4 py-3 text-gray-500 text-center">
                                      Aucun compte trouvé
-                                   </div>
+                  </div>
                                  )}
-                               </div>
+            </div>
                              )}
                            </div>
                            
@@ -1602,8 +1643,8 @@ const Achats = () => {
                        </div>
                      </div>
                    </div>
-                 </div>
-               )}
+          </div>
+        )}
 
               {/* Navigation et actions */}
               <div className="flex justify-between items-center pt-6 border-t border-gray-200 mt-8">
@@ -1622,7 +1663,7 @@ const Achats = () => {
                       Précédent
                     </button>
                   )}
-                </div>
+          </div>
 
                 <div className="flex gap-3">
                   {activeCreateTab !== 'compta' && (
@@ -1651,8 +1692,8 @@ const Achats = () => {
               </div>
             </div>
           </div>
-        </div>
-      )}
+          </div>
+        )}
 
              {/* Modal de création de compte comptable */}
        {showCreateCompteModal && (
@@ -1731,8 +1772,8 @@ const Achats = () => {
               </button>
             </div>
           </div>
-        </div>
-      )}
+          </div>
+        )}
 
       {/* Modal de création de condition de paiement */}
       {showCreateConditionModal && (
@@ -1747,7 +1788,7 @@ const Achats = () => {
                 >
                   <X className="h-6 w-6" />
                 </button>
-              </div>
+      </div>
             </div>
 
             <div className="p-6 space-y-4">
@@ -1906,4 +1947,4 @@ const Achats = () => {
   );
 };
 
-export default Achats;
+export default Achats; 

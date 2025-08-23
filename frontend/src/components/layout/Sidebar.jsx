@@ -183,8 +183,9 @@ const poles = [
     color: 'gestalis-tertiary',
     route: '/admin',
     subModules: [
-      { name: 'Paramètres', route: '/admin/parametres' },
+      { name: 'Paramètres Société', route: '/admin/parametres-societe' },
       { name: 'Utilisateurs', route: '/admin/utilisateurs' },
+      { name: 'Gestion Entreprises', route: '/gestion-entreprises' },
       { name: 'Sécurité', route: '/admin/securite' },
       { name: 'Sauvegardes', route: '/admin/sauvegardes' }
     ]
@@ -194,17 +195,17 @@ const poles = [
 const Sidebar = ({ open, setOpen }) => {
   const location = useLocation();
   const { user, logout } = useAuthStore();
-  const [expandedPoles, setExpandedPoles] = useState(['dashboard']);
+  const [expandedPoles, setExpandedPoles] = useState(['dashboard', 'admin']);
 
-  // Nouvelle logique : les sous-modules ne s'affichent que si on est dans le module parent
+  // Logique simplifiée : on montre toujours les sous-modules pour tous les modules
   const shouldShowSubModules = (pole) => {
     // Sur le dashboard principal, on ne montre pas les sous-modules
     if (location.pathname === '/') {
       return false;
     }
     
-    // On montre les sous-modules seulement si on est dans le module parent
-    return location.pathname.startsWith(pole.route) && pole.route !== '/';
+    // On montre toujours les sous-modules pour tous les modules
+    return pole.subModules && pole.subModules.length > 0;
   };
 
   const getActiveClass = (color) => {

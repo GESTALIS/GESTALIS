@@ -36,6 +36,7 @@ model Fournisseur {
   
   // Relations
   contacts              Contact[]
+  commandes             BonCommande[]
   
   @@index([codeFournisseur])
   @@index([siret])
@@ -91,6 +92,406 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Relations
+  commandesDemandees BonCommande[] @relation("Demandeur")
+  commandesCreees    BonCommande[] @relation("Createur")
+
   @@index([email])
   @@index([role])
+}
+
+model Societe {
+  id                    String   @id @default(uuid())
+  nom                   String   @unique
+  raisonSociale         String
+  siret                 String?
+  tvaIntracommunautaire String?
+  codeApeNaf            String?
+  formeJuridique        String?
+  capitalSocial         Decimal? @db.Decimal(18, 2)
+  adresseSiege          String
+  adresseLivraison      String?
+  telephone             String?
+  email                 String?
+  siteWeb               String?
+  logoUrl               String?
+  logoBase64            String?  // Pour stocker le logo en base64 si nécessaire
+  
+  // Informations légales
+  rcs                   String?
+  numeroRcs             String?
+  
+  // Contacts
+  contactPrincipal      String?
+  serviceAchats         String?
+  serviceComptabilite   String?
+  
+  // Paramètres documents
+  enTeteDefaut          String?
+  piedDePage            String?
+  conditionsGenerales   String?
+  
+  // Paramètres système
+  devise                 String   @default("EUR")
+  langue                 String   @default("FR")
+  fuseauHoraire         String   @default("Europe/Paris")
+  
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  @@index([nom])
+  @@index([siret])
+}
+
+model Chantier {
+  id                    String   @id @default(uuid())
+  codeChantier          String   @unique
+  nom                   String
+  description           String?
+  adresse               String
+  ville                 String
+  codePostal            String
+  pays                  String   @default("France")
+  
+  // Informations client
+  clientNom             String?
+  clientContact         String?
+  clientTelephone       String?
+  clientEmail           String?
+  
+  // Informations chantier
+  dateDebut             DateTime?
+  dateFinPrevue         DateTime?
+  dateFinReelle         DateTime?
+  statut                String   @default("EN_COURS") // EN_COURS, TERMINE, EN_ATTENTE, ANNULE
+  
+  // Informations techniques
+  surface               Decimal? @db.Decimal(10, 2)
+  uniteSurface          String   @default("M2")
+  typeChantier          String?  // RESIDENTIEL, COMMERCIAL, INDUSTRIEL, etc.
+  
+  // Informations financières
+  budgetPrevisionnel    Decimal? @db.Decimal(18, 2)
+  budgetReel            Decimal? @db.Decimal(18, 2)
+  devise                String   @default("EUR")
+  
+  // Responsables
+  chefChantier          String?
+  conducteurTravaux     String?
+  architecte            String?
+  
+  // Documents
+  plansUrl              String?
+  photosUrl             String?
+  documentsUrl          String?
+  
+  // Métadonnées
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  // Relations
+  commandes             BonCommande[]
+  
+  @@index([codeChantier])
+  @@index([statut])
+  @@index([dateDebut])
+  @@index([clientNom])
+}
+
+model BonCommande {
+  id                    String   @id @default(uuid())
+  numeroCommande        String   @unique
+  dateCommande          DateTime @default(now())
+  dateLivraisonSouhaitee DateTime?
+  
+  // Demandeur et créateur
+  demandeurId           String
+  createurId            String
+  demandeur             User     @relation("Demandeur", fields: [demandeurId], references: [id])
+  createur              User     @relation("Createur", fields: [createurId], references: [id])
+  
+  // Fournisseur et chantier
+  fournisseurId         String
+  chantierId            String?
+  fournisseur           Fournisseur @relation(fields: [fournisseurId], references: [id])
+  chantier              Chantier?   @relation(fields: [chantierId], references: [id])
+  
+  // Articles
+  articles              ArticleCommande[]
+  
+  // Statut et suivi
+  statut                String   @default("DEMANDE") // DEMANDE, VALIDEE, EN_COURS, TERMINEE, ANNULEE
+  priorite              String   @default("NORMALE") // BASSE, NORMALE, HAUTE, URGENTE
+  
+  // Informations de livraison
+  adresseLivraison      String?
+  conditionsLivraison   String?
+  
+  // Informations de paiement
+  conditionsPaiement    String?
+  echeancePaiement      DateTime?
+  
+  // Documents et signatures
+  pdfUrl                String?
+  signatureUrl          String?
+  signatureDate         DateTime?
+  signaturePar          String?
+  
+  // Suivi email
+  emailEnvoye           Boolean  @default(false)
+  emailDateEnvoi        DateTime?
+  emailDestinataire     String?
+  
+  // Métadonnées
+  notes                 String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  @@index([numeroCommande])
+  @@index([dateCommande])
+  @@index([statut])
+  @@index([fournisseurId])
+  @@index([chantierId])
+  @@index([demandeurId])
+}
+
+model ArticleCommande {
+  id                    String   @id @default(uuid())
+  bonCommandeId         String
+  bonCommande           BonCommande @relation(fields: [bonCommandeId], references: [id], onDelete: Cascade)
+  
+  // Informations article
+  designation           String
+  quantite              Decimal  @db.Decimal(10, 3)
+  unite                 String   @default("U")
+  description           String?
+  
+  // Prix (optionnel initialement)
+  prixUnitaire          Decimal? @db.Decimal(18, 4)
+  devise                String   @default("EUR")
+  
+  // Justification (optionnelle)
+  justification         String?
+  
+  // Métadonnées
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  @@index([bonCommandeId])
+}
+
+// ========================================
+// SYSTÈME MULTI-ENTREPRISES
+// ========================================
+
+model Company {
+  id          String   @id @default(cuid())
+  code        String   @unique // PRO97, ENTREPRISE2, etc.
+  name        String   // Nom complet de l'entreprise
+  legalName   String?  // Raison sociale légale
+  siret       String?  // SIRET de l'entreprise
+  tvaNumber   String?  // Numéro de TVA intracommunautaire
+  
+  // Adresse
+  address     String?
+  postalCode  String?
+  city        String?
+  country     String?  @default("FR")
+  
+  // Contact
+  phone       String?
+  email       String?
+  website     String?
+  
+  // Configuration
+  isActive    Boolean  @default(true)
+  timezone    String   @default("Europe/Paris")
+  locale      String   @default("fr-FR")
+  currency    String   @default("EUR")
+  
+  // Dates
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  branding    Branding?
+  templates   Template[]
+  numberingRules NumberingRule[]
+  mailTemplates MailTemplate[]
+  
+  @@map("companies")
+}
+
+model Branding {
+  id          String   @id @default(cuid())
+  companyId   String   @unique
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  
+  // Couleurs principales
+  primaryColor    String  @default("#1E40AF")   // Couleur principale
+  secondaryColor  String  @default("#059669")   // Couleur secondaire
+  accentColor     String  @default("#DC2626")   // Couleur d'accent
+  textColor       String  @default("#1F2937")   // Couleur du texte
+  backgroundColor String  @default("#F9FAFB")   // Couleur de fond
+  
+  // Logo et images
+  logoUrl         String? // URL du logo principal
+  logoDarkUrl     String? // URL du logo version sombre
+  faviconUrl      String? // URL du favicon
+  
+  // Typographie
+  primaryFont     String  @default("Inter")
+  secondaryFont   String  @default("Georgia")
+  
+  // Configuration
+  showLogoInDocuments Boolean @default(true)
+  showCompanyInfoInFooter Boolean @default(true)
+  
+  // Dates
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@map("branding")
+}
+
+model Template {
+  id          String   @id @default(cuid())
+  companyId   String?
+  company     Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  
+  // Identification du template
+  name        String   // Nom du template (ex: "Bon de commande PRO97")
+  type        DocumentType // Type de document
+  version     Int      @default(1)
+  isActive    Boolean  @default(true)
+  isSystem    Boolean  @default(false) // Template système par défaut
+  
+  // Contenu du template
+  html        String   // Template HTML avec Handlebars
+  css         String?  // CSS personnalisé
+  js          String?  // JavaScript si nécessaire
+  
+  // Métadonnées
+  description String?
+  tags        String[] // Tags pour la recherche
+  
+  // Fallback et versioning
+  fallbackTemplateId String? // ID du template de fallback
+  fallbackTemplate   Template? @relation("TemplateFallback", fields: [fallbackTemplateId], references: [id])
+  fallbackTemplates  Template[] @relation("TemplateFallback")
+  
+  // Configuration
+  pageSize    String  @default("A4") // A4, A3, Letter, etc.
+  orientation String  @default("portrait") // portrait, landscape
+  margins     Json?   // Marges en mm {top, right, bottom, left}
+  
+  // Dates
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  versions    TemplateVersion[]
+  
+  @@unique([companyId, type, version])
+  @@map("templates")
+}
+
+model TemplateVersion {
+  id          String   @id @default(cuid())
+  templateId  String
+  template    Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  
+  version     Int
+  html        String
+  css         String?
+  js          String?
+  
+  // Qui a modifié
+  modifiedBy  String? // ID de l'utilisateur
+  changeReason String? // Raison de la modification
+  
+  createdAt   DateTime @default(now())
+  
+  @@unique([templateId, version])
+  @@map("template_versions")
+}
+
+model NumberingRule {
+  id          String   @id @default(cuid())
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  
+  // Type de document
+  documentType DocumentType
+  
+  // Format de numérotation
+  prefix      String?  // Préfixe (ex: "BC", "FAC")
+  format      String   // Format (ex: "YYYY-####", "YYYYMM-#####")
+  separator   String   @default("-") // Séparateur entre éléments
+  
+  // Configuration
+  startNumber Int      @default(1) // Numéro de départ
+  increment   Int      @default(1) // Incrément
+  padding     Int      @default(4) // Nombre de zéros de padding
+  
+  // Variables disponibles
+  availableVariables String[] // ["YYYY", "MM", "DD", "####", etc.]
+  
+  // Dates
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@unique([companyId, documentType])
+  @@map("numbering_rules")
+}
+
+model MailTemplate {
+  id          String   @id @default(cuid())
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  
+  // Identification
+  name        String   // Nom du template
+  type        MailType // Type d'email
+  subject     String   // Objet de l'email
+  
+  // Contenu
+  htmlBody    String   // Corps HTML avec Handlebars
+  textBody    String?  // Corps texte (fallback)
+  
+  // Configuration
+  isActive    Boolean  @default(true)
+  cc          String[] // Destinataires en copie
+  bcc         String[] // Destinataires en copie cachée
+  
+  // Dates
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@unique([companyId, type])
+  @@map("mail_templates")
+}
+
+// ========================================
+// TYPES ET ENUMS
+// ========================================
+
+enum DocumentType {
+  BON_COMMANDE
+  DEVIS
+  FACTURE
+  AVOIR
+  BON_LIVRAISON
+  BON_RECEPTION
+  ORDRE_SERVICE
+  RAPPORT
+}
+
+enum MailType {
+  BON_COMMANDE_SENT
+  DEVIS_SENT
+  FACTURE_SENT
+  REMINDER
+  NOTIFICATION
+  CUSTOM
 }

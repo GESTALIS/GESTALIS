@@ -10,6 +10,13 @@ import GestionCommerciale from './pages/GestionCommerciale';
 import Achats from './pages/Achats';
 import DemandesPrix from './pages/achats/DemandesPrix';
 import Commandes from './pages/achats/Commandes';
+import CreationBonCommande from './pages/achats/CreationBonCommande';
+import TestNavigation from './pages/achats/TestNavigation';
+import ParametresSociete from './pages/ParametresSociete';
+import NouveauFournisseur from './pages/achats/fournisseurs/NouveauFournisseur';
+import NouveauChantier from './pages/achats/chantiers/NouveauChantier';
+import NouvelUtilisateur from './pages/admin/users/NouvelUtilisateur';
+import GestionEntreprises from './pages/GestionEntreprises';
 import Layout from './components/layout/Layout';
 import './styles/tailwind.css';
 
@@ -36,6 +43,10 @@ const App = () => {
                   <Route path="/achats" element={<Achats />} />
                   <Route path="/achats/demandes-prix" element={<DemandesPrix />} />
                   <Route path="/achats/commandes" element={<Commandes />} />
+                  <Route path="/achats/creation-bon-commande" element={<CreationBonCommande />} />
+                  <Route path="/achats/test-navigation" element={<TestNavigation />} />
+                  <Route path="/achats/fournisseurs/nouveau" element={<NouveauFournisseur />} />
+                  <Route path="/achats/chantiers/nouveau" element={<NouveauChantier />} />
                   <Route path="/vente" element={<Vente />} />
                   <Route path="/commercial" element={<GestionCommerciale />} />
                   <Route path="/tresorerie" element={<div>Règlements & Trésorerie</div>} />
@@ -45,6 +56,9 @@ const App = () => {
                   <Route path="/logistique" element={<div>Logistique & Stocks</div>} />
                   <Route path="/ia" element={<div>Automatisation & IA</div>} />
                   <Route path="/admin" element={<div>Administration</div>} />
+                  <Route path="/admin/users/nouveau" element={<NouvelUtilisateur />} />
+                  <Route path="/gestion-entreprises" element={<GestionEntreprises />} />
+                  <Route path="/parametres-societe" element={<ParametresSociete />} />
                 </Routes>
               </Layout>
             </PrivateRoute>
