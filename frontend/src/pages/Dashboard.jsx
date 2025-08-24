@@ -1,514 +1,344 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Building2, 
-  FileText, 
   ShoppingCart, 
-  Receipt, 
-  CreditCard, 
   Users,
   TrendingUp,
-  Package,
-  Brain,
-  Plus,
-  Eye,
-  Calendar,
   DollarSign,
+  Award,
   AlertTriangle,
   CheckCircle,
   Clock,
-  MapPin,
+  Package,
   Truck,
-  UserCheck,
+  Calendar,
   BarChart3,
+  Plus,
+  Eye,
+  Download,
+  RefreshCw,
+  Bell,
   Settings,
-  Smartphone,
-  Database,
-  ArrowRight,
-  User,
   Sparkles,
-  Target,
-  Zap
+  Home
 } from 'lucide-react';
-import { GestalisCard, GestalisCardContent, GestalisCardHeader, GestalisCardTitle } from '../components/ui/GestalisCard';
-import { GestalisButton } from '../components/ui/gestalis-button';
-import { Link, useNavigate } from 'react-router-dom';
+import { DashboardBanner } from '../components/layout/ModuleBanner';
 
 const Dashboard = () => {
-  const [selectedPole, setSelectedPole] = useState(null);
-  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
+  const [lastUpdate, setLastUpdate] = useState(new Date());
 
-  // KPIs globaux modernisés avec design premium
-  const globalKPIs = [
-    {
-      title: 'Chantiers actifs',
-      value: '8',
-      change: '+2',
-      icon: Building2,
-      color: 'gestalis-primary',
-      trend: 'up',
-      description: 'En cours de réalisation',
-      bgGradient: 'from-gestalis-primary via-gestalis-primary-light to-gestalis-primary-dark',
-      accentColor: 'text-gestalis-primary'
-    },
-    {
-      title: 'CA mensuel',
-      value: '€450K',
-      change: '+12%',
-      icon: DollarSign,
-      color: 'gestalis-secondary',
-      trend: 'up',
-      description: 'Chiffre d\'affaires',
-      bgGradient: 'from-gestalis-secondary via-gestalis-secondary-light to-gestalis-secondary-dark',
-      accentColor: 'text-gestalis-secondary'
-    },
-    {
-      title: 'Équipes terrain',
-      value: '45',
-      change: '+3',
-      icon: Users,
-      color: 'gestalis-accent',
-      trend: 'up',
-      description: 'Salariés actifs',
-      bgGradient: 'from-gestalis-accent via-gestalis-accent-light to-gestalis-accent-dark',
-      accentColor: 'text-gestalis-accent'
-    },
-    {
-      title: 'Trésorerie',
-      value: '€125K',
-      change: '-5%',
-      icon: CreditCard,
-      color: 'gestalis-tertiary',
-      trend: 'down',
-      description: 'Disponible',
-      bgGradient: 'from-gestalis-tertiary via-gestalis-tertiary-light to-gestalis-tertiary-dark',
-      accentColor: 'text-gestalis-tertiary'
-    }
-  ];
+  // Données réelles des KPI (à connecter à votre backend)
+  const [kpiData, setKpiData] = useState({
+    ca: 1250000,
+    chantiers: 12,
+    fournisseurs: 45,
+    commandes: 28,
+    factures: 156,
+    tauxSatisfaction: 94.2,
+    retardMoyen: 2.3,
+    margeMoyenne: 18.5
+  });
 
-  // Définition des modules avec design moderne et métriques enrichies
-  const modules = [
-    {
-      id: 'chantiers',
-      name: 'CHANTIERS',
-      icon: Building2,
-      color: 'gestalis-primary',
-      description: 'Gestion complète des chantiers et planning',
-      metrics: {
-        active: '8 chantiers',
-        progress: '75%',
-        status: 'En cours'
-      },
-      route: '/chantiers',
-      priority: 'high',
-      bgGradient: 'from-gestalis-primary/10 via-gestalis-primary/5 to-transparent',
-      borderColor: 'border-gestalis-primary/20'
-    },
-    {
-      id: 'vente',
-      name: 'VENTE',
-      icon: FileText,
-      color: 'gestalis-secondary',
-      description: 'Gestion des devis, factures et suivi commercial',
-      metrics: {
-        devis: '2 en cours',
-        factures: '€23.5K',
-        status: 'Actif'
-      },
-      route: '/vente',
-      priority: 'high',
-      bgGradient: 'from-gestalis-secondary/10 via-gestalis-secondary/5 to-transparent',
-      borderColor: 'border-gestalis-secondary/20'
-    },
-    {
-      id: 'achats',
-      name: 'ACHAT',
-      icon: ShoppingCart,
-      color: 'blue-teal',
-      description: 'Gestion des achats et fournisseurs',
-      metrics: {
-        commandes: '12 en cours',
-        fournisseurs: '18 actifs',
-        status: 'En cours'
-      },
-      route: '/achats',
-      priority: 'medium',
-      bgGradient: 'from-blue-500/10 via-teal-500/5 to-transparent',
-      borderColor: 'border-blue-500/20'
-    },
-    {
-      id: 'commercial',
-      name: 'GESTION COMMERCIALE',
-      icon: TrendingUp,
-      color: 'gestalis-tertiary',
-      description: 'Analyse commerciale et marges',
-      metrics: {
-        rentabilite: '18%',
-        marges: '+5%',
-        status: 'Excellent'
-      },
-      route: '/commercial',
-      priority: 'medium',
-      bgGradient: 'from-gestalis-tertiary/10 via-gestalis-tertiary/5 to-transparent',
-      borderColor: 'border-gestalis-tertiary/20'
-    },
-    {
-      id: 'tresorerie',
-      name: 'RÈGLEMENTS & TRÉSORERIE',
-      icon: CreditCard,
-      color: 'gestalis-quaternary',
-      description: 'Gestion financière et trésorerie',
-      metrics: {
-        comptes: '3 comptes',
-        flux: '€125K',
-        status: 'Stable'
-      },
-      route: '/tresorerie',
-      priority: 'medium',
-      bgGradient: 'from-gestalis-quaternary/10 via-gestalis-quaternary/5 to-transparent',
-      borderColor: 'border-gestalis-quaternary/20'
-    },
-    {
-      id: 'tiers',
-      name: 'TIERS',
-      icon: Users,
-      color: 'gestalis-quinary',
-      description: 'Gestion des relations commerciales et administratives',
-      metrics: {
-        clients: '25 actifs',
-        fournisseurs: '18 actifs',
-        status: 'Actif'
-      },
-      route: '/tiers',
-      priority: 'high',
-      bgGradient: 'from-gestalis-quinary/10 via-gestalis-quinary/5 to-transparent',
-      borderColor: 'border-gestalis-quinary/20'
-    },
-    {
-      id: 'rh',
-      name: 'RESSOURCES HUMAINES',
-      icon: User,
-      color: 'gestalis-senary',
-      description: 'Gestion des équipes et planning',
-      metrics: {
-        equipes: '45 personnes',
-        chantiers: '8 actifs',
-        status: 'En cours'
-      },
-      route: '/rh',
-      priority: 'medium',
-      bgGradient: 'from-gestalis-senary/10 via-gestalis-senary/5 to-transparent',
-      borderColor: 'border-gestalis-senary/20'
-    },
-    {
-      id: 'analyse',
-      name: 'ANALYSE & REPORTING',
-      icon: BarChart3,
-      color: 'gestalis-septenary',
-      description: 'KPI et tableaux de bord',
-      metrics: {
-        kpis: '12 indicateurs',
-        rapports: '5 actifs',
-        status: 'Actif'
-      },
-      route: '/analyse',
-      priority: 'low',
-      bgGradient: 'from-gestalis-septenary/10 via-gestalis-septenary/5 to-transparent',
-      borderColor: 'border-gestalis-septenary/20'
-    }
-  ];
-
-  // Alertes récentes modernisées
-  const recentAlerts = [
+  // Alertes et notifications
+  const [alertes, setAlertes] = useState([
     {
       id: 1,
       type: 'warning',
-      title: 'Chantier Rue de la Paix',
-      message: 'Retard de 3 jours détecté',
+      title: 'Chantier en retard',
+      message: 'Chantier Rue de la Paix - 3 jours de retard',
       time: 'Il y a 2h',
-      icon: AlertTriangle,
       priority: 'high'
     },
     {
       id: 2,
-      type: 'success',
-      title: 'Facture FA-001234',
-      message: 'Paiement reçu',
+      type: 'info',
+      title: 'Nouvelle commande',
+      message: 'Commande BC-00123 validée - €45,000',
       time: 'Il y a 4h',
-      icon: CheckCircle,
       priority: 'medium'
     },
     {
       id: 3,
-      type: 'info',
-      title: 'Nouveau fournisseur',
-      message: 'BTP Matériaux Plus ajouté',
+      type: 'success',
+      title: 'Paiement reçu',
+      message: 'Facture FA-001234 - €18,500 reçue',
       time: 'Il y a 6h',
-      icon: Plus,
       priority: 'low'
     }
-  ];
+  ]);
 
-  // Activités récentes enrichies
-  const recentActivities = [
+  // Activités récentes
+  const [activites, setActivites] = useState([
     {
       id: 1,
       type: 'chantier',
-      title: 'Chantier Rue de la Paix',
-      description: 'Fondations terminées',
-      progress: 75,
+      title: 'Fondations terminées',
+      description: 'Chantier Centre Commercial - 75%',
       time: 'Il y a 1h',
       icon: Building2,
-      color: 'gestalis-primary'
+      color: 'text-blue-600'
     },
     {
       id: 2,
-      type: 'facture',
-      title: 'Facture FA-001234',
-      description: 'Paiement reçu',
-      amount: '€18,500',
-      time: 'Il y a 4h',
-      icon: Receipt,
-      color: 'gestalis-secondary'
+      type: 'commande',
+      title: 'Matériaux livrés',
+      description: 'Commande BC-001 - BTP Plus',
+      time: 'Il y a 3h',
+      icon: ShoppingCart,
+      color: 'text-green-600'
     },
     {
       id: 3,
-      type: 'achat',
-      title: 'Commande BC-001',
-      description: 'Matériaux livrés',
-      supplier: 'BTP Matériaux Plus',
-      time: 'Il y a 6h',
-      icon: ShoppingCart,
-      color: 'gestalis-accent'
+      type: 'fournisseur',
+      title: 'Nouveau fournisseur',
+      description: 'BTP Matériaux ajouté',
+      time: 'Il y a 5h',
+      icon: Users,
+      color: 'text-purple-600'
     }
-  ];
+  ]);
 
-  const getPriorityColor = (priority) => {
-    const colors = {
-      high: 'bg-red-100 text-red-800 border-red-200',
-      medium: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-      low: 'bg-blue-100 text-blue-800 border-blue-200'
-    };
-    return colors[priority] || colors.low;
+  // Fonction de rafraîchissement
+  const refreshData = async () => {
+    setIsLoading(true);
+    // Simuler un appel API
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    setLastUpdate(new Date());
+    setIsLoading(false);
   };
 
+  // Calcul des variations (simulation)
+  const variations = {
+    ca: '+12.5%',
+    chantiers: '+8.3%',
+    fournisseurs: '+15.2%',
+    commandes: '+22.1%'
+  };
+
+  // Couleurs des alertes
+  const getAlertColor = (type) => {
+    switch (type) {
+      case 'warning': return 'bg-yellow-50 border-yellow-200 text-yellow-800';
+      case 'info': return 'bg-blue-50 border-blue-200 text-blue-800';
+      case 'success': return 'bg-green-50 border-green-200 text-green-800';
+      default: return 'bg-gray-50 border-gray-200 text-gray-800';
+    }
+  };
+
+  // Icônes des alertes
   const getAlertIcon = (type) => {
-    const icons = {
-      warning: AlertTriangle,
-      success: CheckCircle,
-      info: Plus,
-      error: AlertTriangle
-    };
-    return icons[type] || Plus;
-  };
-
-  const getActivityIcon = (type) => {
-    const icons = {
-      chantier: Building2,
-      facture: Receipt,
-      achat: ShoppingCart,
-      default: FileText
-    };
-    return icons[type] || icons.default;
+    switch (type) {
+      case 'warning': return AlertTriangle;
+      case 'info': return Bell;
+      case 'success': return CheckCircle;
+      default: return Bell;
+    }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
-      {/* Header moderne avec espacement généreux */}
-      <div className="px-8 py-12 bg-white border-b border-gray-100">
+      {/* DashboardBanner avec le nouveau système typographique unifié */}
+      <div className="px-8 py-8">
         <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between">
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="p-3 bg-gradient-to-r from-gestalis-primary to-gestalis-secondary rounded-2xl">
-                  <Sparkles className="h-8 w-8 text-white" />
-                </div>
-          <div>
-                  <h1 className="text-4xl font-bold bg-gradient-to-r from-gestalis-primary to-gestalis-secondary bg-clip-text text-transparent">
-                    Tableau de bord
-                  </h1>
-                  <p className="text-xl text-gray-600 mt-2">
-                    Vue d'ensemble de votre activité GESTALIS
-                  </p>
-                </div>
-              </div>
-          </div>
-            
+          <DashboardBanner
+            description={`Dernière mise à jour: ${lastUpdate.toLocaleTimeString('fr-FR')}`}
+          >
             <div className="flex items-center gap-4">
-              <GestalisButton variant="outline" className="flex items-center gap-2 px-6 py-3">
-                <Settings className="h-5 w-5" />
-              Paramètres
-            </GestalisButton>
-              <GestalisButton className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-gestalis-primary to-gestalis-secondary">
-                <Plus className="h-5 w-5" />
-                Nouveau projet
-            </GestalisButton>
-          </div>
-          </div>
+              <button
+                onClick={refreshData}
+                disabled={isLoading}
+                className="btn btn-primary"
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+                Actualiser
+              </button>
+              
+              <button className="btn btn-primary">
+                <Download className="h-4 w-4 mr-2" />
+                Exporter
+              </button>
+              
+              <button className="btn btn-primary">
+                <Settings className="h-4 w-4 mr-2" />
+                Configurer
+              </button>
+            </div>
+          </DashboardBanner>
         </div>
       </div>
 
-      {/* Contenu principal avec espacement moderne */}
-      <div className="max-w-7xl mx-auto px-8 py-12 space-y-16">
+      {/* Contenu principal */}
+      <div className="max-w-7xl mx-auto px-8 py-8 space-y-8">
         
-        {/* KPIs globaux avec design premium */}
-        <section className="space-y-8">
-          <div className="text-center space-y-4">
-            <h2 className="text-3xl font-bold text-gray-900">Vue d'ensemble</h2>
-            <p className="text-lg text-gray-600">Indicateurs clés de performance</p>
+        {/* KPI principaux */}
+        <section className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold text-gray-900">Indicateurs de performance</h2>
+            <div className="flex items-center gap-2 text-sm text-gray-500">
+              <Clock className="h-4 w-4" />
+              Mise à jour en temps réel
+            </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {globalKPIs.map((kpi, index) => {
-              const IconComponent = kpi.icon;
-              return (
-                <div
-                  key={index}
-                  className="group relative overflow-hidden rounded-3xl bg-white border border-gray-100 shadow-lg hover:shadow-2xl transition-all duration-500 hover:scale-105"
-                >
-                  {/* Fond avec gradient subtil */}
-                  <div className={`absolute inset-0 bg-gradient-to-br ${kpi.bgGradient} opacity-5 group-hover:opacity-10 transition-opacity duration-500`} />
-                  
-                  <div className="relative p-8 space-y-6">
-                    {/* Icône avec fond coloré */}
-                    <div className={`inline-flex p-4 rounded-2xl bg-gradient-to-br ${kpi.bgGradient} shadow-lg`}>
-                      <IconComponent className={`h-8 w-8 text-white`} />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* CA */}
+            <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 bg-green-100 rounded-xl">
+                  <DollarSign className="h-6 w-6 text-green-600" />
+                </div>
+                <span className="text-sm font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">
+                  {variations.ca}
+                </span>
+              </div>
+              <h3 className="text-sm font-medium text-gray-600 mb-1">Chiffre d'affaires</h3>
+              <p className="text-2xl font-bold text-gray-900">€{(kpiData.ca / 1000000).toFixed(1)}M</p>
+              <p className="text-sm text-gray-500 mt-1">Cette année</p>
         </div>
 
-                    {/* Contenu */}
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">
-                        {kpi.title}
-                      </p>
-                      <div className="flex items-baseline gap-3">
-                        <span className="text-3xl font-bold text-gray-900">
-                          {kpi.value}
-                        </span>
-                        <span className={`text-lg font-semibold ${kpi.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
-                      {kpi.change}
+            {/* Chantiers */}
+            <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 bg-blue-100 rounded-xl">
+                  <Building2 className="h-6 w-6 text-blue-600" />
+                </div>
+                <span className="text-sm font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
+                  {variations.chantiers}
                     </span>
                   </div>
-                      <p className="text-sm text-gray-500">
-                        {kpi.description}
-                      </p>
+              <h3 className="text-sm font-medium text-gray-600 mb-1">Chantiers actifs</h3>
+              <p className="text-2xl font-bold text-gray-900">{kpiData.chantiers}</p>
+              <p className="text-sm text-gray-500 mt-1">En cours</p>
+            </div>
+
+            {/* Fournisseurs */}
+            <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 bg-purple-100 rounded-xl">
+                  <Users className="h-6 w-6 text-purple-600" />
                 </div>
-                </div>
+                <span className="text-sm font-medium text-purple-600 bg-purple-50 px-2 py-1 rounded-full">
+                  {variations.fournisseurs}
+                </span>
               </div>
-              );
-            })}
+              <h3 className="text-sm font-medium text-gray-600 mb-1">Fournisseurs</h3>
+              <p className="text-2xl font-bold text-gray-900">{kpiData.fournisseurs}</p>
+              <p className="text-sm text-gray-500 mt-1">Partenaire</p>
+            </div>
+
+            {/* Satisfaction */}
+            <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 bg-orange-100 rounded-xl">
+                  <Award className="h-6 w-6 text-orange-600" />
+                </div>
+                <span className="text-sm font-medium text-orange-600 bg-orange-50 px-2 py-1 rounded-full">
+                  +2.1%
+                </span>
+              </div>
+              <h3 className="text-sm font-medium text-gray-600 mb-1">Satisfaction client</h3>
+              <p className="text-2xl font-bold text-gray-900">{kpiData.tauxSatisfaction}%</p>
+              <p className="text-sm text-gray-500 mt-1">Excellent</p>
+            </div>
           </div>
         </section>
 
-        {/* Modules avec design moderne et espacement généreux */}
-        <section className="space-y-8">
-          <div className="text-center space-y-4">
-            <h2 className="text-3xl font-bold text-gray-900">Modules GESTALIS</h2>
-            <p className="text-lg text-gray-600">Accédez à toutes vos fonctionnalités</p>
+        {/* Graphiques et métriques */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          
+          {/* Évolution CA */}
+          <section className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-gray-900">Évolution du CA</h3>
+              <button className="text-blue-600 hover:text-blue-700 font-medium text-sm">
+                Voir détails
+              </button>
         </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-            {modules.map((module) => {
-              const IconComponent = module.icon;
-              return (
-                <Link
-              key={module.id} 
-                  to={module.route}
-                  className="group block"
-                >
-                  <div className={`relative overflow-hidden rounded-3xl bg-white border-2 ${module.borderColor} shadow-lg hover:shadow-2xl transition-all duration-500 hover:scale-105 cursor-pointer`}>
-                    {/* Fond avec gradient subtil */}
-                    <div className={`absolute inset-0 ${module.bgGradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
-                    
-                    <div className="relative p-8 space-y-6">
-                      {/* En-tête du module */}
-                      <div className="flex items-center justify-between">
-                        <div className={`inline-flex p-4 rounded-2xl bg-gradient-to-br from-${module.color} to-${module.color}-dark shadow-lg`}>
-                          <IconComponent className="h-8 w-8 text-white" />
+            <div className="space-y-4">
+              {/* Graphique simple */}
+              <div className="flex items-end justify-between h-32 space-x-2">
+                {[
+                  { month: 'Jan', ca: 85000 },
+                  { month: 'Fév', ca: 92000 },
+                  { month: 'Mar', ca: 105000 },
+                  { month: 'Avr', ca: 118000 },
+                  { month: 'Mai', ca: 125000 },
+                  { month: 'Juin', ca: 135000 }
+                ].map((data, index) => (
+                  <div key={index} className="flex flex-col items-center space-y-2">
+                    <div 
+                      className="w-8 bg-gradient-to-t from-blue-500 to-teal-600 rounded-t-lg transition-all duration-300 hover:opacity-80"
+                      style={{ height: `${(data.ca / 150000) * 120}px` }}
+                    />
+                    <span className="text-xs text-gray-600 font-medium">{data.month}</span>
                   </div>
-                        {module.priority === 'high' && (
-                          <span className="px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200">
-                            Priorité
-                          </span>
-                        )}
+                ))}
+              </div>
+              
+              <div className="flex items-center justify-between text-sm text-gray-600">
+                <span>Progression: +58.8%</span>
+                <span>Objectif: €150K</span>
+              </div>
+            </div>
+          </section>
+
+          {/* Métriques secondaires */}
+          <section className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+            <h3 className="text-xl font-bold text-gray-900 mb-6">Métriques clés</h3>
+            
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <Package className="h-5 w-5 text-blue-600" />
+                  <span className="text-sm font-medium text-gray-700">Commandes en cours</span>
+                </div>
+                <span className="text-lg font-bold text-gray-900">{kpiData.commandes}</span>
                 </div>
                 
-                      {/* Contenu du module */}
-                      <div className="space-y-4">
-                        <h3 className="text-xl font-bold text-gray-900 group-hover:text-gestalis-primary transition-colors duration-300">
-                          {module.name}
-                        </h3>
-                        <p className="text-sm text-gray-600 leading-relaxed">
-                          {module.description}
-                        </p>
-                        
-                        {/* Métriques */}
-                <div className="space-y-2">
-                  {Object.entries(module.metrics).map(([key, value]) => (
-                            <div key={key} className="flex items-center justify-between text-sm">
-                              <span className="text-gray-500 capitalize">
-                                {key === 'active' ? 'Actifs' : key === 'progress' ? 'Progression' : key === 'status' ? 'Statut' : key}
-                              </span>
-                              <span className="font-semibold text-gray-900">
-                                {value}
-                              </span>
-                    </div>
-                  ))}
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <Truck className="h-5 w-5 text-green-600" />
+                  <span className="text-sm font-medium text-gray-700">Livraisons ce mois</span>
                 </div>
+                <span className="text-lg font-bold text-gray-900">24</span>
               </div>
                       
-                      {/* Indicateur de navigation */}
-                      <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                        <span className="text-sm font-medium text-gestalis-primary">
-                          Accéder
-                        </span>
-                        <ArrowRight className="h-5 w-5 text-gestalis-primary group-hover:translate-x-1 transition-transform duration-300" />
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <TrendingUp className="h-5 w-5 text-purple-600" />
+                  <span className="text-sm font-medium text-gray-700">Marge moyenne</span>
                       </div>
+                <span className="text-lg font-bold text-gray-900">{kpiData.margeMoyenne}%</span>
                     </div>
                   </div>
-                </Link>
-              );
-            })}
+          </section>
           </div>
-        </section>
-
-        {/* Section d'alertes et activités avec layout moderne */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           
-          {/* Alertes récentes */}
+        {/* Alertes et notifications */}
           <section className="space-y-6">
             <div className="flex items-center justify-between">
-              <h3 className="text-2xl font-bold text-gray-900">Alertes récentes</h3>
-              <GestalisButton variant="outline" size="sm">
-                Voir tout
-              </GestalisButton>
+            <h2 className="text-2xl font-bold text-gray-900">Alertes et notifications</h2>
+            <button className="text-blue-600 hover:text-blue-700 font-medium text-sm">
+              Voir toutes
+            </button>
         </div>
 
-              <div className="space-y-4">
-              {recentAlerts.map((alert) => {
-                const IconComponent = getAlertIcon(alert.type);
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {alertes.map((alerte) => {
+              const IconComponent = getAlertIcon(alerte.type);
                 return (
                   <div
-                    key={alert.id}
-                    className="group p-6 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300 hover:scale-[1.02] cursor-pointer"
-                  >
-                    <div className="flex items-start gap-4">
-                      <div className={`p-3 rounded-xl bg-gradient-to-br from-${alert.type === 'warning' ? 'red' : alert.type === 'success' ? 'green' : 'blue'}-100 to-${alert.type === 'warning' ? 'red' : alert.type === 'success' ? 'green' : 'blue'}-200`}>
-                        <IconComponent className={`h-5 w-5 text-${alert.type === 'warning' ? 'red' : alert.type === 'success' ? 'green' : 'blue'}-600`} />
-                      </div>
-                      <div className="flex-1 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <h4 className="font-semibold text-gray-900">
-                            {alert.title}
-                          </h4>
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getPriorityColor(alert.priority)}`}>
-                            {alert.priority === 'high' ? 'Haute' : alert.priority === 'medium' ? 'Moyenne' : 'Basse'}
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-600">
-                          {alert.message}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {alert.time}
-                        </p>
+                  key={alerte.id}
+                  className={`p-4 border rounded-lg ${getAlertColor(alerte.type)} transition-all duration-200 hover:shadow-md cursor-pointer`}
+                >
+                  <div className="flex items-start gap-3">
+                    <IconComponent className="h-5 w-5 mt-0.5" />
+                    <div className="flex-1 space-y-1">
+                      <h4 className="font-medium">{alerte.title}</h4>
+                      <p className="text-sm opacity-90">{alerte.message}</p>
+                      <p className="text-xs opacity-75">{alerte.time}</p>
                       </div>
                     </div>
                   </div>
@@ -520,89 +350,57 @@ const Dashboard = () => {
           {/* Activités récentes */}
           <section className="space-y-6">
             <div className="flex items-center justify-between">
-              <h3 className="text-2xl font-bold text-gray-900">Activités récentes</h3>
-              <GestalisButton variant="outline" size="sm">
+            <h2 className="text-2xl font-bold text-gray-900">Activités récentes</h2>
+            <button className="text-blue-600 hover:text-blue-700 font-medium text-sm">
                 Voir tout
-              </GestalisButton>
+            </button>
               </div>
             
+          <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
               <div className="space-y-4">
-              {recentActivities.map((activity) => {
-                const IconComponent = getActivityIcon(activity.type);
+              {activites.map((activite) => {
+                const IconComponent = activite.icon;
                 return (
-                  <div
-                    key={activity.id}
-                    className="group p-6 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300 hover:scale-[1.02] cursor-pointer"
-                  >
-                    <div className="flex items-start gap-4">
-                      <div className={`p-3 rounded-xl bg-gradient-to-br from-${activity.color}-100 to-${activity.color}-200`}>
-                        <IconComponent className={`h-5 w-5 text-${activity.color}`} />
-                      </div>
-                      <div className="flex-1 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <h4 className="font-semibold text-gray-900">
-                            {activity.title}
-                          </h4>
-                          <span className="text-xs text-gray-500">
-                            {activity.time}
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-600">
-                          {activity.description}
-                        </p>
-                        {activity.progress && (
-                          <div className="space-y-1">
-                            <div className="flex items-center justify-between text-xs">
-                              <span className="text-gray-500">Progression</span>
-                              <span className="font-medium text-gray-900">{activity.progress}%</span>
-                            </div>
-                            <div className="w-full bg-gray-200 rounded-full h-2">
-                              <div 
-                                className="bg-gradient-to-r from-gestalis-primary to-gestalis-secondary h-2 rounded-full transition-all duration-300"
-                                style={{ width: `${activity.progress}%` }}
-                              />
+                  <div key={activite.id} className="flex items-center gap-4 p-3 hover:bg-gray-50 rounded-lg transition-colors">
+                    <div className="p-2 bg-gray-100 rounded-lg">
+                      <IconComponent className={`h-5 w-5 ${activite.color}`} />
                     </div>
-                  </div>
-                        )}
-                        {activity.amount && (
-                          <p className="text-sm font-semibold text-gestalis-secondary">
-                            {activity.amount}
-                          </p>
-                        )}
-                        {activity.supplier && (
-                          <p className="text-xs text-gray-500">
-                            Fournisseur: {activity.supplier}
-                          </p>
-                        )}
-        </div>
+                    <div className="flex-1">
+                      <h4 className="font-medium text-gray-900">{activite.title}</h4>
+                      <p className="text-sm text-gray-600">{activite.description}</p>
                     </div>
+                    <span className="text-xs text-gray-500">{activite.time}</span>
                   </div>
                 );
               })}
             </div>
-          </section>
-        </div>
-
-        {/* Section d'actions rapides */}
-        <section className="text-center space-y-8">
-          <div className="space-y-4">
-            <h2 className="text-3xl font-bold text-gray-900">Actions rapides</h2>
-            <p className="text-lg text-gray-600">Accédez rapidement aux fonctionnalités essentielles</p>
           </div>
+        </section>
+
+        {/* Actions rapides */}
+        <section className="text-center space-y-6">
+          <h2 className="text-2xl font-bold text-gray-900">Actions rapides</h2>
           
-          <div className="flex flex-wrap justify-center gap-6">
-            <GestalisButton className="px-8 py-4 text-lg bg-gradient-to-r from-gestalis-primary to-gestalis-secondary hover:from-gestalis-primary-dark hover:to-gestalis-secondary-dark transition-all duration-300 hover:scale-105">
-              <Plus className="h-6 w-6 mr-2" />
+          <div className="flex flex-wrap justify-center gap-4">
+            <button className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-teal-600 text-white rounded-lg hover:from-blue-600 hover:to-teal-700 transition-all duration-300 hover:scale-105">
+              <Plus className="h-5 w-5" />
               Nouveau chantier
-            </GestalisButton>
-            <GestalisButton variant="outline" className="px-8 py-4 text-lg border-2 hover:border-gestalis-primary hover:text-gestalis-primary transition-all duration-300 hover:scale-105">
-              <FileText className="h-6 w-6 mr-2" />
-              Nouveau devis
-            </GestalisButton>
-            <GestalisButton variant="outline" className="px-8 py-4 text-lg border-2 hover:border-gestalis-secondary hover:text-gestalis-secondary transition-all duration-300 hover:scale-105">
-              <ShoppingCart className="h-6 w-6 mr-2" />
+            </button>
+            
+            <button className="flex items-center gap-2 px-6 py-3 border-2 border-blue-500 text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-300 hover:scale-105">
+              <ShoppingCart className="h-5 w-5" />
               Nouvelle commande
-            </GestalisButton>
+            </button>
+            
+            <button className="flex items-center gap-2 px-6 py-3 border-2 border-teal-500 text-teal-600 hover:bg-teal-50 rounded-lg transition-all duration-300 hover:scale-105">
+              <Users className="h-5 w-5" />
+              Nouveau fournisseur
+            </button>
+            
+            <button className="flex items-center gap-2 px-6 py-3 border-2 border-purple-500 text-purple-600 hover:bg-purple-50 rounded-lg transition-all duration-300 hover:scale-105">
+              <BarChart3 className="h-5 w-5" />
+              Voir rapports
+            </button>
           </div>
         </section>
       </div>

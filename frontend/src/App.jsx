@@ -3,6 +3,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { useAuthStore } from './stores/authStore';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import DashboardActions from './pages/DashboardActions';
+import Home from './pages/Home';
 import Chantiers from './pages/Chantiers';
 import Tiers from './pages/Tiers';
 import Vente from './pages/Vente';
@@ -18,6 +20,8 @@ import NouveauChantier from './pages/achats/chantiers/NouveauChantier';
 import NouvelUtilisateur from './pages/admin/users/NouvelUtilisateur';
 import GestionEntreprises from './pages/GestionEntreprises';
 import Layout from './components/layout/Layout';
+import SidebarTest from './components/layout/SidebarTest';
+import NouvelleFacture from './pages/achats/NouvelleFacture';
 import './styles/tailwind.css';
 
 const PrivateRoute = ({ children }) => {
@@ -38,12 +42,15 @@ const App = () => {
             <PrivateRoute>
               <Layout>
                 <Routes>
-                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/" element={<Home />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/dashboard/actions" element={<DashboardActions />} />
                   <Route path="/chantiers" element={<Chantiers />} />
                   <Route path="/achats" element={<Achats />} />
                   <Route path="/achats/demandes-prix" element={<DemandesPrix />} />
                   <Route path="/achats/commandes" element={<Commandes />} />
                   <Route path="/achats/creation-bon-commande" element={<CreationBonCommande />} />
+                  <Route path="/achats/nouvelle-facture" element={<NouvelleFacture />} />
                   <Route path="/achats/test-navigation" element={<TestNavigation />} />
                   <Route path="/achats/fournisseurs/nouveau" element={<NouveauFournisseur />} />
                   <Route path="/achats/chantiers/nouveau" element={<NouveauChantier />} />
@@ -59,6 +66,7 @@ const App = () => {
                   <Route path="/admin/users/nouveau" element={<NouvelUtilisateur />} />
                   <Route path="/gestion-entreprises" element={<GestionEntreprises />} />
                   <Route path="/parametres-societe" element={<ParametresSociete />} />
+                  <Route path="/test-sidebar" element={<SidebarTest />} />
                 </Routes>
               </Layout>
             </PrivateRoute>

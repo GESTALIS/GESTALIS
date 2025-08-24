@@ -42,6 +42,8 @@ import { GestalisCard, GestalisCardContent, GestalisCardHeader, GestalisCardTitl
 import { GestalisButton } from '../components/ui/gestalis-button';
 import { Input } from '../components/ui/input';
 import Commandes from './achats/Commandes';
+import Factures from './achats/Factures';
+import { AchatsBanner } from '../components/layout/ModuleBanner';
 
 const Achats = () => {
   const location = useLocation();
@@ -561,15 +563,10 @@ const Achats = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
-             {/* En-tête du module */}
-       <div className="bg-gradient-to-r from-blue-500 to-teal-600 px-6 py-8 text-white">
-         <div className="max-w-7xl mx-auto">
-           <div className="flex items-center justify-between">
-            <div>
-               <h1 className="text-3xl font-bold text-white mb-2">Module Achats</h1>
-               <p className="text-blue-100 text-lg">Gestion des fournisseurs, commandes et factures</p>
-            </div>
-           </div>
+      {/* AchatsBanner avec le nouveau système typographique unifié */}
+      <div className="px-6 py-8">
+        <div className="max-w-7xl mx-auto">
+          <AchatsBanner />
         </div>
       </div>
 
@@ -966,11 +963,7 @@ const Achats = () => {
 
 
         {activeTab === 'factures' && (
-          <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">
-            <Receipt className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-medium text-gray-900 mb-2">Module Factures</h3>
-            <p className="text-gray-500">Fonctionnalité en cours de développement</p>
-          </div>
+          <Factures />
         )}
 
         {activeTab === 'analytics' && (

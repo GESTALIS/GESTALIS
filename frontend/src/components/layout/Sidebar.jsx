@@ -22,22 +22,26 @@ import {
   LogOut
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
+import { gradients, moduleGradient } from '../../theme/gradients.js';
 
-// Structure des pôles avec leurs sous-modules (sans numéros)
+// Structure des pôles avec les nouvelles couleurs professionnelles
 const poles = [
   {
     id: 'dashboard',
-    name: 'Tableau de bord',
+    name: 'TABLEAU DE BORD',
     icon: Home,
-    color: 'gestalis-primary',
-    route: '/',
-    isMain: true
+    color: gradients.brand,
+    route: '/dashboard',
+    subModules: [
+      { name: 'Vue d\'ensemble', route: '/dashboard' },
+      { name: 'Actions rapides', route: '/dashboard/actions' }
+    ]
   },
   {
     id: 'chantiers',
     name: 'CHANTIERS',
     icon: Building2,
-    color: 'gestalis-primary',
+    color: gradients.ops,
     route: '/chantiers',
     subModules: [
       { name: 'Gestion chantiers', route: '/chantiers' },
@@ -52,7 +56,7 @@ const poles = [
     id: 'vente',
     name: 'VENTE',
     icon: FileText,
-    color: 'gestalis-secondary',
+    color: gradients.sales,
     route: '/vente',
     subModules: [
       { name: 'Devis', route: '/vente/devis' },
@@ -64,24 +68,25 @@ const poles = [
   },
   {
     id: 'achats',
-    name: 'ACHAT & FOURNISSEURS',
+    name: 'ACHAT',
     icon: ShoppingCart,
-    color: 'gestalis-accent',
+    color: gradients.ops,
     route: '/achats',
     subModules: [
+      { name: 'Vue d\'ensemble', route: '/achats' },
+      { name: 'Fournisseurs', route: '/achats?tab=fournisseurs' },
+      { name: 'Bons de commande', route: '/achats?tab=commandes' },
+      { name: 'Création bon de commande', route: '/achats/creation-bon-commande' },
       { name: 'Demandes de prix', route: '/achats/demandes-prix' },
-      { name: 'Bons de commande', route: '/achats/commandes' },
-      { name: 'Factures d\'achat', route: '/achats/factures' },
-      { name: 'Réceptions/Livraisons', route: '/achats/receptions' },
-      { name: 'Avenants fournisseurs', route: '/achats/avenants' },
-      { name: 'Suivi des marges', route: '/achats/marges' }
+      { name: 'Factures d\'achat', route: '/achats?tab=factures' },
+      { name: 'Analytics', route: '/achats?tab=analytics' }
     ]
   },
   {
     id: 'commercial',
     name: 'GESTION COMMERCIALE',
     icon: TrendingUp,
-    color: 'gestalis-tertiary',
+    color: gradients.sales,
     route: '/commercial',
     subModules: [
       { name: 'Analyse de rentabilité', route: '/commercial/rentabilite' },
@@ -95,7 +100,7 @@ const poles = [
     id: 'tresorerie',
     name: 'RÈGLEMENTS & TRÉSORERIE',
     icon: CreditCard,
-    color: 'gestalis-primary',
+    color: gradients.finance,
     route: '/tresorerie',
     subModules: [
       { name: 'Import bancaire', route: '/tresorerie/import' },
@@ -110,7 +115,7 @@ const poles = [
     id: 'tiers',
     name: 'TIERS',
     icon: Users,
-    color: 'gestalis-secondary',
+    color: gradients.sales,
     route: '/tiers',
     subModules: [
       { name: 'Fiches complètes', route: '/tiers/fiches' },
@@ -125,7 +130,7 @@ const poles = [
     id: 'rh',
     name: 'RESSOURCES HUMAINES',
     icon: UserCheck,
-    color: 'gestalis-accent',
+    color: gradients.brand,
     route: '/rh',
     subModules: [
       { name: 'Fiches salariés', route: '/rh/fiches' },
@@ -139,7 +144,7 @@ const poles = [
     id: 'analyse',
     name: 'ANALYSE & REPORTING',
     icon: BarChart3,
-    color: 'gestalis-tertiary',
+    color: gradients.finance,
     route: '/analyse',
     subModules: [
       { name: 'KPI personnalisés', route: '/analyse/kpis' },
@@ -153,7 +158,7 @@ const poles = [
     id: 'logistique',
     name: 'LOGISTIQUE & STOCKS',
     icon: Package,
-    color: 'gestalis-primary',
+    color: gradients.ops,
     route: '/logistique',
     subModules: [
       { name: 'Gestion matériaux', route: '/logistique/materiaux' },
@@ -167,7 +172,7 @@ const poles = [
     id: 'ia',
     name: 'AUTOMATISATION & IA',
     icon: Brain,
-    color: 'gestalis-secondary',
+    color: gradients.admin,
     route: '/ia',
     subModules: [
       { name: 'OCR documents', route: '/ia/ocr' },
@@ -180,7 +185,7 @@ const poles = [
     id: 'admin',
     name: 'ADMINISTRATION',
     icon: Settings,
-    color: 'gestalis-tertiary',
+    color: gradients.admin,
     route: '/admin',
     subModules: [
       { name: 'Paramètres Société', route: '/admin/parametres-societe' },
@@ -199,51 +204,27 @@ const Sidebar = ({ open, setOpen }) => {
 
   // Logique simplifiée : on montre toujours les sous-modules pour tous les modules
   const shouldShowSubModules = (pole) => {
-    // Sur le dashboard principal, on ne montre pas les sous-modules
-    if (location.pathname === '/') {
-      return false;
-    }
-    
     // On montre toujours les sous-modules pour tous les modules
     return pole.subModules && pole.subModules.length > 0;
   };
 
   const getActiveClass = (color) => {
-    switch (color) {
-      case 'gestalis-primary':
-        return 'bg-gradient-to-r from-gestalis-primary to-gestalis-primary/90 text-white shadow-lg';
-      case 'gestalis-secondary':
-        return 'bg-gradient-to-r from-gestalis-secondary to-gestalis-secondary/90 text-white shadow-lg';
-      case 'gestalis-accent':
-        return 'bg-gradient-to-r from-gestalis-accent to-gestalis-accent/90 text-white shadow-lg';
-      case 'gestalis-tertiary':
-        return 'bg-gradient-to-r from-gestalis-tertiary to-gestalis-tertiary/90 text-white shadow-lg';
-      default:
-        return 'bg-gradient-to-r from-slate-600 to-slate-700 text-white shadow-lg';
-    }
+    return `${color} text-white shadow-lg`;
   };
 
   const getInactiveClass = (color) => {
-    switch (color) {
-      case 'gestalis-primary':
-        return 'text-gestalis-primary hover:bg-gestalis-primary/10 hover:text-gestalis-primary border-l-2 border-transparent hover:border-gestalis-primary';
-      case 'gestalis-secondary':
-        return 'text-gestalis-secondary hover:bg-gestalis-secondary/10 hover:text-gestalis-secondary border-l-2 border-transparent hover:border-gestalis-secondary';
-      case 'gestalis-accent':
-        return 'text-gestalis-accent hover:bg-gestalis-accent/10 hover:text-gestalis-accent border-l-2 border-transparent hover:border-gestalis-accent';
-      case 'gestalis-tertiary':
-        return 'text-gestalis-tertiary hover:bg-gestalis-tertiary/10 hover:text-gestalis-tertiary border-l-2 border-transparent hover:border-gestalis-tertiary';
-      default:
-        return 'text-slate-600 hover:bg-slate-100 hover:text-slate-800 border-l-2 border-transparent hover:border-slate-400';
-    }
+    return `text-slate-700 hover:bg-slate-100 hover:text-slate-900 border-l-2 border-transparent hover:border-transparent transition-all duration-300`;
   };
 
   const togglePole = (poleId) => {
-    setExpandedPoles(prev => 
-      prev.includes(poleId) 
+    console.log('togglePole appelé avec:', poleId);
+    setExpandedPoles(prev => {
+      const newExpanded = prev.includes(poleId) 
         ? prev.filter(id => id !== poleId)
-        : [...prev, poleId]
-    );
+        : [...prev, poleId];
+      console.log('Nouveaux expandedPoles:', newExpanded);
+      return newExpanded;
+    });
   };
 
   const isPoleActive = (pole) => {
@@ -262,12 +243,21 @@ const Sidebar = ({ open, setOpen }) => {
     const isActive = isPoleActive(pole);
     const isExpanded = expandedPoles.includes(pole.id);
     const showSubModules = shouldShowSubModules(pole);
+    
+    console.log('renderPoleItem:', {
+      poleId: pole.id,
+      poleName: pole.name,
+      isActive,
+      isExpanded,
+      showSubModules,
+      expandedPoles
+    });
 
     return (
       <div key={pole.id}>
         <button
           onClick={() => pole.subModules ? togglePole(pole.id) : null}
-          className={`w-full group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+          className={`w-full group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-300 ${
             isActive
               ? getActiveClass(pole.color)
               : getInactiveClass(pole.color)
@@ -288,13 +278,13 @@ const Sidebar = ({ open, setOpen }) => {
                 to={subModule.route}
                 className={`block px-3 py-2 text-sm rounded-md transition-colors ${
                   isSubModuleActive(subModule)
-                    ? 'bg-gray-100 text-gray-900 font-medium'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                    ? 'bg-slate-100 text-slate-800 font-medium'
+                    : 'text-slate-600 hover:text-slate-800 hover:bg-slate-50'
                 }`}
                 onClick={() => setOpen(false)}
               >
                 <div className="flex items-center">
-                  <div className="w-1 h-1 bg-gray-400 rounded-full mr-3"></div>
+                  <div className="w-1 h-1 bg-slate-400 rounded-full mr-3"></div>
                   {subModule.name}
                 </div>
               </Link>
@@ -329,52 +319,7 @@ const Sidebar = ({ open, setOpen }) => {
 
         {/* Navigation principale */}
         <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
-          {poles.map((pole) => {
-            const isActive = isPoleActive(pole);
-            const isExpanded = expandedPoles.includes(pole.id);
-            const showSubModules = shouldShowSubModules(pole);
-
-            return (
-              <div key={pole.id}>
-                {/* Élément principal */}
-                <div
-                  className={`flex items-center justify-between p-3 rounded-lg transition-all duration-200 cursor-pointer ${
-                    isActive ? getActiveClass(pole.color) : getInactiveClass(pole.color)
-                  }`}
-                  onClick={() => togglePole(pole.id)}
-                >
-                  <div className="flex items-center space-x-3">
-                    <pole.icon className="w-5 h-5" />
-                    <span className="font-medium">{pole.name}</span>
-                  </div>
-                  {pole.subModules && showSubModules && (
-                    <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${
-                      expandedPoles.includes(pole.id) ? 'rotate-180' : ''
-                    }`} />
-                  )}
-                </div>
-
-                {/* Sous-modules */}
-                {pole.subModules && expandedPoles.includes(pole.id) && showSubModules && (
-                  <div className="ml-8 mt-2 space-y-1">
-                    {pole.subModules.map((subModule, index) => (
-                      <Link
-                        key={index}
-                        to={subModule.route}
-                        className={`block px-3 py-2 rounded-md text-sm transition-all duration-200 ${
-                          isSubModuleActive(subModule)
-                            ? 'bg-slate-100 text-slate-800 font-medium'
-                            : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800'
-                        }`}
-                      >
-                        {subModule.name}
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+          {poles.map((pole) => renderPoleItem(pole))}
         </nav>
 
         {/* Footer utilisateur */}
@@ -400,4 +345,4 @@ const Sidebar = ({ open, setOpen }) => {
   );
 };
 
-export default Sidebar; 
+export default Sidebar;

@@ -1,29 +1,31 @@
 import React, { useState } from 'react';
-import { Plus, Search, Filter, Eye, Edit, Trash2, ShoppingCart, Calendar, DollarSign, Building2 } from 'lucide-react';
+import { Plus, Search, Filter, Eye, Edit, Trash2, Receipt, Calendar, DollarSign, Building2, Download, Upload, FileText, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-const Commandes = () => {
+const Factures = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('all');
-  const [selectedCommandes, setSelectedCommandes] = useState([]);
-  const [commandes, setCommandes] = useState([]); // Liste vide au départ
+  const [selectedFactures, setSelectedFactures] = useState([]);
+  const [factures, setFactures] = useState([]); // Liste vide au départ
 
-  const handleNouveauBonCommande = () => {
-    console.log('🚀 Navigation vers création bon de commande...');
+  const handleNouvelleFacture = () => {
+    console.log('🚀 Navigation vers création facture...');
     try {
-      navigate('/achats/creation-bon-commande');
+      navigate('/achats/nouvelle-facture');
     } catch (error) {
       console.error('❌ Erreur de navigation:', error);
-      window.location.href = '/achats/creation-bon-commande';
+      window.location.href = '/achats/nouvelle-facture';
     }
   };
 
   const getStatusColor = (status) => {
     switch (status) {
       case 'En attente': return 'bg-yellow-100 text-yellow-800';
-      case 'Validé': return 'bg-blue-100 text-blue-800';
-      case 'Livré': return 'bg-green-100 text-green-800';
+      case 'Validée': return 'bg-blue-100 text-blue-800';
+      case 'Payée': return 'bg-green-100 text-green-800';
+      case 'En retard': return 'bg-red-100 text-red-800';
+      case 'Partiellement payée': return 'bg-orange-100 text-orange-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -31,39 +33,53 @@ const Commandes = () => {
   const getStatusText = (status) => {
     switch (status) {
       case 'En attente': return 'En attente';
-      case 'Validé': return 'Validé';
-      case 'Livré': return 'Livré';
+      case 'Validée': return 'Validée';
+      case 'Payée': return 'Payée';
+      case 'En retard': return 'En retard';
+      case 'Partiellement payée': return 'Partiellement payée';
       default: return 'Inconnu';
     }
   };
 
-  const handleSelectCommande = (id) => {
-    setSelectedCommandes(prev => 
+  const handleSelectFacture = (id) => {
+    setSelectedFactures(prev => 
       prev.includes(id) 
-        ? prev.filter(cId => cId !== id)
+        ? prev.filter(fId => fId !== id)
         : [...prev, id]
     );
   };
 
-  const handleSelectAllCommandes = () => {
-    if (selectedCommandes.length === commandes.length) {
-      setSelectedCommandes([]);
+  const handleSelectAllFactures = () => {
+    if (selectedFactures.length === factures.length) {
+      setSelectedFactures([]);
     } else {
-      setSelectedCommandes(commandes.map(c => c.id));
+      setSelectedFactures(factures.map(f => f.id));
     }
   };
 
-  const handleDeleteBulkCommandes = () => {
-    if (selectedCommandes.length === 0) {
-      alert('Aucun bon de commande sélectionné');
+  const handleDeleteBulkFactures = () => {
+    if (selectedFactures.length === 0) {
+      alert('Aucune facture sélectionnée');
       return;
     }
     
-    if (confirm(`Êtes-vous sûr de vouloir supprimer ${selectedCommandes.length} bon(s) de commande ?`)) {
-      setCommandes(prev => prev.filter(c => !selectedCommandes.includes(c.id)));
-      setSelectedCommandes([]);
-      alert(`${selectedCommandes.length} bon(s) de commande supprimé(s) avec succès !`);
+    if (confirm(`Êtes-vous sûr de vouloir supprimer ${selectedFactures.length} facture(s) ?`)) {
+      setFactures(prev => prev.filter(f => !selectedFactures.includes(f.id)));
+      setSelectedFactures([]);
+      alert(`${selectedFactures.length} facture(s) supprimée(s) avec succès !`);
     }
+  };
+
+  const handleExportFactures = () => {
+    if (selectedFactures.length === 0) {
+      alert('Veuillez sélectionner au moins une facture à exporter');
+      return;
+    }
+    alert(`Export de ${selectedFactures.length} facture(s) en cours...`);
+  };
+
+  const handleImportFactures = () => {
+    alert('Fonctionnalité d\'import en cours de développement');
   };
 
   return (
@@ -80,7 +96,7 @@ const Commandes = () => {
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <input
                     type="text"
-                    placeholder="Rechercher un bon de commande..."
+                    placeholder="Rechercher une facture..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10 pr-4 py-2 w-full border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -96,8 +112,10 @@ const Commandes = () => {
                 >
                   <option value="all">Tous les statuts</option>
                   <option value="En attente">En attente</option>
-                  <option value="Validé">Validé</option>
-                  <option value="Livré">Livré</option>
+                  <option value="Validée">Validée</option>
+                  <option value="Payée">Payée</option>
+                  <option value="En retard">En retard</option>
+                  <option value="Partiellement payée">Partiellement payée</option>
                 </select>
                 
                 <button className="px-4 py-2 border border-blue-500 text-blue-600 hover:bg-blue-50 hover:border-blue-600 rounded-xl transition-colors flex items-center gap-2">
@@ -109,33 +127,40 @@ const Commandes = () => {
           </div>
 
           {/* Barre de sélection multiple - Même style que Fournisseurs */}
-          {commandes.length > 0 && (
+          {factures.length > 0 && (
             <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <label className="flex items-center gap-2">
                     <input
                       type="checkbox"
-                      checked={selectedCommandes.length === commandes.length && commandes.length > 0}
-                      onChange={handleSelectAllCommandes}
+                      checked={selectedFactures.length === factures.length && factures.length > 0}
+                      onChange={handleSelectAllFactures}
                       className="rounded border-gray-300"
                     />
                     <span className="text-sm font-medium text-gray-700">
-                      {selectedCommandes.length === 0 
+                      {selectedFactures.length === 0 
                         ? 'Sélectionner tout' 
-                        : `${selectedCommandes.length} sur ${commandes.length} sélectionné(s)`
+                        : `${selectedFactures.length} sur ${factures.length} sélectionnée(s)`
                       }
                     </span>
                   </label>
                 </div>
                 
-                {selectedCommandes.length > 0 && (
+                {selectedFactures.length > 0 && (
                   <div className="flex items-center gap-3">
                     <span className="text-sm text-gray-600">
-                      {selectedCommandes.length} bon(s) de commande sélectionné(s)
+                      {selectedFactures.length} facture(s) sélectionnée(s)
                     </span>
                     <button 
-                      onClick={handleDeleteBulkCommandes}
+                      onClick={handleExportFactures}
+                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-2 text-sm"
+                    >
+                      <Download className="h-4 w-4" />
+                      Exporter
+                    </button>
+                    <button 
+                      onClick={handleDeleteBulkFactures}
                       className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors flex items-center gap-2 text-sm"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -147,44 +172,54 @@ const Commandes = () => {
             </div>
           )}
 
-          {/* Bouton nouveau - Même style que Fournisseurs */}
-          <div className="flex justify-end">
+          {/* Boutons d'action - Même style que Fournisseurs */}
+          <div className="flex justify-between items-center">
+            <div className="flex gap-3">
+              <button 
+                onClick={handleImportFactures}
+                className="px-4 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl transition-colors flex items-center gap-2"
+              >
+                <Upload className="h-4 w-4" />
+                Importer
+              </button>
+            </div>
+            
             <button 
-              onClick={handleNouveauBonCommande}
+              onClick={handleNouvelleFacture}
               className="px-6 py-3 bg-gradient-to-r from-blue-500 to-teal-600 hover:from-blue-600 hover:to-teal-700 text-white rounded-xl transition-all duration-200 font-medium flex items-center gap-2 shadow-lg hover:shadow-xl"
             >
               <Plus className="h-5 w-5" />
-              Nouveau Bon de Commande
+              Nouvelle Facture
             </button>
           </div>
 
           {/* Contenu principal - Affichage conditionnel comme Fournisseurs */}
-          {commandes.length === 0 ? (
+          {factures.length === 0 ? (
             <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">
-              <ShoppingCart className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-xl font-medium text-gray-900 mb-2">Aucun bon de commande</h3>
+              <Receipt className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-xl font-medium text-gray-900 mb-2">Aucune facture</h3>
               <p className="text-gray-500 mb-6">
                 {searchTerm || selectedStatus !== 'all' 
                   ? 'Essayez de modifier vos critères de recherche'
-                  : 'Commencez par créer votre premier bon de commande'
+                  : 'Commencez par créer votre première facture fournisseur'
                 }
               </p>
               {!searchTerm && selectedStatus === 'all' && (
                 <button 
-                  onClick={handleNouveauBonCommande}
+                  onClick={handleNouvelleFacture}
                   className="px-6 py-3 bg-gradient-to-r from-blue-500 to-teal-600 hover:from-blue-600 hover:to-teal-700 text-white rounded-xl transition-all duration-200 font-medium flex items-center gap-2 mx-auto"
                 >
                   <Plus className="h-4 w-4" />
-                  Créer un bon de commande
+                  Créer une facture
                 </button>
               )}
             </div>
           ) : (
-            /* Table des bons de commande - Même style que Fournisseurs */
+            /* Table des factures - Même style que Fournisseurs */
             <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
               <div className="px-6 py-4 border-b border-gray-200">
-                <h2 className="text-xl font-semibold text-gray-900">Bons de commande</h2>
-                <p className="text-sm text-gray-600 mt-1">Liste des commandes fournisseurs</p>
+                <h2 className="text-xl font-semibold text-gray-900">Factures fournisseurs</h2>
+                <p className="text-sm text-gray-600 mt-1">Liste des factures et suivi des paiements</p>
               </div>
               
               <div className="overflow-x-auto">
@@ -198,7 +233,7 @@ const Commandes = () => {
                         Fournisseur
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Date
+                        Date facture
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Montant HT
@@ -209,23 +244,23 @@ const Commandes = () => {
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Échéance
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {commandes.map((commande) => (
-                      <tr key={commande.id} className="hover:bg-gray-50 transition-colors">
+                    {factures.map((facture) => (
+                      <tr key={facture.id} className="hover:bg-gray-50 transition-colors">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-3">
                             <input
                               type="checkbox"
-                              checked={selectedCommandes.includes(commande.id)}
-                              onChange={() => handleSelectCommande(commande.id)}
+                              checked={selectedFactures.includes(facture.id)}
+                              onChange={() => handleSelectFacture(facture.id)}
                               className="rounded border-gray-300"
                             />
-                            <span className="text-sm font-medium text-gray-900">{commande.id}</span>
+                            <span className="text-sm font-medium text-gray-900">{facture.numero}</span>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -234,15 +269,15 @@ const Commandes = () => {
                               <Building2 className="h-4 w-4 text-blue-600" />
                             </div>
                             <div>
-                              <div className="text-sm font-medium text-gray-900">{commande.fournisseur}</div>
-                              <div className="text-sm text-gray-500">{commande.codeFournisseur} • {commande.siret}</div>
+                              <div className="text-sm font-medium text-gray-900">{facture.fournisseur}</div>
+                              <div className="text-sm text-gray-500">{facture.codeFournisseur} • {facture.siret}</div>
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-2">
                             <Calendar className="h-4 w-4 text-gray-400" />
-                            <span className="text-sm text-gray-500">{commande.date}</span>
+                            <span className="text-sm text-gray-500">{facture.dateFacture}</span>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -252,19 +287,19 @@ const Commandes = () => {
                               {new Intl.NumberFormat('fr-FR', {
                                 style: 'currency',
                                 currency: 'EUR'
-                              }).format(commande.montant)}
+                              }).format(facture.montantHT)}
                             </span>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(commande.status)}`}>
-                            {getStatusText(commande.status)}
+                          <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(facture.statut)}`}>
+                            {getStatusText(facture.statut)}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-2">
                             <Calendar className="h-4 w-4 text-gray-400" />
-                            <span className="text-sm text-gray-500">{commande.echeance}</span>
+                            <span className="text-sm text-gray-500">{facture.echeance}</span>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -293,4 +328,5 @@ const Commandes = () => {
   );
 };
 
-export default Commandes; 
+export default Factures;
+
