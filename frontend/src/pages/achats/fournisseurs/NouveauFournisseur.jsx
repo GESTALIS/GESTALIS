@@ -27,7 +27,8 @@ const NouveauFournisseur = () => {
     regimeFiscal: 'NORMAL',
     tvaIntracommunautaire: '',
     contactPrincipal: '',
-    notes: ''
+    notes: '',
+    compteFournisseur: '' // Compte comptable au format "F..." (ex: FTOTAL, F00045)
   });
 
   const [loading, setLoading] = useState(false);
@@ -61,6 +62,17 @@ const NouveauFournisseur = () => {
       // Validation
       if (!fournisseur.raisonSociale || !fournisseur.codeFournisseur) {
         alert('Veuillez remplir la raison sociale et le code fournisseur');
+        return;
+      }
+      
+      // Validation du compte fournisseur (format "F...")
+      if (!fournisseur.compteFournisseur) {
+        alert('Le compte fournisseur est obligatoire pour la comptabilisation');
+        return;
+      }
+      
+      if (!fournisseur.compteFournisseur.startsWith('F')) {
+        alert('Le compte fournisseur doit commencer par "F" (ex: FTOTAL, F00045)');
         return;
       }
       
@@ -144,6 +156,20 @@ const NouveauFournisseur = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Compte fournisseur *
+                  </label>
+                  <Input
+                    value={fournisseur.compteFournisseur}
+                    onChange={(e) => handleInputChange('compteFournisseur', e.target.value)}
+                    placeholder="FTOTAL, F00045, F-BETONEXP"
+                    className="w-full"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    Format "F..." obligatoire pour la comptabilisation
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     SIRET
                   </label>
                   <Input
@@ -153,6 +179,9 @@ const NouveauFournisseur = () => {
                     className="w-full"
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Activité

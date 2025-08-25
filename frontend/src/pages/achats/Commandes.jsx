@@ -127,7 +127,7 @@ const Commandes = () => {
                       }
                     </span>
                   </label>
-                </div>
+        </div>
                 
                 {selectedCommandes.length > 0 && (
                   <div className="flex items-center gap-3">
@@ -140,7 +140,7 @@ const Commandes = () => {
                     >
                       <Trash2 className="h-4 w-4" />
                       Supprimer la sélection
-                    </button>
+          </button>
                   </div>
                 )}
               </div>
@@ -149,14 +149,14 @@ const Commandes = () => {
 
           {/* Bouton nouveau - Même style que Fournisseurs */}
           <div className="flex justify-end">
-            <button 
+          <button 
               onClick={handleNouveauBonCommande}
               className="px-6 py-3 bg-gradient-to-r from-blue-500 to-teal-600 hover:from-blue-600 hover:to-teal-700 text-white rounded-xl transition-all duration-200 font-medium flex items-center gap-2 shadow-lg hover:shadow-xl"
-            >
+          >
               <Plus className="h-5 w-5" />
-              Nouveau Bon de Commande
-            </button>
-          </div>
+            Nouveau Bon de Commande
+          </button>
+        </div>
 
           {/* Contenu principal - Affichage conditionnel comme Fournisseurs */}
           {commandes.length === 0 ? (
@@ -185,8 +185,8 @@ const Commandes = () => {
               <div className="px-6 py-4 border-b border-gray-200">
                 <h2 className="text-xl font-semibold text-gray-900">Bons de commande</h2>
                 <p className="text-sm text-gray-600 mt-1">Liste des commandes fournisseurs</p>
-              </div>
-              
+      </div>
+
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-gray-50">

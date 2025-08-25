@@ -19,10 +19,23 @@ import {
   X,
   Menu,
   User,
-  LogOut
+  LogOut,
+  Calculator,
+  Download,
+  FileSpreadsheet,
+  Eye,
+  EyeOff,
+  CheckCircle,
+  AlertCircle,
+  Info,
+  History,
+  ArrowRight
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { gradients, moduleGradient } from '../../theme/gradients.js';
+import { GestalisCard, GestalisCardContent, GestalisCardHeader, GestalisCardTitle } from '../ui/GestalisCard';
+import { Button } from '../ui/button';
+import comptabiliteService from '../../services/comptabiliteService';
 
 // Structure des pôles avec les nouvelles couleurs professionnelles
 const poles = [
@@ -193,6 +206,18 @@ const poles = [
       { name: 'Gestion Entreprises', route: '/gestion-entreprises' },
       { name: 'Sécurité', route: '/admin/securite' },
       { name: 'Sauvegardes', route: '/admin/sauvegardes' }
+    ]
+  },
+  {
+    id: 'comptabilite',
+    name: 'COMPTABILITÉ',
+    icon: Calculator,
+    color: gradients.finance,
+    route: '/comptabilite',
+    subModules: [
+      { name: 'Gestion comptable', route: '/comptabilite' },
+      { name: 'Historique exports', route: '/comptabilite/historique' },
+      { name: 'Statistiques', route: '/comptabilite/stats' }
     ]
   }
 ];

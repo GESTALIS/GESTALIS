@@ -163,7 +163,7 @@ const Dashboard = () => {
                 <Settings className="h-4 w-4 mr-2" />
                 Configurer
               </button>
-            </div>
+          </div>
           </DashboardBanner>
         </div>
       </div>

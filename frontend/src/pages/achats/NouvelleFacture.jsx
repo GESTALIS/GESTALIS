@@ -1,858 +1,1259 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Plus, 
-  Search, 
-  Building2, 
-  Receipt, 
-  Calendar, 
-  DollarSign, 
-  FileText,
-  Trash2,
-  Save,
-  X,
-  AlertCircle,
-  CheckCircle,
-  Clock,
-  TrendingUp,
-  Package,
-  Users,
-  Wrench,
-  Truck,
-  Calculator
-} from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Plus, Minus, Save, X, ArrowLeft, FileText, Calculator, Upload, Search, Settings, FileImage } from 'lucide-react';
+import { GestalisCard, GestalisCardContent, GestalisCardHeader, GestalisCardTitle } from '../../components/ui/GestalisCard';
+import { Input } from '../../components/ui/input';
+import { Button } from '../../components/ui/button';
+import numerotationService from '../../services/numerotationService';
+import ventilationService from '../../services/ventilationService';
+import produitsService from '../../services/produitsService';
+import VentilationMultiChantiers from '../../components/achats/VentilationMultiChantiers';
+import SelectionProduit from '../../components/achats/SelectionProduit';
+import ParametresDecimales from '../../components/ui/ParametresDecimales';
+import ExportEcrituresComptables from '../../components/comptabilite/ExportEcrituresComptables';
 
-const NouvelleFacture = () => {
-  const navigate = useNavigate();
-  
-  // États principaux
-  const [activeTab, setActiveTab] = useState('coordonnees');
+const NouvelleFacture = ({ parametresEtape1, onRetourEtape1 }) => {
+  // État principal de la facture
   const [facture, setFacture] = useState({
-    type: 'FACTURE_STANDARD',
-    numero: '',
+    // En-tête (reçu de l'étape 1)
+    typePiece: parametresEtape1?.typePiece || 'FACTURE_ACHAT',
+    numeroPiece: parametresEtape1?.numeroPiece || '', // Reçu de l'étape 1
+    periode: parametresEtape1?.periode || '',
+    
+    // Champs utilisateur
+    numeroFacture: '',         // Numéro de facture manuel (libre)
     dateFacture: new Date().toISOString().split('T')[0],
-    dateEcheance: '',
-    fournisseur: null,
-    chantier: null,
-    cessionCreance: false,
-    organismeCession: '',
-    tauxCession: 0,
-    lignes: [],
-    totalHT: 0,
-    totalTVA: 0,
-    totalTTC: 0,
+    fournisseur: '',
+    chantier: '',
+    echeance: '',
+    
+    // Lignes de facture
+    lignes: [
+      {
+        id: 1,
+        produit: null,
+        designation: '',
+        categorie: 'Divers',
+        unite: 'U',
+        quantite: 1,
+        prixUnitaire: 0,
+        montantHT: 0,
+        tva: 0 // TVA fixée à 0% (Article Guyane)
+      }
+    ],
+    
+    // Totaux
+    sousTotalHT: 0,
     netAPayer: 0,
-    notes: ''
+    
+    // Retenue de garantie (uniquement pour sous-traitants)
+    retenueGarantie: 0,
+    retenuePourcentage: 5, // Par défaut 5% pour sous-traitants
+    
+    // Cession de créance
+    cessionCreance: false,
+    
+    // Facture sous-traitant
+    factureSousTraitant: false,
+    
+    // Sous-traitant sélectionné
+    sousTraitantSelection: '',
+    
+    // Cession de créance sélectionnée
+    cessionCreanceSelection: '',
+    
+    // Pièces jointes
+    piecesJointes: [],
+    
+    // Notes
+    notes: '',
   });
 
-  // États pour la gestion des données
-  const [fournisseurs, setFournisseurs] = useState([]);
-  const [chantiers, setChantiers] = useState([]);
-  const [produits, setProduits] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [showFournisseurResults, setShowFournisseurResults] = useState(false);
-  const [showChantierResults, setShowChantierResults] = useState(false);
-  const [showProduitResults, setShowProduitResults] = useState(false);
-
-  // États pour les modals
-  const [showCreateProduitModal, setShowCreateProduitModal] = useState(false);
-  const [newProduit, setNewProduit] = useState({
-    designation: '',
-    categorie: 'MATERIAU',
-    unite: '',
-    prixUnitaire: 0,
-    codeFournisseur: ''
-  });
-
-  // Types de factures
-  const typesFactures = [
-    { id: 'FACTURE_STANDARD', label: 'Facture Standard', icon: Receipt, color: 'blue' },
-    { id: 'FACTURE_SITUATION', label: 'Facture de Situation', icon: TrendingUp, color: 'green' },
-    { id: 'FACTURE_ACOMPTE', label: 'Facture d\'Acompte', icon: Clock, color: 'yellow' },
-    { id: 'FACTURE_REVISION', label: 'Facture de Révision', icon: AlertCircle, color: 'orange' },
-    { id: 'AVOIR', label: 'Avoir', icon: X, color: 'red' }
-  ];
-
-  // Catégories de produits
-  const categoriesProduits = [
-    { id: 'MATERIAU', label: 'Matériaux', icon: Package, color: 'blue' },
-    { id: 'MAIN_OEUVRE', label: 'Main d\'œuvre', icon: Users, color: 'green' },
-    { id: 'SOUS_TRAITANCE', label: 'Sous-traitance', icon: Wrench, color: 'purple' },
-    { id: 'SERVICE', label: 'Services', icon: Truck, color: 'orange' }
-  ];
-
-  // Données d'exemple (à remplacer par des appels API)
-  useEffect(() => {
-    // Simulation de chargement des données
-    setFournisseurs([
-      { id: 'FOUR001', raisonSociale: 'Béton Express', siret: '12345678901234', codeFournisseur: 'BE001' },
-      { id: 'FOUR002', raisonSociale: 'Acier Pro', siret: '23456789012345', codeFournisseur: 'AP002' },
-      { id: 'FOUR003', raisonSociale: 'Matériaux Plus', siret: '34567890123456', codeFournisseur: 'MP003' }
-    ]);
-
-    setChantiers([
-      { id: 'CHANT001', nom: 'Résidence Les Jardins', adresse: '123 Rue de la Paix, Paris' },
-      { id: 'CHANT002', nom: 'Immeuble de bureaux', adresse: '456 Avenue des Champs, Lyon' }
-    ]);
-
-    setProduits([
-      { id: 'PROD001', designation: 'Béton C25/30', categorie: 'MATERIAU', unite: 'm³', prixUnitaire: 120.00, fournisseur: 'Béton Express' },
-      { id: 'PROD002', designation: 'Acier HA500', categorie: 'MATERIAU', unite: 'kg', prixUnitaire: 2.50, fournisseur: 'Acier Pro' }
-    ]);
-  }, []);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [showImportPDF, setShowImportPDF] = useState(false);
+  
+  // États pour les suggestions et modales
+  const [showFournisseurSuggestions, setShowFournisseurSuggestions] = useState(false);
+  const [showChantierSuggestions, setShowChantierSuggestions] = useState(false);
+  const [showCessionSuggestions, setShowCessionSuggestions] = useState(false);
+  const [showSousTraitantSuggestions, setShowSousTraitantSuggestions] = useState(false);
+  
+  // États pour la ventilation multi-chantiers
+  const [showVentilation, setShowVentilation] = useState(false);
+  const [ligneVentilation, setLigneVentilation] = useState(null);
+  const [modelesVentilation, setModelesVentilation] = useState([]);
+  
+  // État pour les paramètres des décimales
+  const [showParametresDecimales, setShowParametresDecimales] = useState(false);
+  
+  // État pour la comptabilisation
+  const [showComptabilisation, setShowComptabilisation] = useState(false);
 
   // Calculs automatiques
   useEffect(() => {
-    const totalHT = facture.lignes.reduce((sum, ligne) => sum + ligne.montantHT, 0);
-    const totalTVA = totalHT * 0.20; // TVA 20%
-    const totalTTC = totalHT + totalTVA;
-    
-    let netAPayer = totalTTC;
-    if (facture.cessionCreance) {
-      const coutCession = totalTTC * (facture.tauxCession / 100);
-      netAPayer = totalTTC - coutCession;
-    }
+    calculerTotaux();
+  }, [facture.lignes, facture.retenuePourcentage, facture.factureSousTraitant]);
 
+  // Calculer l'échéance automatiquement
+  useEffect(() => {
+    if (facture.dateFacture && facture.echeance) {
+      // L'échéance est maintenant gérée manuellement par l'utilisateur
+      // Pas de calcul automatique
+    }
+  }, [facture.dateFacture]);
+
+  // Calculer les totaux
+  const calculerTotaux = () => {
+    let sousTotal = 0;
+    
+    facture.lignes.forEach(ligne => {
+      const montantLigne = (ligne.quantite * ligne.prixUnitaire);
+      sousTotal += montantLigne;
+    });
+    
+    // Retenue de garantie uniquement pour factures de sous-traitants
+    let retenue = 0;
+    let net = sousTotal;
+    
+    if (facture.factureSousTraitant && facture.retenuePourcentage > 0) {
+      retenue = (sousTotal * facture.retenuePourcentage) / 100;
+      net = sousTotal - retenue;
+    }
+    
     setFacture(prev => ({
       ...prev,
-      totalHT,
-      totalTVA,
-      totalTTC,
-      netAPayer
+      sousTotalHT: sousTotal,
+      retenueGarantie: retenue,
+      netAPayer: net
     }));
-  }, [facture.lignes, facture.cessionCreance, facture.tauxCession]);
+  };
 
-  // Gestion des lignes de facture
-  const addLigne = () => {
-    const newLigne = {
+
+
+  // Validation que la date correspond à la période sélectionnée
+  const validerDatePeriode = () => {
+    if (!parametresEtape1) return true; // Pas de validation si pas d'étape 1
+    
+    const dateFacture = new Date(facture.dateFacture);
+    const moisFacture = dateFacture.getMonth() + 1;
+    const anneeFacture = dateFacture.getFullYear();
+    
+    // Extraire mois et année de la période sélectionnée
+    const periodeMatch = facture.periode.match(/(\w+)\s+(\d{4})/);
+    if (periodeMatch) {
+      const moisSelectionne = getMoisFromLabel(periodeMatch[1]);
+      const anneeSelectionnee = parseInt(periodeMatch[2]);
+      
+      return moisFacture === moisSelectionne && anneeFacture === anneeSelectionnee;
+    }
+    
+    return true; // Si pas de période, pas de validation
+  };
+
+  // Fonctions pour les suggestions
+  const getFournisseurSuggestions = () => {
+    // TODO: Récupérer depuis l'API
+    // Pour l'instant, données de test avec conditions de paiement
+    const fournisseurs = [
+      { nom: 'BTP Martin', ville: 'Paris', conditions: '30 jours' },
+      { nom: 'Construction Dubois', ville: 'Lyon', conditions: '45 jours' },
+      { nom: 'Entreprise Legrand', ville: 'Marseille', conditions: '60 jours' },
+      { nom: 'Société Moreau', ville: 'Toulouse', conditions: '30 jours' },
+      { nom: 'Groupe Bernard', ville: 'Nantes', conditions: '90 jours' }
+    ];
+    
+    if (!facture.fournisseur) return [];
+    
+    return fournisseurs.filter(f => 
+      f.nom.toLowerCase().includes(facture.fournisseur.toLowerCase())
+    );
+  };
+
+  const getChantierSuggestions = () => {
+    // TODO: Récupérer depuis l'API
+    // Pour l'instant, données de test
+    const chantiers = [
+      { id: 1, nom: 'Résidence Les Jardins', adresse: '123 Rue de la Paix, Paris' },
+      { id: 2, nom: 'Centre Commercial Central', adresse: '456 Avenue des Champs, Lyon' },
+      { id: 3, nom: 'Immeuble de Bureaux', adresse: '789 Boulevard Maritime, Marseille' },
+      { id: 4, nom: 'Logements Sociaux', adresse: '321 Rue du Commerce, Toulouse' },
+      { id: 5, nom: 'Hôtel de Ville', adresse: '654 Place de la République, Nantes' }
+    ];
+    
+    if (!facture.chantier) return [];
+    
+    return chantiers.filter(c => 
+      c.nom.toLowerCase().includes(facture.chantier.toLowerCase())
+    );
+  };
+
+  const getCessionSuggestions = () => {
+    // TODO: Récupérer depuis l'API
+    // Pour l'instant, données de test pré-filtrées par chantier
+    const cessions = [
+      { reference: 'Cession-001', client: 'Client A', montant: '1500.00', statut: 'En cours' },
+      { reference: 'Cession-002', client: 'Client B', montant: '2000.00', statut: 'Terminée' },
+      { reference: 'Cession-003', client: 'Client A', montant: '1000.00', statut: 'En cours' },
+      { reference: 'Cession-004', client: 'Client C', montant: '3000.00', statut: 'Terminée' }
+    ];
+
+    if (!facture.chantier) return [];
+
+    return cessions.filter(c => 
+      c.client.toLowerCase().includes(facture.chantier.toLowerCase())
+    );
+  };
+
+  const getSousTraitantSuggestions = () => {
+    // TODO: Récupérer depuis l'API
+    // Pour l'instant, données de test
+    const sousTraitants = [
+      { nom: 'Entreprise A', specialite: 'Travaux de maçonnerie', ville: 'Paris', statut: 'Actif' },
+      { nom: 'Entreprise B', specialite: 'Travaux de peinture', ville: 'Lyon', statut: 'Actif' },
+      { nom: 'Entreprise C', specialite: 'Travaux de plomberie', ville: 'Marseille', statut: 'Actif' },
+      { nom: 'Entreprise D', specialite: 'Travaux de menuiserie', ville: 'Toulouse', statut: 'Actif' },
+      { nom: 'Entreprise E', specialite: 'Travaux de chauffage', ville: 'Nantes', statut: 'Actif' }
+    ];
+
+    if (!facture.sousTraitantSelection) return [];
+
+    return sousTraitants.filter(s => 
+      s.nom.toLowerCase().includes(facture.sousTraitantSelection.toLowerCase())
+    );
+  };
+
+  // Fermer les suggestions quand on clique ailleurs
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.fournisseur-field') && !event.target.closest('.chantier-field') && !event.target.closest('.cession-field') && !event.target.closest('.sous-traitant-field')) {
+        setShowFournisseurSuggestions(false);
+        setShowChantierSuggestions(false);
+        setShowCessionSuggestions(false);
+        setShowSousTraitantSuggestions(false);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
+
+  // Charger les modèles de ventilation pour le fournisseur sélectionné
+  useEffect(() => {
+    if (facture.fournisseur) {
+      const fournisseurId = facture.fournisseur.id || facture.fournisseur;
+      if (fournisseurId) {
+        const modeles = ventilationService.rechercherModelesParFournisseur(fournisseurId);
+        setModelesVentilation(modeles);
+      }
+    }
+  }, [facture.fournisseur]);
+
+  // Ouvrir le modal de ventilation pour une ligne
+  const ouvrirVentilation = (ligne) => {
+    setLigneVentilation(ligne);
+    setShowVentilation(true);
+  };
+
+  // Sauvegarder la ventilation d'une ligne
+  const sauvegarderVentilation = (ventilation) => {
+    if (ligneVentilation) {
+      // Mettre à jour la ligne avec la ventilation
+      const lignesMiseAJour = facture.lignes.map(ligne => {
+        if (ligne.id === ligneVentilation.id) {
+          return { ...ligne, ventilation };
+        }
+        return ligne;
+      });
+      
+      handleInputChange('lignes', lignesMiseAJour);
+      
+      // Sauvegarder le modèle si demandé
+      if (facture.fournisseur && ligneVentilation.categorie) {
+        const fournisseurId = facture.fournisseur.id || facture.fournisseur;
+        ventilationService.sauvegarderModele(
+          fournisseurId, 
+          ligneVentilation.categorie, 
+          ventilation
+        );
+      }
+      
+      setShowVentilation(false);
+      setLigneVentilation(null);
+    }
+  };
+
+  // Annuler la ventilation
+  const annulerVentilation = () => {
+    setShowVentilation(false);
+    setLigneVentilation(null);
+  };
+
+  // Obtenir le modèle précédent pour une ligne
+  const obtenirModelePrecedent = (ligne) => {
+    if (!facture.fournisseur || !ligne.categorie) return null;
+    
+    const fournisseurId = facture.fournisseur.id || facture.fournisseur;
+    return ventilationService.chargerModele(fournisseurId, ligne.categorie);
+  };
+
+  // Helper pour convertir les noms de mois
+  const getMoisFromLabel = (moisLabel) => {
+    const moisMap = {
+      'Janvier': 1, 'Février': 2, 'Mars': 3, 'Avril': 4,
+      'Mai': 5, 'Juin': 6, 'Juillet': 7, 'Août': 8,
+      'Septembre': 9, 'Octobre': 10, 'Novembre': 11, 'Décembre': 12
+    };
+    return moisMap[moisLabel] || 1;
+  };
+
+  // Obtenir le type de pièce sélectionné
+  const getTypePieceLabel = () => {
+    const types = {
+      'FACTURE_ACHAT': 'Facture d\'achat',
+      'AVOIR_FOURNISSEUR': 'Avoir fournisseur'
+    };
+    return types[facture.typePiece] || 'Document';
+  };
+
+  // Gérer les changements d'input
+  const handleInputChange = (field, value) => {
+    setFacture(prev => ({ ...prev, [field]: value }));
+    
+    // Si le fournisseur change, récupérer ses conditions de paiement
+    if (field === 'fournisseur') {
+      // recupererConditionsFournisseur(value); // Supprimé
+    }
+  };
+
+  // Modifier une ligne de facture
+  const handleLigneChange = (index, field, value) => {
+    const lignesMiseAJour = [...facture.lignes];
+    lignesMiseAJour[index] = { ...lignesMiseAJour[index], [field]: value };
+    
+    // Recalculer le montant HT si la quantité ou le prix unitaire change
+    if (field === 'quantite' || field === 'prixUnitaire') {
+      const ligne = lignesMiseAJour[index];
+      ligne.montantHT = (ligne.quantite || 0) * (ligne.prixUnitaire || 0);
+    }
+    
+    setFacture(prev => ({
+      ...prev,
+      lignes: lignesMiseAJour
+    }));
+  };
+
+  // Ajouter une nouvelle ligne
+  const ajouterLigne = () => {
+    const nouvelleLigne = {
       id: Date.now(),
       produit: null,
       designation: '',
       quantite: 1,
-      unite: '',
       prixUnitaire: 0,
       montantHT: 0,
-      categorie: 'MATERIAU',
-      chantierAffectation: facture.chantier?.id || null
+      categorie: 'Divers', // Catégorie par défaut pour la ventilation
+      tva: 0 // TVA fixée à 0% (Article Guyane)
     };
-    setFacture(prev => ({ ...prev, lignes: [...prev.lignes, newLigne] }));
-  };
-
-  const updateLigne = (id, field, value) => {
     setFacture(prev => ({
       ...prev,
-      lignes: prev.lignes.map(ligne => {
-        if (ligne.id === id) {
-          const updatedLigne = { ...ligne, [field]: value };
-          // Calcul automatique du montant HT
-          if (field === 'quantite' || field === 'prixUnitaire') {
-            updatedLigne.montantHT = updatedLigne.quantite * updatedLigne.prixUnitaire;
+      lignes: [...prev.lignes, nouvelleLigne]
+    }));
+  };
+
+  // Supprimer une ligne
+  const supprimerLigne = (index) => {
+    if (facture.lignes.length > 1) {
+      setFacture(prev => ({
+        ...prev,
+        lignes: prev.lignes.filter((_, i) => i !== index)
+      }));
+    }
+  };
+
+  const handleImportPDF = () => {
+    setShowImportPDF(true);
+    // TODO: Implémenter l'import PDF avec OCR
+  };
+
+  const handleMatchingBCBL = () => {
+    // TODO: Implémenter le matching automatique BC/BL
+    alert('🔍 Recherche de correspondance BC/BL en cours...');
+  };
+
+  // Sauvegarder la facture
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      
+      // Validation
+      if (!facture.numeroPiece || !facture.fournisseur || !facture.chantier) {
+        alert('❌ Veuillez remplir les champs obligatoires (Numéro de pièce, Fournisseur, Chantier)');
+        return;
+      }
+      
+      // Validation de la date si on vient de l'étape 1
+      if (parametresEtape1 && !validerDatePeriode()) {
+        alert(`❌ La date de facture doit correspondre à la période sélectionnée : ${facture.periode}`);
+        return;
+      }
+      
+      if (facture.lignes.some(ligne => !ligne.designation || ligne.prixUnitaire <= 0)) {
+        alert('❌ Veuillez vérifier les lignes de facture');
+        return;
+      }
+      
+      // Confirmer le numéro réservé
+      if (parametresEtape1) {
+        const confirmation = numerotationService.confirmerNumero(
+          facture.typePiece, 
+          facture.numeroPiece,
+          {
+            fournisseur: facture.fournisseur,
+            chantier: facture.chantier,
+            societe: 'GESTALIS',
+            utilisateur: 'USER'
           }
-          return updatedLigne;
+        );
+        
+        if (!confirmation.success) {
+          alert(`❌ Erreur lors de la confirmation du numéro : ${confirmation.message}`);
+          return;
         }
-        return ligne;
-      })
-    }));
-  };
-
-  const removeLigne = (id) => {
-    setFacture(prev => ({
-      ...prev,
-      lignes: prev.lignes.filter(ligne => ligne.id !== id)
-    }));
-  };
-
-  // Gestion des produits
-  const handleProduitSelect = (produit, ligneId) => {
-    updateLigne(ligneId, 'produit', produit);
-    updateLigne(ligneId, 'designation', produit.designation);
-    updateLigne(ligneId, 'unite', produit.unite);
-    updateLigne(ligneId, 'prixUnitaire', produit.prixUnitaire);
-    updateLigne(ligneId, 'categorie', produit.categorie);
-    updateLigne(ligneId, 'montantHT', produit.prixUnitaire);
-    setShowProduitResults(false);
-  };
-
-  const createProduit = () => {
-    if (!newProduit.designation || !newProduit.unite || !newProduit.prixUnitaire) {
-      alert('Veuillez remplir tous les champs obligatoires');
-      return;
+      }
+      
+      // TODO: Appel API pour sauvegarder
+      console.log('Facture à sauvegarder:', facture);
+      
+      alert('✅ Facture créée avec succès !');
+      
+      // Retourner à la page précédente
+      if (onRetourEtape1) {
+        onRetourEtape1(); // Retour à l'étape 1
+      } else {
+        window.history.back();
+      }
+      
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde:', error);
+      alert('❌ Erreur lors de la sauvegarde');
+    } finally {
+      setSaving(false);
     }
-
-    const produit = {
-      id: `PROD${Date.now()}`,
-      ...newProduit,
-      fournisseur: facture.fournisseur?.raisonSociale || 'Nouveau'
-    };
-
-    setProduits(prev => [...prev, produit]);
-    setNewProduit({ designation: '', categorie: 'MATERIAU', unite: '', prixUnitaire: 0, codeFournisseur: '' });
-    setShowCreateProduitModal(false);
-    alert('Produit créé avec succès dans la bibliothèque !');
   };
 
-  // Sauvegarde de la facture
-  const saveFacture = () => {
-    if (!facture.fournisseur) {
-      alert('Veuillez sélectionner un fournisseur');
-      return;
+  // Annuler la facture
+  const handleCancel = () => {
+    // Si on a un numéro réservé, l'annuler
+    if (parametresEtape1 && facture.numeroPiece) {
+      const annulation = numerotationService.annulerNumero(
+        facture.typePiece,
+        facture.numeroPiece,
+        {
+          fournisseur: facture.fournisseur,
+          chantier: facture.chantier,
+          societe: 'GESTALIS',
+          utilisateur: 'USER'
+        }
+      );
+      
+      if (annulation.success) {
+        console.log('Numéro annulé avec succès');
+      }
     }
-    if (facture.lignes.length === 0) {
-      alert('Veuillez ajouter au moins une ligne');
-      return;
+    
+    if (onRetourEtape1) {
+      onRetourEtape1(); // Retour à l'étape 1
+    } else {
+      window.history.back();
     }
-
-    // Ici on sauvegarderait en base de données
-    alert('Facture sauvegardée avec succès !');
-    navigate('/achats/factures');
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
       {/* En-tête */}
-      <div className="px-6 py-8">
+      <div className="bg-gradient-to-r from-blue-500 to-teal-600 px-6 py-8 text-white">
         <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Nouvelle Facture</h1>
-              <p className="text-gray-600 mt-2">Création d'une facture fournisseur</p>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={onRetourEtape1 || handleCancel}
+              className="text-white hover:text-blue-100 transition-colors"
+            >
+              <ArrowLeft className="h-6 w-6" />
+            </button>
+            <FileText className="h-8 w-8" />
+            <div className="flex-1">
+              <h1 className="text-3xl font-bold text-white mb-2">
+                {parametresEtape1 ? 'Nouvelle Facture' : 'Nouvelle Facture'}
+              </h1>
+              <p className="text-blue-100 text-lg">
+                {parametresEtape1 
+                  ? `Étape 2 : ${getTypePieceLabel()} - ${facture.periode}`
+                  : 'Créer une nouvelle facture fournisseur'
+                }
+              </p>
             </div>
-            <div className="flex gap-3">
-              <button
-                onClick={() => navigate('/achats/factures')}
-                className="px-4 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl transition-colors"
-              >
-                Annuler
-              </button>
-              <button
-                onClick={saveFacture}
-                className="px-6 py-2 bg-gradient-to-r from-blue-500 to-teal-600 hover:from-blue-600 hover:to-teal-700 text-white rounded-xl transition-all duration-200 font-medium flex items-center gap-2"
-              >
-                <Save className="h-5 w-5" />
-                Sauvegarder
-              </button>
-            </div>
+            
+            {/* Informations de l'étape 1 */}
+            {parametresEtape1 && (
+              <div className="text-right">
+                <div className="text-sm text-blue-100 mb-1">Type de document</div>
+                <div className="text-lg font-semibold">{getTypePieceLabel()}</div>
+                <div className="text-sm text-blue-100">{facture.periode}</div>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Contenu principal */}
-      <div className="px-6 pb-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-            {/* Navigation par onglets */}
-            <div className="border-b border-gray-200">
-              <nav className="flex space-x-1 p-4">
-                {[
-                  { id: 'coordonnees', label: 'Coordonnées', icon: FileText },
-                  { id: 'lignes', label: 'Lignes de facture', icon: Receipt },
-                  { id: 'calculs', label: 'Calculs', icon: Calculator },
-                  { id: 'cession', label: 'Cession de créance', icon: TrendingUp }
-                ].map((tab) => (
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <div className="space-y-6">
+          
+          {/* Actions rapides */}
+          <div className="flex gap-4 mb-6">
+            <Button
+              onClick={handleImportPDF}
+              className="flex items-center gap-2"
+            >
+              <Upload className="h-4 w-4" />
+              Importer PDF
+            </Button>
+            
+            <Button
+              onClick={handleMatchingBCBL}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <Search className="h-4 w-4" />
+              Rechercher BC/BL
+            </Button>
+          </div>
+
+          {/* En-tête de la facture */}
+          <GestalisCard>
+            <GestalisCardHeader>
+              <div className="flex items-center justify-between">
+                <GestalisCardTitle>
+                  Étape 2: {parametresEtape1.typePiece === 'FACTURE_ACHAT' ? 'Facture d\'achat' : 'Avoir fournisseur'} - {parametresEtape1.periode}
+                </GestalisCardTitle>
+                
+                <div className="flex items-center gap-2">
                   <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
-                      activeTab === tab.id
-                        ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                    }`}
+                    onClick={() => setShowParametresDecimales(true)}
+                    className="px-3 py-2 text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50 flex items-center gap-2 text-sm"
+                    title="Paramètres des décimales"
                   >
-                    <tab.icon className="h-4 w-4" />
-                    {tab.label}
+                    <Settings className="h-4 w-4" />
+                    Décimales
                   </button>
-                ))}
-              </nav>
-            </div>
-
-            {/* Contenu des onglets */}
-            <div className="p-6">
-              {/* Onglet Coordonnées */}
-              {activeTab === 'coordonnees' && (
-                <div className="space-y-6">
-                  <h3 className="text-xl font-semibold text-gray-900">Informations générales</h3>
                   
-                  <div className="grid grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Type de facture *</label>
-                      <div className="grid grid-cols-1 gap-3">
-                        {typesFactures.map((type) => (
-                          <label key={type.id} className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
-                            <input
-                              type="radio"
-                              name="typeFacture"
-                              value={type.id}
-                              checked={facture.type === type.id}
-                              onChange={(e) => setFacture(prev => ({ ...prev, type: e.target.value }))}
-                              className="text-blue-600"
-                            />
-                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center bg-${type.color}-100`}>
-                              <type.icon className={`h-4 w-4 text-${type.color}-600`} />
-                            </div>
-                            <span className="font-medium">{type.label}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Numéro de facture</label>
-                        <input
-                          type="text"
-                          value={facture.numero}
-                          onChange={(e) => setFacture(prev => ({ ...prev, numero: e.target.value }))}
-                          placeholder="Numéro fournisseur"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Date facture *</label>
-                          <input
-                            type="date"
-                            value={facture.dateFacture}
-                            onChange={(e) => setFacture(prev => ({ ...prev, dateFacture: e.target.value }))}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Date échéance</label>
-                          <input
-                            type="date"
-                            value={facture.dateEcheance}
-                            onChange={(e) => setFacture(prev => ({ ...prev, dateEcheance: e.target.value }))}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Fournisseur *</label>
-                      <div className="relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                        <input
-                          type="text"
-                          placeholder="Rechercher un fournisseur..."
-                          value={searchTerm}
-                          onChange={(e) => {
-                            setSearchTerm(e.target.value);
-                            setShowFournisseurResults(true);
-                          }}
-                          onFocus={() => setShowFournisseurResults(true)}
-                          className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        />
-                        
-                        {showFournisseurResults && (
-                          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                            {fournisseurs
-                              .filter(f => f.raisonSociale.toLowerCase().includes(searchTerm.toLowerCase()))
-                              .map((fournisseur) => (
-                                <div
-                                  key={fournisseur.id}
-                                  onClick={() => {
-                                    setFacture(prev => ({ ...prev, fournisseur }));
-                                    setSearchTerm(fournisseur.raisonSociale);
-                                    setShowFournisseurResults(false);
-                                  }}
-                                  className="px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-                                >
-                                  <div className="font-medium text-gray-900">{fournisseur.raisonSociale}</div>
-                                  <div className="text-sm text-gray-600">{fournisseur.codeFournisseur} • {fournisseur.siret}</div>
-                                </div>
-                              ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Chantier</label>
-                      <div className="relative">
-                        <input
-                          type="text"
-                          placeholder="Sélectionner un chantier..."
-                          value={facture.chantier?.nom || ''}
-                          onChange={(e) => {
-                            setSearchTerm(e.target.value);
-                            setShowChantierResults(true);
-                          }}
-                          onFocus={() => setShowChantierResults(true)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        />
-                        
-                        {showChantierResults && (
-                          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                            {chantiers
-                              .filter(c => c.nom.toLowerCase().includes(searchTerm.toLowerCase()))
-                              .map((chantier) => (
-                                <div
-                                  key={chantier.id}
-                                  onClick={() => {
-                                    setFacture(prev => ({ ...prev, chantier }));
-                                    setShowChantierResults(false);
-                                  }}
-                                  className="px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-                                >
-                                  <div className="font-medium text-gray-900">{chantier.nom}</div>
-                                  <div className="text-sm text-gray-600">{chantier.adresse}</div>
-                                </div>
-                              ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Notes</label>
-                    <textarea
-                      value={facture.notes}
-                      onChange={(e) => setFacture(prev => ({ ...prev, notes: e.target.value }))}
-                      placeholder="Notes additionnelles..."
-                      rows={3}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
+                  <button
+                    onClick={onRetourEtape1}
+                    className="px-4 py-2 text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50 flex items-center gap-2"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    Retour à l'étape 1
+                  </button>
                 </div>
-              )}
+              </div>
+            </GestalisCardHeader>
+            <GestalisCardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Numéro de pièce *
+                  </label>
+                  <Input
+                    value={facture.numeroPiece}
+                    placeholder="Numéro auto-généré"
+                    className="w-full bg-gray-100"
+                    readOnly
+                  />
+                  {parametresEtape1 && (
+                    <p className="mt-1 text-xs text-gray-500">
+                      {facture.periode} - {getTypePieceLabel()}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Numéro de facture
+                  </label>
+                  <Input
+                    value={facture.numeroFacture}
+                    onChange={(e) => handleInputChange('numeroFacture', e.target.value)}
+                    placeholder="Référence facture (optionnel)"
+                    className="w-full"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    Numéro libre selon vos besoins
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Date facture *
+                  </label>
+                  <Input
+                    type="date"
+                    value={facture.dateFacture}
+                    onChange={(e) => handleInputChange('dateFacture', e.target.value)}
+                    className={`w-full ${
+                      parametresEtape1 && !validerDatePeriode() 
+                        ? 'border-red-500 focus:border-red-500' 
+                        : ''
+                    }`}
+                  />
+                  {parametresEtape1 && !validerDatePeriode() && (
+                    <p className="mt-1 text-xs text-red-500">
+                      ⚠️ La date doit correspondre à {facture.periode}
+                    </p>
+                  )}
+                </div>
+              </div>
 
-              {/* Onglet Lignes de facture */}
-              {activeTab === 'lignes' && (
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-xl font-semibold text-gray-900">Lignes de facture</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="fournisseur-field">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Fournisseur *
+                  </label>
+                  <div className="relative">
+                    <Input
+                      value={facture.fournisseur}
+                      onChange={(e) => handleInputChange('fournisseur', e.target.value)}
+                      onFocus={() => setShowFournisseurSuggestions(true)}
+                      placeholder="Rechercher un fournisseur..."
+                      className="w-full pr-20"
+                    />
                     <button
-                      onClick={addLigne}
-                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-2"
+                      type="button"
+                      onClick={() => {
+                        // Rediriger vers le formulaire existant de nouveau fournisseur
+                        window.location.href = '/achats/fournisseurs/nouveau';
+                      }}
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2 px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
                     >
-                      <Plus className="h-4 w-4" />
-                      Ajouter une ligne
+                      <Plus className="h-3 w-3 inline mr-1" />
+                      Nouveau
                     </button>
                   </div>
-
-                  {facture.lignes.length === 0 ? (
-                    <div className="text-center py-12 bg-gray-50 rounded-lg">
-                      <Receipt className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                      <p className="text-gray-500">Aucune ligne de facture</p>
-                      <p className="text-sm text-gray-400">Commencez par ajouter une ligne</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {facture.lignes.map((ligne, index) => (
-                        <div key={ligne.id} className="border border-gray-200 rounded-lg p-4">
-                          <div className="grid grid-cols-12 gap-4 items-center">
-                            {/* Catégorie */}
-                            <div className="col-span-2">
-                              <select
-                                value={ligne.categorie}
-                                onChange={(e) => updateLigne(ligne.id, 'categorie', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                              >
-                                {categoriesProduits.map(cat => (
-                                  <option key={cat.id} value={cat.id}>{cat.label}</option>
-                                ))}
-                              </select>
-                            </div>
-
-                            {/* Désignation */}
-                            <div className="col-span-4">
-                              <div className="relative">
-                                <input
-                                  type="text"
-                                  placeholder="Désignation du produit/service..."
-                                  value={ligne.designation}
-                                  onChange={(e) => updateLigne(ligne.id, 'designation', e.target.value)}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                />
-                                <button
-                                  onClick={() => setShowProduitResults(true)}
-                                  className="absolute right-2 top-1/2 transform -translate-y-1/2 text-blue-600 hover:text-blue-700"
-                                >
-                                  <Search className="h-4 w-4" />
-                                </button>
-                              </div>
-                            </div>
-
-                            {/* Quantité */}
-                            <div className="col-span-1">
-                              <input
-                                type="number"
-                                placeholder="Qté"
-                                value={ligne.quantite}
-                                onChange={(e) => updateLigne(ligne.id, 'quantite', parseFloat(e.target.value) || 0)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                              />
-                            </div>
-
-                            {/* Unité */}
-                            <div className="col-span-1">
-                              <input
-                                type="text"
-                                placeholder="Unité"
-                                value={ligne.unite}
-                                onChange={(e) => updateLigne(ligne.id, 'unite', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                              />
-                            </div>
-
-                            {/* Prix unitaire */}
-                            <div className="col-span-2">
-                              <input
-                                type="number"
-                                placeholder="Prix HT"
-                                value={ligne.prixUnitaire}
-                                onChange={(e) => updateLigne(ligne.id, 'prixUnitaire', parseFloat(e.target.value) || 0)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                              />
-                            </div>
-
-                            {/* Montant HT */}
-                            <div className="col-span-1">
-                              <div className="px-3 py-2 bg-gray-50 rounded-lg text-right font-medium">
-                                {ligne.montantHT.toFixed(2)} €
-                              </div>
-                            </div>
-
-                            {/* Actions */}
-                            <div className="col-span-1">
-                              <button
-                                onClick={() => removeLigne(ligne.id)}
-                                className="text-red-600 hover:text-red-700"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
-                            </div>
+                  
+                  {/* Suggestions fournisseurs */}
+                  {showFournisseurSuggestions && facture.fournisseur && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                      {getFournisseurSuggestions().map((fournisseur, index) => (
+                        <div
+                          key={index}
+                          className="px-3 py-2 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
+                          onClick={() => {
+                            handleInputChange('fournisseur', fournisseur.nom);
+                            setShowFournisseurSuggestions(false);
+                          }}
+                        >
+                          <div className="font-medium">{fournisseur.nom}</div>
+                          <div className="text-sm text-gray-600">
+                            {fournisseur.ville} • {fournisseur.conditions}
                           </div>
                         </div>
                       ))}
                     </div>
                   )}
                 </div>
-              )}
-
-              {/* Onglet Calculs */}
-              {activeTab === 'calculs' && (
-                <div className="space-y-6">
-                  <h3 className="text-xl font-semibold text-gray-900">Calculs et totaux</h3>
+                
+                <div className="chantier-field">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Chantier *
+                  </label>
+                  <div className="relative">
+                    <Input
+                      value={facture.chantier}
+                      onChange={(e) => handleInputChange('chantier', e.target.value)}
+                      onFocus={() => setShowChantierSuggestions(true)}
+                      placeholder="Rechercher un chantier..."
+                      className="w-full pr-20"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        // Rediriger vers le futur formulaire de nouveau chantier
+                        alert('🚧 Formulaire de nouveau chantier à implémenter !\n\nRedirection vers /chantiers/nouveau-chantier');
+                        // TODO: Implémenter le formulaire de nouveau chantier
+                        // window.location.href = '/chantiers/nouveau-chantier';
+                      }}
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2 px-2 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors"
+                    >
+                      <Plus className="h-3 w-3 inline mr-1" />
+                      Nouveau
+                    </button>
+                  </div>
                   
-                  <div className="grid grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                      <h4 className="text-lg font-medium text-gray-900">Détail des calculs</h4>
-                      
-                      <div className="space-y-3">
-                        <div className="flex justify-between py-2 border-b border-gray-200">
-                          <span className="text-gray-600">Total HT</span>
-                          <span className="font-medium">{facture.totalHT.toFixed(2)} €</span>
+                  {/* Suggestions chantiers */}
+                  {showChantierSuggestions && facture.chantier && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                      {getChantierSuggestions().map((chantier, index) => (
+                        <div
+                          key={index}
+                          className="px-3 py-2 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
+                          onClick={() => {
+                            handleInputChange('chantier', chantier.nom);
+                            setShowChantierSuggestions(false);
+                          }}
+                        >
+                          <div className="font-medium">{chantier.nom}</div>
+                          <div className="text-sm text-gray-600">{chantier.adresse}</div>
                         </div>
-                        <div className="flex justify-between py-2 border-b border-gray-200">
-                          <span className="text-gray-600">TVA (20%)</span>
-                          <span className="font-medium">{facture.totalTVA.toFixed(2)} €</span>
-                        </div>
-                        <div className="flex justify-between py-2 border-b border-gray-200">
-                          <span className="text-gray-600">Total TTC</span>
-                          <span className="font-medium">{facture.totalTTC.toFixed(2)} €</span>
-                        </div>
-                        {facture.cessionCreance && (
-                          <>
-                            <div className="flex justify-between py-2 border-b border-gray-200">
-                              <span className="text-gray-600">Coût cession ({facture.tauxCession}%)</span>
-                              <span className="font-medium text-red-600">
-                                -{(facture.totalTTC * facture.tauxCession / 100).toFixed(2)} €
-                              </span>
-                            </div>
-                            <div className="flex justify-between py-2 bg-blue-50 p-3 rounded-lg">
-                              <span className="text-blue-900 font-medium">Net à payer</span>
-                              <span className="text-blue-900 font-bold">{facture.netAPayer.toFixed(2)} €</span>
-                            </div>
-                          </>
-                        )}
-                      </div>
+                      ))}
                     </div>
+                  )}
+                </div>
+              </div>
 
-                    <div className="space-y-4">
-                      <h4 className="text-lg font-medium text-gray-900">Résumé</h4>
+              {/* Conditions de paiement et échéance */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Date d'échéance
+                  </label>
+                  <Input
+                    type="date"
+                    value={facture.echeance}
+                    onChange={(e) => handleInputChange('echeance', e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+              </div>
+
+              {/* Options spéciales */}
+              <div className="pt-4 border-t">
+                {/* Section Facture sous-traitant */}
+                <div className="mb-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <input
+                      type="checkbox"
+                      id="factureSousTraitant"
+                      checked={facture.factureSousTraitant}
+                      onChange={(e) => handleInputChange('factureSousTraitant', e.target.checked)}
+                      className="rounded border-gray-300"
+                    />
+                    <label htmlFor="factureSousTraitant" className="text-sm font-medium text-gray-700">
+                      Facture sous-traitant
+                    </label>
+                  </div>
+                  
+                  {/* Formulaire sous-traitant (si activé) */}
+                  {facture.factureSousTraitant && (
+                    <div className="ml-6 p-4 bg-gray-50 rounded-lg border sous-traitant-field">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Sélectionner le sous-traitant *
+                      </label>
+                      <div className="relative">
+                        <Input
+                          value={facture.sousTraitantSelection}
+                          onChange={(e) => handleInputChange('sousTraitantSelection', e.target.value)}
+                          onFocus={() => setShowSousTraitantSuggestions(true)}
+                          placeholder="Rechercher un sous-traitant..."
+                          className="w-full pr-20"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            // TODO: Rediriger vers le module sous-traitant
+                            alert('🚧 Module sous-traitant à implémenter !\n\nRedirection vers /sous-traitants');
+                          }}
+                          className="absolute right-2 top-1/2 transform -translate-y-1/2 px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
+                        >
+                          <Plus className="h-3 w-3 inline mr-1" />
+                          Nouveau
+                        </button>
+                      </div>
                       
-                      <div className="bg-gray-50 p-4 rounded-lg space-y-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                          <span className="text-sm text-gray-600">Nombre de lignes</span>
-                          <span className="ml-auto font-medium">{facture.lignes.length}</span>
+                      {/* Suggestions sous-traitants */}
+                      {showSousTraitantSuggestions && facture.sousTraitantSelection && (
+                        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                          {getSousTraitantSuggestions().map((sousTraitant, index) => (
+                            <div
+                              key={index}
+                              className="px-3 py-2 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
+                              onClick={() => {
+                                handleInputChange('sousTraitantSelection', sousTraitant.nom);
+                                setShowSousTraitantSuggestions(false);
+                              }}
+                            >
+                              <div className="font-medium">{sousTraitant.nom}</div>
+                              <div className="text-sm text-gray-600">
+                                {sousTraitant.specialite} • {sousTraitant.ville} • {sousTraitant.statut}
+                              </div>
+                            </div>
+                          ))}
                         </div>
+                      )}
+                      
+                      <p className="mt-1 text-xs text-gray-500">
+                        Sélectionnez le sous-traitant concerné par cette facture
+                      </p>
+                      
+                      {/* Configuration retenue de garantie pour sous-traitants */}
+                      <div className="mt-4 pt-4 border-t">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Retenue de garantie
+                        </label>
                         <div className="flex items-center gap-3">
-                          <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                          <span className="text-sm text-gray-600">Fournisseur</span>
-                          <span className="ml-auto font-medium">{facture.fournisseur?.raisonSociale || 'Non sélectionné'}</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
-                          <span className="text-sm text-gray-600">Chantier</span>
-                          <span className="ml-auto font-medium">{facture.chantier?.nom || 'Non affecté'}</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-                          <span className="text-sm text-gray-600">Type</span>
-                          <span className="ml-auto font-medium">
-                            {typesFactures.find(t => t.id === facture.type)?.label}
+                          <Input
+                            type="number"
+                            value={facture.retenuePourcentage}
+                            onChange={(e) => {
+                              const pourcentage = parseFloat(e.target.value) || 0;
+                              handleInputChange('retenuePourcentage', pourcentage);
+                            }}
+                            placeholder="5"
+                            step="0.1"
+                            min="0"
+                            max="100"
+                            className="w-24"
+                          />
+                          <span className="text-sm text-gray-600">%</span>
+                          <span className="text-xs text-gray-500">
+                            (Optionnel - Appliquée au total HT)
                           </span>
                         </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Onglet Cession de créance */}
-              {activeTab === 'cession' && (
-                <div className="space-y-6">
-                  <h3 className="text-xl font-semibold text-gray-900">Cession de créance</h3>
-                  
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <div className="flex items-start gap-3">
-                      <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
-                      <div>
-                        <h4 className="font-medium text-blue-900">Qu'est-ce que la cession de créance ?</h4>
-                        <p className="text-sm text-blue-700 mt-1">
-                          La cession de créance permet de transférer le droit de recouvrement d'une facture à un organisme financier. 
-                          Le client paie directement le fournisseur, réduisant le besoin en trésorerie de l'entreprise.
+                        <p className="mt-1 text-xs text-gray-500">
+                          Pourcentage de retenue appliqué au total HT de la facture
                         </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <label className="flex items-center gap-3">
-                      <input
-                        type="checkbox"
-                        checked={facture.cessionCreance}
-                        onChange={(e) => setFacture(prev => ({ ...prev, cessionCreance: e.target.checked }))}
-                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                      />
-                      <span className="font-medium text-gray-900">Cette facture est cédée</span>
-                    </label>
-
-                    {facture.cessionCreance && (
-                      <div className="grid grid-cols-2 gap-6">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Organisme de cession</label>
-                          <input
-                            type="text"
-                            value={facture.organismeCession}
-                            onChange={(e) => setFacture(prev => ({ ...prev, organismeCession: e.target.value }))}
-                            placeholder="Banque, organisme financier..."
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Taux de cession (%)</label>
-                          <input
-                            type="number"
-                            value={facture.tauxCession}
-                            onChange={(e) => setFacture(prev => ({ ...prev, tauxCession: parseFloat(e.target.value) || 0 }))}
-                            placeholder="2.5"
-                            step="0.1"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {facture.cessionCreance && (
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                      <div className="flex items-center gap-3 mb-3">
-                        <CheckCircle className="h-5 w-5 text-green-600" />
-                        <h4 className="font-medium text-green-900">Impact de la cession</h4>
-                      </div>
-                      <div className="grid grid-cols-3 gap-4 text-sm">
-                        <div>
-                          <span className="text-green-700">Montant facturé</span>
-                          <div className="font-medium text-green-900">{facture.totalTTC.toFixed(2)} €</div>
-                        </div>
-                        <div>
-                          <span className="text-green-700">Coût cession</span>
-                          <div className="font-medium text-green-900">{(facture.totalTTC * facture.tauxCession / 100).toFixed(2)} €</div>
-                        </div>
-                        <div>
-                          <span className="text-green-700">Net à payer</span>
-                          <div className="font-bold text-green-900">{facture.netAPayer.toFixed(2)} €</div>
-                        </div>
                       </div>
                     </div>
                   )}
                 </div>
+
+                {/* Section Cession de créance */}
+                <div className="mb-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <input
+                      type="checkbox"
+                      id="cessionCreance"
+                      checked={facture.cessionCreance}
+                      onChange={(e) => handleInputChange('cessionCreance', e.target.checked)}
+                      className="rounded border-gray-300"
+                    />
+                    <label htmlFor="cessionCreance" className="text-sm font-medium text-gray-700">
+                      Cession de créance
+                    </label>
+                  </div>
+                  
+                  {/* Formulaire cession de créance (si activé) */}
+                  {facture.cessionCreance && (
+                    <div className="ml-6 p-4 bg-gray-50 rounded-lg border cession-field">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Sélectionner la cession de créance *
+                      </label>
+                      <div className="relative">
+                        <Input
+                          value={facture.cessionCreanceSelection}
+                          onChange={(e) => handleInputChange('cessionCreanceSelection', e.target.value)}
+                          onFocus={() => setShowCessionSuggestions(true)}
+                          placeholder="Rechercher une cession de créance..."
+                          className="w-full pr-20"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            // TODO: Rediriger vers le module cession de créance
+                            alert('🚧 Module cession de créance à implémenter !\n\nRedirection vers /cessions-creance avec filtre chantier');
+                          }}
+                          className="absolute right-2 top-1/2 transform -translate-y-1/2 px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition-colors"
+                        >
+                          <Plus className="h-3 w-3 inline mr-1" />
+                          Nouvelle
+                        </button>
+                      </div>
+                      
+                      {/* Suggestions cessions de créance (pré-filtrées par chantier) */}
+                      {showCessionSuggestions && facture.cessionCreanceSelection && (
+                        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                          {getCessionSuggestions().map((cession, index) => (
+                            <div
+                              key={index}
+                              className="px-3 py-2 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
+                              onClick={() => {
+                                handleInputChange('cessionCreanceSelection', cession.reference);
+                                setShowCessionSuggestions(false);
+                              }}
+                            >
+                              <div className="font-medium">{cession.reference}</div>
+                              <div className="text-sm text-gray-600">
+                                {cession.client} • {cession.montant}€ • {cession.statut}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      
+                      <p className="mt-1 text-xs text-gray-500">
+                        Pré-filtré par le chantier sélectionné : {facture.chantier || 'Aucun chantier'}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </GestalisCardContent>
+          </GestalisCard>
+
+          {/* Lignes de facture */}
+          <GestalisCard>
+            <GestalisCardHeader>
+              <GestalisCardTitle className="flex items-center gap-2">
+                <Calculator className="h-5 w-5" />
+                Lignes de facture
+              </GestalisCardTitle>
+            </GestalisCardHeader>
+            <GestalisCardContent>
+              <div className="space-y-4">
+                {facture.lignes.map((ligne, index) => (
+                  <div key={ligne.id} className="border border-gray-200 rounded-lg p-4">
+                    <div className="grid grid-cols-1 md:grid-cols-8 gap-3">
+                          {/* Produit/Service */}
+                          <div className="md:col-span-2">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Produit/Service
+                            </label>
+                            <SelectionProduit
+                              produitSelectionne={ligne.produit}
+                              onSelectionner={(produit) => {
+                                handleLigneChange(index, 'produit', produit);
+                                handleLigneChange(index, 'designation', produit.designation);
+                                handleLigneChange(index, 'categorie', produit.categorie);
+                                handleLigneChange(index, 'prixUnitaire', produit.prixUnitaire);
+                                // Recalculer le montant HT
+                                const nouveauMontant = (ligne.quantite || 0) * produit.prixUnitaire;
+                                handleLigneChange(index, 'montantHT', nouveauMontant);
+                              }}
+                              onNouveauProduit={(nouveauProduit) => {
+                                // Le produit est déjà sauvegardé par le composant
+                                // On peut l'utiliser directement
+                                handleLigneChange(index, 'produit', nouveauProduit);
+                                handleLigneChange(index, 'designation', nouveauProduit.designation);
+                                handleLigneChange(index, 'categorie', nouveauProduit.categorie);
+                                handleLigneChange(index, 'prixUnitaire', nouveauProduit.prixUnitaire);
+                                // Recalculer le montant HT
+                                const nouveauMontant = (ligne.quantite || 0) * nouveauProduit.prixUnitaire;
+                                handleLigneChange(index, 'montantHT', nouveauMontant);
+                              }}
+                              categorieFiltree={ligne.categorie}
+                            />
+                          </div>
+
+                          {/* Catégorie */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Catégorie
+                            </label>
+                            <div className="px-3 py-2 bg-gray-100 border border-gray-300 rounded-md text-sm text-gray-700">
+                              {ligne.categorie || 'Non définie'}
+                            </div>
+                          </div>
+
+                          {/* Quantité */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Quantité
+                            </label>
+                            <Input
+                              type="number"
+                              value={ligne.quantite}
+                              onChange={(e) => {
+                                const quantite = parseFloat(e.target.value) || 0;
+                                handleLigneChange(index, 'quantite', quantite);
+                                // Recalculer le montant HT si le prix unitaire est défini
+                                if (ligne.prixUnitaire) {
+                                  const nouveauMontant = quantite * ligne.prixUnitaire;
+                                  handleLigneChange(index, 'montantHT', nouveauMontant);
+                                }
+                              }}
+                              placeholder="1"
+                              step="0.01"
+                              className="w-full"
+                            />
+                          </div>
+
+                          {/* Prix unitaire HT */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Prix unitaire HT
+                            </label>
+                            <Input
+                              type="number"
+                              value={ligne.prixUnitaire}
+                              onChange={(e) => {
+                                const prix = parseFloat(e.target.value) || 0;
+                                handleLigneChange(index, 'prixUnitaire', prix);
+                                // Recalculer le montant HT
+                                const nouveauMontant = (ligne.quantite || 0) * prix;
+                                handleLigneChange(index, 'montantHT', nouveauMontant);
+                              }}
+                              placeholder="0.00"
+                              step={`0.${'0'.repeat(produitsService.getDecimales() - 1)}1`}
+                              className="w-full"
+                            />
+                          </div>
+
+                          {/* Montant HT */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Montant HT
+                            </label>
+                            <div className="text-lg font-semibold text-gray-900">
+                              {produitsService.formaterNombre(ligne.montantHT)}€
+                            </div>
+                          </div>
+
+                          {/* Actions */}
+                          <div className="flex items-end gap-2">
+                            <Button
+                              type="button"
+                              onClick={() => ouvrirVentilation(ligne)}
+                              variant="outline"
+                              size="sm"
+                              className="flex items-center gap-2"
+                            >
+                              <Plus className="h-4 w-4" />
+                              Ventiler
+                            </Button>
+                            <Button
+                              type="button"
+                              onClick={() => supprimerLigne(index)}
+                              variant="destructive"
+                              size="sm"
+                            >
+                              <Minus className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+
+                    {/* Indicateur multi-chantiers */}
+                    {ligne.ventilation && (
+                      <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                              Multi-chantiers
+                            </span>
+                            <span className="text-sm text-blue-700">
+                              {ligne.ventilation.splits.length} chantier{ligne.ventilation.splits.length > 1 ? 's' : ''}
+                            </span>
+                          </div>
+                          <div className="text-sm text-blue-600">
+                            {ligne.ventilation.modeVentilation === 'PERCENT' && 
+                              `${ligne.ventilation.splits.map(s => `${s.value}%`).join(' / ')}`
+                            }
+                            {ligne.ventilation.modeVentilation === 'AMOUNT' && 
+                              `${ligne.ventilation.splits.map(s => `${s.ht.toFixed(2)}€`).join(' / ')}`
+                            }
+                            {ligne.ventilation.modeVentilation === 'QUANTITY' && 
+                              `${ligne.ventilation.splits.map(s => s.value).join(' / ')}`
+                            }
+                          </div>
+                        </div>
+                        <div className="mt-2 text-xs text-blue-600">
+                          {ligne.ventilation.splits.map((split, idx) => {
+                            const chantier = getChantierSuggestions().find(c => c.id === split.chantierId);
+                            return (
+                              <span key={idx} className="inline-block mr-3">
+                                {chantier?.nom}: {split.ht.toFixed(2)}€
+                                {split.note && ` (${split.note})`}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+                
+                {/* Bouton ajouter ligne */}
+                <div className="mt-4">
+                  <Button
+                    type="button"
+                    onClick={ajouterLigne}
+                    variant="outline"
+                    className="flex items-center gap-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Ajouter une ligne
+                  </Button>
+                </div>
+              </div>
+            </GestalisCardContent>
+          </GestalisCard>
+
+          {/* Totaux et calculs */}
+          <GestalisCard>
+            <GestalisCardHeader>
+              <GestalisCardTitle className="flex items-center gap-2">
+                <Calculator className="h-5 w-5" />
+                Totaux et calculs
+              </GestalisCardTitle>
+            </GestalisCardHeader>
+            <GestalisCardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Totaux */}
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <div className={`grid gap-4 ${facture.factureSousTraitant ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-gray-900">
+                        {produitsService.formaterNombre(facture.sousTotalHT)}€
+                      </div>
+                      <div className="text-sm text-gray-600">Total HT</div>
+                    </div>
+                    
+                    {/* Retenue de garantie (uniquement pour sous-traitants) */}
+                    {facture.factureSousTraitant && (
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-orange-600">
+                          {produitsService.formaterNombre(facture.retenueGarantie)}€
+                        </div>
+                        <div className="text-sm text-orange-600">Retenue de garantie</div>
+                        <div className="text-xs text-orange-500">{facture.retenuePourcentage}%</div>
+                      </div>
+                    )}
+                    
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-blue-600">
+                        {produitsService.formaterNombre(facture.netAPayer)}€
+                      </div>
+                      <div className="text-sm text-blue-600">Net à payer</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <h4 className="font-medium text-blue-900 mb-2">Informations importantes</h4>
+                    <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
+                      <li>• TVA : 0% (Article 294, 1 du CGI - Pas de TVA en Guyane)</li>
+                      {facture.factureSousTraitant && (
+                        <li>• Facture sous-traitant : {facture.sousTraitantSelection || 'Non sélectionné'}</li>
+                      )}
+                      {facture.factureSousTraitant && facture.retenuePourcentage > 0 && (
+                        <li>• Retenue de garantie : {facture.retenuePourcentage}% (sous-traitant)</li>
+                      )}
+                      {facture.cessionCreance && (
+                        <li>• Cession de créance activée</li>
+                      )}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </GestalisCardContent>
+          </GestalisCard>
+
+          {/* Pièces jointes */}
+          <GestalisCard>
+            <GestalisCardHeader>
+              <GestalisCardTitle className="flex items-center gap-2">
+                <FileImage className="h-5 w-5" />
+                Pièces jointes
+              </GestalisCardTitle>
+            </GestalisCardHeader>
+            <GestalisCardContent>
+              <div className="space-y-4">
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                  <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-600 mb-2">Glissez-déposez vos fichiers ici</p>
+                  <p className="text-sm text-gray-500">PDF facture, BC, BL, commentaires...</p>
+                  <button className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+                    Sélectionner des fichiers
+                  </button>
+                </div>
+              </div>
+            </GestalisCardContent>
+          </GestalisCard>
+
+          {/* Notes */}
+          <GestalisCard>
+            <GestalisCardHeader>
+              <GestalisCardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Notes et commentaires
+              </GestalisCardTitle>
+            </GestalisCardHeader>
+            <GestalisCardContent>
+              <textarea
+                value={facture.notes}
+                onChange={(e) => handleInputChange('notes', e.target.value)}
+                placeholder="Notes, conditions spéciales, informations importantes..."
+                rows="4"
+                className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
+              />
+            </GestalisCardContent>
+          </GestalisCard>
+
+          {/* Actions */}
+          <div className="flex justify-end gap-4">
+            {parametresEtape1 && (
+              <button
+                onClick={onRetourEtape1}
+                className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2"
+              >
+                <ArrowLeft className="h-5 w-5" />
+                Retour à l'étape 1
+              </button>
+            )}
+            
+            <button
+              onClick={handleCancel}
+              className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2"
+            >
+              <X className="h-5 w-5" />
+              Annuler
+            </button>
+            
+            <Button
+              onClick={handleSave}
+              disabled={saving || (parametresEtape1 && !validerDatePeriode())}
+              className="px-6 py-3"
+            >
+              {saving ? (
+                <>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                  Sauvegarde...
+                </>
+              ) : (
+                <>
+                  <Save className="h-5 w-5 mr-2" />
+                  Créer la facture
+                </>
               )}
-            </div>
+            </Button>
           </div>
         </div>
       </div>
 
-      {/* Modal de création de produit */}
-      {showCreateProduitModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl">
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex justify-between items-center">
-                <h3 className="text-xl font-semibold text-gray-900">Créer un nouveau produit</h3>
-                <button
-                  onClick={() => setShowCreateProduitModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <X className="h-6 w-6" />
-                </button>
-              </div>
-            </div>
-
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Désignation *</label>
-                <input
-                  type="text"
-                  value={newProduit.designation}
-                  onChange={(e) => setNewProduit(prev => ({ ...prev, designation: e.target.value }))}
-                  placeholder="Nom du produit/service"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Catégorie *</label>
-                  <select
-                    value={newProduit.categorie}
-                    onChange={(e) => setNewProduit(prev => ({ ...prev, categorie: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    {categoriesProduits.map(cat => (
-                      <option key={cat.id} value={cat.id}>{cat.label}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Unité *</label>
-                  <input
-                    type="text"
-                    value={newProduit.unite}
-                    onChange={(e) => setNewProduit(prev => ({ ...prev, unite: e.target.value }))}
-                    placeholder="m³, kg, h, etc."
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Prix unitaire HT *</label>
-                  <input
-                    type="number"
-                    value={newProduit.prixUnitaire}
-                    onChange={(e) => setNewProduit(prev => ({ ...prev, prixUnitaire: parseFloat(e.target.value) || 0 }))}
-                    placeholder="0.00"
-                    step="0.01"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Code fournisseur</label>
-                  <input
-                    type="text"
-                    value={newProduit.codeFournisseur}
-                    onChange={(e) => setNewProduit(prev => ({ ...prev, codeFournisseur: e.target.value }))}
-                    placeholder="Code interne fournisseur"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="p-6 border-t border-gray-200 flex justify-end gap-3">
-              <button
-                onClick={() => setShowCreateProduitModal(false)}
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                Annuler
-              </button>
-              <button
-                onClick={createProduit}
-                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
-              >
-                Créer le produit
-              </button>
-            </div>
-          </div>
-        </div>
+      {/* Modal de ventilation */}
+      {showVentilation && ligneVentilation && (
+        <VentilationMultiChantiers
+          ligne={ligneVentilation}
+          chantiers={getChantierSuggestions()}
+          onSave={sauvegarderVentilation}
+          onCancel={annulerVentilation}
+          modelePrecedent={obtenirModelePrecedent(ligneVentilation)}
+        />
       )}
 
-      {/* Modal de sélection de produit */}
-      {showProduitResults && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl">
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex justify-between items-center">
-                <h3 className="text-xl font-semibold text-gray-900">Sélectionner un produit</h3>
-                <button
-                  onClick={() => setShowProduitResults(false)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <X className="h-6 w-6" />
-                </button>
-              </div>
-            </div>
+      {/* Modal de paramétrage des décimales */}
+      {showParametresDecimales && (
+        <ParametresDecimales
+          isOpen={showParametresDecimales}
+          onClose={() => setShowParametresDecimales(false)}
+        />
+      )}
 
-            <div className="p-6">
-              <div className="mb-4">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Rechercher un produit..."
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2 max-h-96 overflow-y-auto">
-                {produits.map((produit) => (
-                  <div
-                    key={produit.id}
-                    className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center bg-${categoriesProduits.find(c => c.id === produit.categorie)?.color}-100`}>
-                        {React.createElement(categoriesProduits.find(c => c.id === produit.categorie)?.icon, { className: `h-4 w-4 text-${categoriesProduits.find(c => c.id === produit.categorie)?.color}-600` })}
-                      </div>
-                      <div>
-                        <div className="font-medium text-gray-900">{produit.designation}</div>
-                        <div className="text-sm text-gray-600">{produit.categorie} • {produit.unite} • {produit.fournisseur}</div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-medium text-gray-900">{produit.prixUnitaire.toFixed(2)} €</div>
-                      <div className="text-sm text-gray-500">{produit.unite}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-4 pt-4 border-t border-gray-200">
-                <button
-                  onClick={() => {
-                    setShowProduitResults(false);
-                    setShowCreateProduitModal(true);
-                  }}
-                  className="w-full px-4 py-2 border-2 border-dashed border-gray-300 text-gray-600 hover:border-gray-400 hover:text-gray-700 rounded-lg transition-colors flex items-center justify-center gap-2"
-                >
-                  <Plus className="h-4 w-4" />
-                  Créer un nouveau produit
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* Modal de comptabilisation */}
+      {showComptabilisation && (
+        <ExportEcrituresComptables
+          facture={facture}
+          onClose={() => setShowComptabilisation(false)}
+          onExport={(format) => {
+            console.log(`Export ${format} réussi`);
+            setShowComptabilisation(false);
+          }}
+        />
       )}
     </div>
   );

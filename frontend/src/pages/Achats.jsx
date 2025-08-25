@@ -123,15 +123,14 @@ const Achats = () => {
   const fetchFournisseurs = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:3001/api/fournisseurs');
-      if (response.ok) {
-        const data = await response.json();
-        setFournisseurs(data);
-      } else {
-        console.error('Erreur lors du chargement des fournisseurs');
-      }
+      // Utiliser le service local au lieu de l'API
+      const fournisseursService = await import('../services/fournisseursService');
+      const data = fournisseursService.default.obtenirFournisseurs();
+      setFournisseurs(data);
     } catch (error) {
-      console.error('Erreur réseau:', error);
+      console.error('Erreur lors du chargement des fournisseurs:', error);
+      // Utiliser des données par défaut en cas d'erreur
+      setFournisseurs([]);
     } finally {
       setLoading(false);
     }
@@ -139,12 +138,16 @@ const Achats = () => {
 
   const fetchPlanComptable = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/plan-comptable');
-      if (response.ok) {
-        const data = await response.json();
-        setPlanComptable(data);
-        setFilteredPlanComptable(data);
-      }
+      // Utiliser les données par défaut du plan comptable
+      const planComptableDefault = [
+        { numeroCompte: 'F0001', intitule: 'Fournisseurs' },
+        { numeroCompte: 'F0002', intitule: 'Fournisseurs - Sous-traitants' },
+        { numeroCompte: 'F0003', intitule: 'Fournisseurs - Frais de transport' },
+        { numeroCompte: 'F0004', intitule: 'Fournisseurs - Frais de dépôt' },
+        { numeroCompte: 'F0005', intitule: 'Fournisseurs - Frais de douane' },
+      ];
+      setPlanComptable(planComptableDefault);
+      setFilteredPlanComptable(planComptableDefault);
     } catch (error) {
       console.error('Erreur lors du chargement du plan comptable:', error);
     }
@@ -334,18 +337,14 @@ const Achats = () => {
         }))
       };
 
-      console.log('Envoi vers Supabase:', fournisseurData);
+      console.log('Création du fournisseur:', fournisseurData);
 
-      const response = await fetch('http://localhost:3001/api/fournisseurs', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(fournisseurData)
-      });
-
-      if (response.ok) {
-        const nouveauFournisseur = await response.json();
+      try {
+        // Utiliser le service local au lieu de l'API
+        const fournisseursService = await import('../services/fournisseursService');
+        const nouveauFournisseur = fournisseursService.default.creerFournisseur(fournisseurData.fournisseur);
+        
+        // Mettre à jour la liste locale
         setFournisseurs(prev => [...prev, nouveauFournisseur]);
         
         // Générer le prochain code fournisseur
@@ -385,9 +384,9 @@ const Achats = () => {
         setActiveTab('fournisseurs');
         
         // Notification de succès
-        alert(`✅ Fournisseur ${fournisseurData.fournisseur.raisonSociale} créé avec succès dans Supabase !\nCode: ${fournisseurData.fournisseur.codeFournisseur}`);
-      } else {
-        throw new Error('Erreur lors de la création');
+        alert(`✅ Fournisseur ${fournisseurData.fournisseur.raisonSociale} créé avec succès !\nCode: ${fournisseurData.fournisseur.codeFournisseur}`);
+      } catch (error) {
+        throw new Error(`Erreur lors de la création: ${error.message}`);
       }
     } catch (error) {
       console.error('Erreur:', error);
@@ -419,20 +418,17 @@ const Achats = () => {
     setContacts(contacts.filter(contact => contact.id !== id));
   };
 
-  const handleDeleteFournisseur = async (id) => {
+    const handleDeleteFournisseur = async (id) => {
     try {
-      const response = await fetch(`http://localhost:3001/api/fournisseurs/${id}`, {
-        method: 'DELETE'
-      });
-
-      if (response.ok) {
-        setFournisseurs(prev => prev.filter(f => f.id !== id));
-        alert('Fournisseur supprimé avec succès de Supabase !');
-      } else {
-        throw new Error('Erreur lors de la suppression');
-      }
+      // Utiliser le service local au lieu de l'API
+      const fournisseursService = await import('../services/fournisseursService');
+      fournisseursService.default.supprimerFournisseur(id);
+      
+      // Mettre à jour la liste locale
+      setFournisseurs(prev => prev.filter(f => f.id !== id));
+      alert('Fournisseur supprimé avec succès !');
     } catch (error) {
-      console.error('Erreur:', error);
+      console.error('Erreur lors de la suppression:', error);
       alert('Erreur lors de la suppression du fournisseur');
     }
   };

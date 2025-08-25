@@ -21,8 +21,11 @@ import NouvelUtilisateur from './pages/admin/users/NouvelUtilisateur';
 import GestionEntreprises from './pages/GestionEntreprises';
 import Layout from './components/layout/Layout';
 import SidebarTest from './components/layout/SidebarTest';
-import NouvelleFacture from './pages/achats/NouvelleFacture';
+import NouvelleFactureWorkflow from './pages/achats/NouvelleFactureWorkflow';
+import ParametresNumerotation from './pages/ParametresNumerotation';
+import ParametresComptables from './pages/ParametresComptables';
 import './styles/tailwind.css';
+import Comptabilite from './pages/Comptabilite';
 
 const PrivateRoute = ({ children }) => {
   // Temporairement désactivé pour tester Supabase
@@ -50,7 +53,7 @@ const App = () => {
                   <Route path="/achats/demandes-prix" element={<DemandesPrix />} />
                   <Route path="/achats/commandes" element={<Commandes />} />
                   <Route path="/achats/creation-bon-commande" element={<CreationBonCommande />} />
-                  <Route path="/achats/nouvelle-facture" element={<NouvelleFacture />} />
+                  <Route path="/achats/nouvelle-facture" element={<NouvelleFactureWorkflow />} />
                   <Route path="/achats/test-navigation" element={<TestNavigation />} />
                   <Route path="/achats/fournisseurs/nouveau" element={<NouveauFournisseur />} />
                   <Route path="/achats/chantiers/nouveau" element={<NouveauChantier />} />
@@ -66,7 +69,10 @@ const App = () => {
                   <Route path="/admin/users/nouveau" element={<NouvelUtilisateur />} />
                   <Route path="/gestion-entreprises" element={<GestionEntreprises />} />
                   <Route path="/parametres-societe" element={<ParametresSociete />} />
+                  <Route path="/parametres-numerotation" element={<ParametresNumerotation />} />
+                  <Route path="/parametres-comptables" element={<ParametresComptables />} />
                   <Route path="/test-sidebar" element={<SidebarTest />} />
+                  <Route path="/comptabilite" element={<Comptabilite />} />
                 </Routes>
               </Layout>
             </PrivateRoute>

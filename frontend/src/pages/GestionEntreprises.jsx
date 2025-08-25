@@ -16,9 +16,26 @@ const GestionEntreprises = () => {
 
   const fetchCompanies = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/companies');
-      const data = await response.json();
-      setCompanies(data.companies || []);
+      // Utiliser des données locales au lieu de l'API
+      const companiesData = [
+        {
+          id: 1,
+          name: 'GESTALIS SARL',
+          code: 'GESTALIS',
+          address: '123 Rue de la République, 97300 Cayenne',
+          phone: '05 94 30 12 34',
+          email: 'contact@gestalis.gf',
+          siret: '12345678901234',
+          tva: 'FR12345678901',
+          logo: null,
+          branding: {
+            primaryColor: '#3B82F6',
+            secondaryColor: '#10B981',
+            logo: null
+          }
+        }
+      ];
+      setCompanies(companiesData);
     } catch (error) {
       console.error('Erreur lors de la récupération des entreprises:', error);
     } finally {
@@ -28,23 +45,20 @@ const GestionEntreprises = () => {
 
   const handleCreateCompany = async (companyData) => {
     try {
-      const response = await fetch('http://localhost:3001/api/companies', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(companyData),
-      });
-
-      if (response.ok) {
-        const newCompany = await response.json();
-        setCompanies(prev => [...prev, newCompany]);
-        setShowCreateModal(false);
-        alert('Entreprise créée avec succès !');
-      } else {
-        const error = await response.json();
-        alert(`Erreur: ${error.error}`);
-      }
+      // Créer une entreprise locale
+      const newCompany = {
+        ...companyData,
+        id: Date.now(),
+        branding: {
+          primaryColor: '#3B82F6',
+          secondaryColor: '#10B981',
+          logo: null
+        }
+      };
+      
+      setCompanies(prev => [...prev, newCompany]);
+      setShowCreateModal(false);
+      alert('Entreprise créée avec succès !');
     } catch (error) {
       console.error('Erreur lors de la création:', error);
       alert('Erreur lors de la création de l\'entreprise');
@@ -55,28 +69,15 @@ const GestionEntreprises = () => {
     if (!selectedCompany) return;
 
     try {
-      const response = await fetch(`http://localhost:3001/api/companies/${selectedCompany.id}/branding`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(brandingData),
-      });
-
-      if (response.ok) {
-        const updatedBranding = await response.json();
-        setCompanies(prev => prev.map(company => 
-          company.id === selectedCompany.id 
-            ? { ...company, branding: updatedBranding }
-            : company
-        ));
-        setShowBrandingModal(false);
-        setSelectedCompany(null);
-        alert('Branding mis à jour avec succès !');
-      } else {
-        const error = await response.json();
-        alert(`Erreur: ${error.error}`);
-      }
+      // Mettre à jour le branding localement
+      setCompanies(prev => prev.map(company => 
+        company.id === selectedCompany.id 
+          ? { ...company, branding: brandingData }
+          : company
+      ));
+      setShowBrandingModal(false);
+      setSelectedCompany(null);
+      alert('Branding mis à jour avec succès !');
     } catch (error) {
       console.error('Erreur lors de la mise à jour du branding:', error);
       alert('Erreur lors de la mise à jour du branding');
