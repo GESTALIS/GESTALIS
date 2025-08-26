@@ -3,11 +3,11 @@
 /* 1) Import Inter Variable (police unique pour UI + documents) */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
-/* 2) Variables marque PRO 97 */
+/* 2) Variables marque GESTALIS */
 :root {
-  --brand-1: #0B3D91;      /* Bleu PRO 97 principal */
-  --brand-2: #F89032;      /* Orange PRO 97 */
-  --brand-3: #BA8A36;      /* Doré PRO 97 (hover) */
+  --brand-1: #1B275A;      /* Bleu GESTALIS principal */
+  --brand-2: #06B6D4;      /* Bleu turquoise GESTALIS */
+  --brand-3: #3C7DD9;      /* Bleu clair GESTALIS (hover) */
   --danger: #D92D20;        /* Rouge bouton déconnexion */
   --bg: #F5F7FA;           /* Fond principal */
   --text: #0F172A;         /* Texte principal */

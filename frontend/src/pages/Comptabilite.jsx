@@ -238,7 +238,7 @@ const Comptabilite = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
+    <div className="min-h-screen bg-[#1B275A]">
       {/* En-tête */}
       <div className="bg-gradient-to-r from-blue-500 to-teal-600 px-6 py-8 text-white">
         <div className="max-w-7xl mx-auto">

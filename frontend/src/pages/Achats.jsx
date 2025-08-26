@@ -559,21 +559,24 @@ const Achats = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
-      {/* AchatsBanner avec le nouveau système typographique unifié */}
-      <div className="px-6 py-8">
-        <div className="max-w-7xl mx-auto">
-          <AchatsBanner />
+      {/* AchatsBanner STICKY - reste fixé en haut */}
+      <div className="sticky top-0 z-30 bg-white shadow-sm border-b border-gray-200">
+        <div className="px-6 py-4">
+          <div className="max-w-7xl mx-auto">
+            <AchatsBanner />
+          </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Navigation par onglets */}
-        <div className="mb-8">
-          <nav className="flex space-x-1 bg-white p-1 rounded-2xl shadow-sm border border-gray-200">
+      {/* Navigation par onglets STICKY - reste sous le banner */}
+      <div className="sticky top-[120px] z-20 bg-white/95 backdrop-blur-sm border-b border-gray-200 pb-4">
+        <div className="max-w-7xl mx-auto px-6 pt-4">
+          <nav className="flex space-x-1 bg-[#1B275A] p-1 rounded-2xl shadow-sm border border-gray-200">
             {[
               { id: 'overview', label: 'Vue d\'ensemble', icon: Target },
               { id: 'fournisseurs', label: 'Fournisseurs', icon: Building2 },
-              { id: 'commandes', label: 'Commandes', icon: ShoppingCart },
+              { id: 'demandes-prix', label: 'Demandes de prix', icon: ClipboardList },
+              { id: 'commandes', label: 'Bons de commande', icon: ShoppingCart },
               { id: 'factures', label: 'Factures', icon: Receipt },
               { id: 'analytics', label: 'Analytics', icon: TrendingUp }
             ].map((tab) => (
@@ -583,7 +586,7 @@ const Achats = () => {
                 className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-200 ${
                   activeTab === tab.id
                     ? 'bg-gradient-to-r from-blue-500 to-teal-600 text-white shadow-lg'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                    : 'text-white hover:text-blue-100 hover:bg-white/20'
                 }`}
               >
                 <tab.icon className="h-5 w-5" />
@@ -592,7 +595,10 @@ const Achats = () => {
             ))}
           </nav>
         </div>
+      </div>
 
+      {/* Contenu principal avec padding-top pour compenser les éléments sticky */}
+      <div className="max-w-7xl mx-auto px-6 py-8 pt-4">
         {/* Statistiques - UNIQUEMENT dans Vue d'ensemble */}
         {activeTab === 'overview' && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -716,7 +722,30 @@ const Achats = () => {
           </div>
         )}
 
-        {/* Onglet Fournisseurs */}
+        {activeTab === 'demandes-prix' && (
+          <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">
+            <ClipboardList className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-xl font-medium text-gray-900 mb-2">Demandes de prix</h3>
+            <p className="text-gray-500">Fonctionnalité à coder beaucoup plus tard</p>
+          </div>
+        )}
+
+        {activeTab === 'commandes' && (
+          <Commandes />
+        )}
+
+        {activeTab === 'factures' && (
+          <Factures />
+        )}
+
+        {activeTab === 'analytics' && (
+          <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">
+            <TrendingUp className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-xl font-medium text-gray-900 mb-2">Module Analytics</h3>
+            <p className="text-gray-500">Fonctionnalité en cours de développement</p>
+          </div>
+        )}
+
         {activeTab === 'fournisseurs' && (
           <div className="space-y-6">
             {/* Barre de recherche et filtres */}
@@ -759,214 +788,90 @@ const Achats = () => {
               </GestalisCardContent>
             </GestalisCard>
 
-                         {/* Barre de sélection multiple */}
-             {filteredFournisseurs.length > 0 && (
-               <GestalisCard className="bg-white border-0 shadow-sm">
-                 <GestalisCardContent className="p-4">
-                   <div className="flex items-center justify-between">
-                     <div className="flex items-center gap-4">
-                       <label className="flex items-center gap-2">
-                         <input
-                           type="checkbox"
-                           checked={selectedFournisseurs.length === filteredFournisseurs.length && filteredFournisseurs.length > 0}
-                           onChange={handleSelectAllFournisseurs}
-                           className="rounded border-gray-300"
-                         />
-                         <span className="text-sm font-medium text-gray-700">
-                           {selectedFournisseurs.length === 0 
-                             ? 'Sélectionner tout' 
-                             : `${selectedFournisseurs.length} sur ${filteredFournisseurs.length} sélectionné(s)`
-                           }
-                         </span>
-                       </label>
-                     </div>
-                     
-                     {selectedFournisseurs.length > 0 && (
-                       <div className="flex items-center gap-3">
-                         <span className="text-sm text-gray-600">
-                           {selectedFournisseurs.length} fournisseur(s) sélectionné(s)
-                         </span>
-                         <GestalisButton 
-                           variant="danger" 
-                           size="sm"
-                           onClick={handleDeleteBulkFournisseurs}
-                           className="bg-red-600 hover:bg-red-700 text-white"
-                         >
-                           <Trash2 className="h-4 w-4 mr-2" />
-                           Supprimer la sélection
-                         </GestalisButton>
-                       </div>
-                     )}
-                   </div>
-                 </GestalisCardContent>
-               </GestalisCard>
-             )}
-
-             {/* Liste des fournisseurs */}
-             {loading ? (
-               <div className="flex items-center justify-center h-64">
-                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-               </div>
-             ) : (
-               <div className="grid gap-4">
-                {filteredFournisseurs.length === 0 ? (
-                  <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">
-                    <Building2 className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-xl font-medium text-gray-900 mb-2">Aucun fournisseur trouvé</h3>
-                    <p className="text-gray-500 mb-6">
-                      {searchTerm || selectedStatus !== 'all' 
-                        ? 'Essayez de modifier vos critères de recherche'
-                        : 'Commencez par ajouter votre premier fournisseur'
-                      }
-                    </p>
-                    {!searchTerm && selectedStatus === 'all' && (
-                      <GestalisButton 
-                        onClick={() => setShowCreateModal(true)}
-                        className="bg-gradient-to-r from-blue-500 to-teal-600 hover:from-blue-600 hover:to-teal-700 text-white"
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Ajouter un fournisseur
-                      </GestalisButton>
-                    )}
-                  </div>
-                ) : (
-                                     filteredFournisseurs.map((fournisseur) => (
-                     <GestalisCard key={fournisseur.id} className="hover:shadow-md transition-all duration-300 border-0 bg-white">
-                       <GestalisCardContent className="p-6">
-                         <div className="flex justify-between items-start">
-                           <div className="flex items-center gap-3">
-                             <input
-                               type="checkbox"
-                               checked={selectedFournisseurs.includes(fournisseur.id)}
-                               onChange={() => handleSelectFournisseur(fournisseur.id)}
-                               className="rounded border-gray-300"
-                             />
-                           </div>
-                           <div className="flex-1">
-                            {/* En-tête du fournisseur */}
-                            <div className="flex items-center gap-3 mb-4">
-                              <div className="flex items-center gap-2">
-                                <h3 className="text-xl font-semibold text-gray-900">{fournisseur.raisonSociale}</h3>
-                                <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(fournisseur.statut)}`}>
-                                  {getStatusText(fournisseur.statut)}
-                                </span>
-                                {fournisseur.estSousTraitant && (
-                                  <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                    Sous-traitant
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-
-                            {/* Informations principales */}
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                              <div className="flex items-center gap-2">
-                                <Building2 className="h-4 w-4 text-gray-400" />
-                                <span className="text-sm text-gray-600">{fournisseur.codeFournisseur}</span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <CreditCard className="h-4 w-4 text-gray-400" />
-                                <span className="text-sm text-gray-600">{fournisseur.compteComptable}</span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <Shield className="h-4 w-4 text-gray-400" />
-                                <span className="text-sm text-gray-600">{fournisseur.siret}</span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <MapPin className="h-4 w-4 text-gray-400" />
-                                <span className="text-sm text-gray-600">{fournisseur.adresseSiege?.split(',')[0]}</span>
-                              </div>
-                            </div>
-
-                            {/* Contacts et documents */}
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                              <div className="flex items-center gap-2">
-                                <Users className="h-4 w-4 text-gray-400" />
-                                <span className="text-sm text-gray-600">{fournisseur.contacts?.length || 0} contact(s)</span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <DocumentIcon className="h-4 w-4 text-gray-400" />
-                                <span className="text-sm text-gray-600">{fournisseur.documents?.length || 0} document(s)</span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <Star className="h-4 w-4 text-gray-400" />
-                                <span className="text-sm text-gray-600">{fournisseur.scoreQualite || 0}/5</span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <DollarSign className="h-4 w-4 text-gray-400" />
-                                <span className="text-sm text-gray-600">€{fournisseur.totalAchats?.toLocaleString() || 0}</span>
-                              </div>
-                            </div>
-
-                            {/* Alertes documents */}
-                            {fournisseur.documents?.some(doc => doc.statut === 'A_RENOUVELER' || doc.statut === 'EXPIRE') && (
-                              <div className="flex items-center gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                                <AlertTriangle className="h-4 w-4 text-yellow-600" />
-                                <span className="text-sm text-yellow-800">
-                                  {fournisseur.documents.filter(doc => doc.statut === 'A_RENOUVELER' || doc.statut === 'EXPIRE').length} document(s) à renouveler
-                                </span>
-                              </div>
-                            )}
+            {/* Liste des fournisseurs */}
+            {loading ? (
+              <div className="flex items-center justify-center h-64">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+              </div>
+            ) : fournisseurs.length === 0 ? (
+              <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">
+                <Building2 className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-xl font-medium text-gray-900 mb-2">Aucun fournisseur trouvé</h3>
+                <p className="text-gray-500 mb-6">Commencez par ajouter votre premier fournisseur</p>
+                <GestalisButton 
+                  onClick={() => setShowCreateModal(true)}
+                  className="bg-gradient-to-r from-blue-500 to-teal-600 hover:from-blue-600 hover:to-teal-700 text-white"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Ajouter un fournisseur
+                </GestalisButton>
+              </div>
+            ) : (
+              <div className="grid gap-4">
+                {fournisseurs.map((fournisseur) => (
+                  <GestalisCard key={fournisseur.id} className="hover:shadow-md transition-all duration-300 border-0 bg-white">
+                    <GestalisCardContent className="p-6">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-4">
+                            <h3 className="text-xl font-semibold text-gray-900">{fournisseur.raisonSociale}</h3>
+                            <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              Actif
+                            </span>
                           </div>
-
-                                                     {/* Actions */}
-                           <div className="flex items-center gap-2 ml-4">
-                             <GestalisButton 
-                               variant="outline" 
-                               size="sm" 
-                               onClick={() => handleViewFournisseur(fournisseur)}
-                               className="border-blue-500 text-blue-600 hover:bg-blue-50"
-                               title="Visualiser"
-                             >
-                               <Eye className="h-4 w-4" />
-                             </GestalisButton>
-                             <GestalisButton 
-                               variant="outline" 
-                               size="sm"
-                               onClick={() => handleEditFournisseur(fournisseur)}
-                               className="border-green-500 text-green-600 hover:bg-green-50"
-                               title="Modifier"
-                             >
-                               <Edit className="h-4 w-4" />
-                             </GestalisButton>
-                             <GestalisButton 
-                               variant="danger" 
-                               size="sm" 
-                               onClick={() => handleDeleteFournisseur(fournisseur.id)}
-                               className="bg-red-600 hover:bg-red-700 text-white"
-                               title="Supprimer"
-                             >
-                               <Trash2 className="h-4 w-4" />
-                             </GestalisButton>
-                           </div>
+                          
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div className="flex items-center gap-2">
+                              <Building2 className="h-4 w-4 text-gray-400" />
+                              <span className="text-sm text-gray-600">{fournisseur.codeFournisseur}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Shield className="h-4 w-4 text-gray-400" />
+                              <span className="text-sm text-gray-600">{fournisseur.siret}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <MapPin className="h-4 w-4 text-gray-400" />
+                              <span className="text-sm text-gray-600">{fournisseur.adresseSiege?.split(',')[0] || 'N/A'}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <CreditCard className="h-4 w-4 text-gray-400" />
+                              <span className="text-sm text-gray-600">{fournisseur.compteComptable || 'N/A'}</span>
+                            </div>
+                          </div>
                         </div>
-                      </GestalisCardContent>
-                    </GestalisCard>
-                  ))
-                )}
+                        
+                        <div className="flex items-center gap-2 ml-4">
+                          <GestalisButton 
+                            variant="outline" 
+                            size="sm" 
+                            className="border-blue-500 text-blue-600 hover:bg-blue-50"
+                            title="Visualiser"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </GestalisButton>
+                          <GestalisButton 
+                            variant="outline" 
+                            size="sm"
+                            className="border-green-500 text-green-600 hover:bg-green-50"
+                            title="Modifier"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </GestalisButton>
+                          <GestalisButton 
+                            variant="danger" 
+                            size="sm" 
+                            className="bg-red-600 hover:bg-red-700 text-white"
+                            title="Supprimer"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </GestalisButton>
+                        </div>
+                      </div>
+                    </GestalisCardContent>
+                  </GestalisCard>
+                ))}
               </div>
             )}
-          </div>
-        )}
-
-        {/* Autres onglets (Commandes, Factures, Analytics) - SANS les statistiques */}
-
-
-        {activeTab === 'commandes' && (
-          <Commandes />
-        )}
-
-
-
-        {activeTab === 'factures' && (
-          <Factures />
-        )}
-
-        {activeTab === 'analytics' && (
-          <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">
-            <TrendingUp className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-medium text-gray-900 mb-2">Module Analytics</h3>
-            <p className="text-gray-500">Fonctionnalité en cours de développement</p>
           </div>
         )}
       </div>
@@ -1638,6 +1543,15 @@ const Achats = () => {
               {/* Navigation et actions */}
               <div className="flex justify-between items-center pt-6 border-t border-gray-200 mt-8">
                 <div className="flex gap-3">
+                  {/* Bouton Annuler - NOUVEAU */}
+                  <button
+                    onClick={() => setShowCreateModal(false)}
+                    className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors font-medium flex items-center gap-2"
+                  >
+                    <X className="h-4 w-4" />
+                    Annuler
+                  </button>
+
                   {activeCreateTab !== 'coordonnees' && (
                     <button
                       onClick={() => {
@@ -1652,7 +1566,7 @@ const Achats = () => {
                       Précédent
                     </button>
                   )}
-          </div>
+                </div>
 
                 <div className="flex gap-3">
                   {activeCreateTab !== 'compta' && (

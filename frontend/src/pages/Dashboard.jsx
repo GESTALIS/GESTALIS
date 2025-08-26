@@ -382,7 +382,7 @@ const Dashboard = () => {
           <h2 className="text-2xl font-bold text-gray-900">Actions rapides</h2>
           
           <div className="flex flex-wrap justify-center gap-4">
-            <button className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-teal-600 text-white rounded-lg hover:from-blue-600 hover:to-teal-700 transition-all duration-300 hover:scale-105">
+            <button className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#1B275A] to-[#06B6D4] text-white rounded-lg hover:from-[#3C7DD9] hover:to-[#0891B2] transition-all duration-300 hover:scale-105">
               <Plus className="h-5 w-5" />
               Nouveau chantier
             </button>

@@ -650,29 +650,77 @@ const CreationBonCommande = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
-      {/* En-tête */}
-      <div className="bg-gradient-to-r from-blue-500 to-teal-600 px-6 py-8 text-white">
+      {/* En-tête STICKY - reste fixé en haut */}
+      <div className="sticky top-0 z-30 bg-gradient-to-r from-blue-500 to-teal-600 px-6 py-8 text-white shadow-lg">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <FileText className="h-8 w-8" />
               <div>
-                <h1 className="text-3xl font-bold text-white mb-2">Création d'un Bon de Commande</h1>
+                <h1 className="text-3xl font-bold text-white mb-2">
+                  Création d'un Bon de Commande
+                  {bonCommande.numeroCommande && (
+                    <span className="text-blue-100 font-normal text-xl ml-2">
+                      - {bonCommande.numeroCommande}
+                    </span>
+                  )}
+                </h1>
                 <p className="text-blue-100 text-lg">Nouvelle demande d'articles</p>
               </div>
             </div>
-            <button
-              onClick={() => navigate('/achats/commandes')}
-              className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg transition-colors"
-            >
-              <ArrowLeft className="h-5 w-5" />
-              Retour aux commandes
-            </button>
+            
+            {/* Actions intégrées dans la bannière */}
+            <div className="flex items-center gap-4">
+              {/* Actions avec icônes COLORÉES */}
+              <div className="flex items-center gap-3 mr-4">
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="flex items-center gap-2 px-3 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg transition-colors disabled:opacity-50"
+                  title="Sauvegarder"
+                >
+                  {saving ? (
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  ) : (
+                    <Save className="h-5 w-5 text-green-400" />
+                  )}
+                  <span className="hidden sm:inline">Sauvegarder</span>
+                </button>
+
+                <button
+                  onClick={handleSendEmail}
+                  className="flex items-center gap-2 px-3 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg transition-colors"
+                  title="Envoyer par email"
+                >
+                  <Send className="h-5 w-5 text-blue-400" />
+                  <span className="hidden sm:inline">Envoyer</span>
+                </button>
+
+                <button
+                  onClick={handleDownloadPDF}
+                  className="flex items-center gap-2 px-3 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg transition-colors"
+                  title="Télécharger PDF"
+                >
+                  <Download className="h-5 w-5 text-orange-400" />
+                  <span className="hidden sm:inline">PDF</span>
+                </button>
+              </div>
+
+              {/* Bouton Retour */}
+              <button
+                onClick={() => navigate('/achats?tab=commandes')}
+                className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg transition-colors"
+              >
+                <ArrowLeft className="h-5 w-5" />
+                Retour aux BC
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      {/* Contenu principal avec padding-top pour compenser l'en-tête sticky */}
+      <div className="max-w-7xl mx-auto px-6 py-8 pt-4">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Colonne principale */}
           <div className="lg:col-span-2 space-y-6">
@@ -1215,51 +1263,7 @@ const CreationBonCommande = () => {
 
           {/* Colonne latérale */}
           <div className="space-y-6">
-            {/* Actions */}
-            <GestalisCard>
-              <GestalisCardHeader>
-                <GestalisCardTitle className="flex items-center gap-2">
-                  <Save className="h-5 w-5" />
-                  Actions
-                </GestalisCardTitle>
-              </GestalisCardHeader>
-              <GestalisCardContent className="space-y-3">
-                <GestalisButton
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="w-full py-3"
-                >
-                  {saving ? (
-                    <>
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                      Sauvegarde...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="h-5 w-5 mr-2" />
-                      Sauvegarder
-                    </>
-                  )}
-                </GestalisButton>
-
-                <button 
-                  onClick={handleSendEmail}
-                  className="w-full py-3 px-4 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
-                >
-                  <Send className="h-5 w-5" />
-                  Envoyer par email
-                </button>
-
-                <button 
-                  onClick={handleDownloadPDF}
-                  className="w-full py-3 px-4 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
-                >
-                  <Download className="h-5 w-5" />
-                  Télécharger PDF
-                </button>
-              </GestalisCardContent>
-            </GestalisCard>
-
+            
             {/* Informations fournisseur */}
             {bonCommande.fournisseurId && (
               <GestalisCard>

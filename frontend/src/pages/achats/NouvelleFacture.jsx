@@ -470,42 +470,69 @@ const NouvelleFacture = ({ parametresEtape1, onRetourEtape1 }) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
-      {/* En-tête */}
-      <div className="bg-gradient-to-r from-blue-500 to-teal-600 px-6 py-8 text-white">
+      {/* En-tête STICKY avec actions intégrées */}
+      <div className="sticky top-0 z-30 bg-gradient-to-r from-blue-500 to-teal-600 px-6 py-8 text-white shadow-lg">
         <div className="max-w-7xl mx-auto">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={onRetourEtape1 || handleCancel}
-              className="text-white hover:text-blue-100 transition-colors"
-            >
-              <ArrowLeft className="h-6 w-6" />
-            </button>
-            <FileText className="h-8 w-8" />
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold text-white mb-2">
-                {parametresEtape1 ? 'Nouvelle Facture' : 'Nouvelle Facture'}
-              </h1>
-              <p className="text-blue-100 text-lg">
-                {parametresEtape1 
-                  ? `Étape 2 : ${getTypePieceLabel()} - ${facture.periode}`
-                  : 'Créer une nouvelle facture fournisseur'
-                }
-              </p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <FileText className="h-8 w-8" />
+              <div>
+                <h1 className="text-3xl font-bold text-white mb-2">
+                  Nouvelle Facture
+                  {facture.numeroPiece && (
+                    <span className="text-blue-100 font-normal text-xl ml-2">
+                      - {facture.numeroPiece}
+                    </span>
+                  )}
+                </h1>
+                <p className="text-blue-100 text-lg">
+                  {parametresEtape1 
+                    ? `Étape 2 : ${getTypePieceLabel()} - ${facture.periode}`
+                    : 'Créer une nouvelle facture fournisseur'
+                  }
+                </p>
+              </div>
             </div>
             
-            {/* Informations de l'étape 1 */}
-            {parametresEtape1 && (
-              <div className="text-right">
-                <div className="text-sm text-blue-100 mb-1">Type de document</div>
-                <div className="text-lg font-semibold">{getTypePieceLabel()}</div>
-                <div className="text-sm text-blue-100">{facture.periode}</div>
+            {/* Actions intégrées */}
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3 mr-4">
+                <button
+                  onClick={() => setShowParametresDecimales(true)}
+                  className="flex items-center gap-2 px-3 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg transition-colors"
+                  title="Paramètres décimales"
+                >
+                  <Calculator className="h-5 w-5 text-orange-400" />
+                  <span className="hidden sm:inline">Décimales</span>
+                </button>
+
+                {/* Bouton Retour étape 1 si disponible */}
+                {onRetourEtape1 && (
+                  <button
+                    onClick={onRetourEtape1}
+                    className="flex items-center gap-2 px-3 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg transition-colors"
+                    title="Retour à l'étape 1"
+                  >
+                    <ArrowLeft className="h-5 w-5 text-blue-400" />
+                    <span className="hidden sm:inline">Retour à l'étape 1</span>
+                  </button>
+                )}
               </div>
-            )}
+
+              <button
+                onClick={() => window.location.href = '/achats?tab=factures'}
+                className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg transition-colors"
+              >
+                <ArrowLeft className="h-5 w-5" />
+                Retour aux Factures
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      {/* Contenu principal */}
+      <div className="max-w-7xl mx-auto px-6 py-8 pt-4">
         <div className="space-y-6">
           
           {/* Actions rapides */}
@@ -528,33 +555,12 @@ const NouvelleFacture = ({ parametresEtape1, onRetourEtape1 }) => {
             </Button>
           </div>
 
-          {/* En-tête de la facture */}
+          {/* En-tête de la facture - SANS LES BOUTONS EN DOUBLON */}
           <GestalisCard>
             <GestalisCardHeader>
-              <div className="flex items-center justify-between">
-                <GestalisCardTitle>
-                  Étape 2: {parametresEtape1.typePiece === 'FACTURE_ACHAT' ? 'Facture d\'achat' : 'Avoir fournisseur'} - {parametresEtape1.periode}
-                </GestalisCardTitle>
-                
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setShowParametresDecimales(true)}
-                    className="px-3 py-2 text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50 flex items-center gap-2 text-sm"
-                    title="Paramètres des décimales"
-                  >
-                    <Settings className="h-4 w-4" />
-                    Décimales
-                  </button>
-                  
-                  <button
-                    onClick={onRetourEtape1}
-                    className="px-4 py-2 text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50 flex items-center gap-2"
-                  >
-                    <ArrowLeft className="h-4 w-4" />
-                    Retour à l'étape 1
-                  </button>
-                </div>
-              </div>
+              <GestalisCardTitle>
+                Étape 2: {parametresEtape1.typePiece === 'FACTURE_ACHAT' ? 'Facture d\'achat' : 'Avoir fournisseur'} - {parametresEtape1.periode}
+              </GestalisCardTitle>
             </GestalisCardHeader>
             <GestalisCardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

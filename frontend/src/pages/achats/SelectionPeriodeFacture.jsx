@@ -121,28 +121,32 @@ const SelectionPeriodeFacture = ({ onContinue, onCancel }) => {
   const typeSelectionne = typesPieces.find(t => t.key === selection.typePiece);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
-      {/* En-tête */}
-      <div className="bg-gradient-to-r from-blue-500 to-teal-600 px-6 py-8 text-white">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50"> {/* Supprimer le fond bleu */}
+      {/* En-tête STICKY */}
+      <div className="sticky top-0 z-30 bg-gradient-to-r from-blue-500 to-teal-600 px-6 py-8 text-white shadow-lg">
         <div className="max-w-7xl mx-auto">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={onCancel}
-              className="text-white hover:text-blue-100 transition-colors"
-            >
-              <ArrowLeft className="h-6 w-6" />
-            </button>
-            <FileText className="h-8 w-8" />
-            <div>
-              <h1 className="text-3xl font-bold text-white mb-2">Nouvelle Facture</h1>
-              <p className="text-blue-100 text-lg">Étape 1 : Sélection de la période</p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <FileText className="h-8 w-8" />
+              <div>
+                <h1 className="text-3xl font-bold text-white mb-2">Nouvelle Facture</h1>
+                <p className="text-blue-100 text-lg">Étape 1 : Sélection de la période</p>
+              </div>
             </div>
+            <button
+              onClick={() => window.location.href = '/achats?tab=factures'}
+              className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg transition-colors"
+            >
+              <ArrowLeft className="h-5 w-5" />
+              Retour aux Factures
+            </button>
           </div>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-6 py-8">
-        <div className="space-y-6">
+      {/* Contenu principal */}
+      <div className="max-w-4xl mx-auto px-6 py-8 pt-4">
+        <div className="bg-white rounded-xl shadow-lg p-6 space-y-6">
           
           {/* Sélection du type de pièce */}
           <GestalisCard>

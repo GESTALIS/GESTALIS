@@ -29,21 +29,24 @@ import {
   AlertCircle,
   Info,
   History,
-  ArrowRight
+  ArrowRight,
+  Target,
+  ClipboardList
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
-import { gradients, moduleGradient } from '../../theme/gradients.js';
 import { GestalisCard, GestalisCardContent, GestalisCardHeader, GestalisCardTitle } from '../ui/GestalisCard';
 import { Button } from '../ui/button';
 import comptabiliteService from '../../services/comptabiliteService';
 
-// Structure des pôles avec les nouvelles couleurs professionnelles
+// Structure des pôles avec la palette GESTALIS unifiée
 const poles = [
   {
     id: 'dashboard',
     name: 'TABLEAU DE BORD',
     icon: Home,
-    color: gradients.brand,
+    color: 'gestalis-gray',
+    bgColor: 'bg-[#9CA3AF]',
+    hoverColor: 'hover:bg-[#6B7280]',
     route: '/dashboard',
     subModules: [
       { name: 'Vue d\'ensemble', route: '/dashboard' },
@@ -51,10 +54,43 @@ const poles = [
     ]
   },
   {
+    id: 'etude-prix',
+    name: 'ÉTUDE DE PRIX',
+    icon: Calculator,
+    color: 'gestalis-accent-green',
+    bgColor: 'bg-[#4CAF50]',
+    hoverColor: 'hover:bg-[#3C7DD9]',
+    route: '/etude-prix',
+    subModules: [
+      { name: 'Nouvelle étude', route: '/etude-prix/nouvelle' },
+      { name: 'Études en cours', route: '/etude-prix/encours' },
+      { name: 'Historique', route: '/etude-prix/historique' },
+      { name: 'Modèles', route: '/etude-prix/modeles' }
+    ]
+  },
+  {
+    id: 'vente',
+    name: 'VENTE',
+    icon: FileText,
+    color: 'gestalis-accent-green',
+    bgColor: 'bg-[#4CAF50]',
+    hoverColor: 'hover:bg-[#3C7DD9]',
+    route: '/vente',
+    subModules: [
+      { name: 'Devis', route: '/vente/devis' },
+      { name: 'Factures', route: '/vente/factures' },
+      { name: 'Suivi commercial', route: '/vente/suivi' },
+      { name: 'Relances', route: '/vente/relances' },
+      { name: 'Rapports', route: '/vente/rapports' }
+    ]
+  },
+  {
     id: 'chantiers',
     name: 'CHANTIERS',
     icon: Building2,
-    color: gradients.ops,
+    color: 'gestalis-accent-green',
+    bgColor: 'bg-[#4CAF50]',
+    hoverColor: 'hover:bg-[#3C7DD9]',
     route: '/chantiers',
     subModules: [
       { name: 'Gestion chantiers', route: '/chantiers' },
@@ -66,139 +102,149 @@ const poles = [
     ]
   },
   {
-    id: 'vente',
-    name: 'VENTE',
-    icon: FileText,
-    color: gradients.sales,
-    route: '/vente',
-    subModules: [
-      { name: 'Devis', route: '/vente/devis' },
-      { name: 'Factures', route: '/vente/factures' },
-      { name: 'Suivi commercial', route: '/vente/suivi' },
-      { name: 'Relances', route: '/vente/relances' },
-      { name: 'Rapports', route: '/vente/rapports' }
-    ]
-  },
-  {
     id: 'achats',
     name: 'ACHAT',
     icon: ShoppingCart,
-    color: gradients.ops,
+    color: 'gestalis-primary-light',
+    bgColor: 'bg-[#3C7DD9]',
+    hoverColor: 'hover:bg-[#1B275A]',
     route: '/achats',
     subModules: [
       { name: 'Vue d\'ensemble', route: '/achats' },
       { name: 'Fournisseurs', route: '/achats?tab=fournisseurs' },
-      { name: 'Bons de commande', route: '/achats?tab=commandes' },
-      { name: 'Création bon de commande', route: '/achats/creation-bon-commande' },
       { name: 'Demandes de prix', route: '/achats/demandes-prix' },
-      { name: 'Factures d\'achat', route: '/achats?tab=factures' },
+      { name: 'Bons de commande', route: '/achats?tab=commandes' },
+      { name: 'Factures', route: '/achats?tab=factures' },
       { name: 'Analytics', route: '/achats?tab=analytics' }
     ]
   },
   {
-    id: 'commercial',
-    name: 'GESTION COMMERCIALE',
-    icon: TrendingUp,
-    color: gradients.sales,
-    route: '/commercial',
+    id: 'cession-creance',
+    name: 'CESSION DE CRÉANCE',
+    icon: FileSpreadsheet,
+    color: 'gestalis-primary-light',
+    bgColor: 'bg-[#3C7DD9]',
+    hoverColor: 'hover:bg-[#1B275A]',
+    route: '/cession-creance',
     subModules: [
-      { name: 'Analyse de rentabilité', route: '/commercial/rentabilite' },
-      { name: 'Calcul prix de revient', route: '/commercial/prix-revient' },
-      { name: 'Tableaux de bord', route: '/commercial/dashboard' },
-      { name: 'Équilibre achat/vente', route: '/commercial/equilibre' },
-      { name: 'KPI commerciaux', route: '/commercial/kpis' }
+      { name: 'Nouvelle cession', route: '/cession-creance/nouvelle' },
+      { name: 'Cessions en cours', route: '/cession-creance/encours' },
+      { name: 'Historique', route: '/cession-creance/historique' },
+      { name: 'Rapports', route: '/cession-creance/rapports' }
+    ]
+  },
+  {
+    id: 'sous-traitant',
+    name: 'SOUS-TRAITANT',
+    icon: Users,
+    color: 'gestalis-primary-light',
+    bgColor: 'bg-[#3C7DD9]',
+    hoverColor: 'hover:bg-[#1B275A]',
+    route: '/sous-traitant',
+    subModules: [
+      { name: 'Gestion sous-traitants', route: '/sous-traitant' },
+      { name: 'Contrats', route: '/sous-traitant/contrats' },
+      { name: 'Suivi travaux', route: '/sous-traitant/suivi' },
+      { name: 'Facturation', route: '/sous-traitant/facturation' }
     ]
   },
   {
     id: 'tresorerie',
-    name: 'RÈGLEMENTS & TRÉSORERIE',
+    name: 'TRÉSORERIE',
     icon: CreditCard,
-    color: gradients.finance,
+    color: 'gestalis-accent-orange',
+    bgColor: 'bg-[#F8A23B]',
+    hoverColor: 'hover:bg-[#E63946]',
     route: '/tresorerie',
     subModules: [
-      { name: 'Import bancaire', route: '/tresorerie/import' },
-      { name: 'Lettrage auto/manuel', route: '/tresorerie/lettrage' },
-      { name: 'Gestion trésorerie', route: '/tresorerie/gestion' },
-      { name: 'Cash-flow prévisionnel', route: '/tresorerie/cashflow' },
-      { name: 'Alertes financières', route: '/tresorerie/alertes' },
-      { name: 'Gestion avoirs', route: '/tresorerie/avoirs' }
+      { name: 'Comptes bancaires', route: '/tresorerie/comptes' },
+      { name: 'Mouvements', route: '/tresorerie/mouvements' },
+      { name: 'Prévisions', route: '/tresorerie/previsions' },
+      { name: 'Rapprochements', route: '/tresorerie/rapprochements' }
     ]
   },
   {
-    id: 'tiers',
-    name: 'TIERS',
-    icon: Users,
-    color: gradients.sales,
-    route: '/tiers',
+    id: 'logistique',
+    name: 'LOGISTIQUE',
+    icon: Package,
+    color: 'gestalis-accent-orange',
+    bgColor: 'bg-[#F8A23B]',
+    hoverColor: 'hover:bg-[#E63946]',
+    route: '/logistique',
     subModules: [
-      { name: 'Fiches complètes', route: '/tiers/fiches' },
-      { name: 'Synthèses financières', route: '/tiers/syntheses' },
-      { name: 'Communication intégrée', route: '/tiers/communication' },
-      { name: 'Signature électronique', route: '/tiers/signature' },
-      { name: 'Historique relationnel', route: '/tiers/historique' },
-      { name: 'Gestion avoirs', route: '/tiers/avoirs' }
+      { name: 'Stock', route: '/logistique/stock' },
+      { name: 'Entrées', route: '/logistique/entrees' },
+      { name: 'Sorties', route: '/logistique/sorties' },
+      { name: 'Inventaires', route: '/logistique/inventaires' },
+      { name: 'Transports', route: '/logistique/transports' }
     ]
   },
   {
     id: 'rh',
     name: 'RESSOURCES HUMAINES',
     icon: UserCheck,
-    color: gradients.brand,
+    color: 'gestalis-accent-orange',
+    bgColor: 'bg-[#F8A23B]',
+    hoverColor: 'hover:bg-[#E63946]',
     route: '/rh',
     subModules: [
-      { name: 'Fiches salariés', route: '/rh/fiches' },
-      { name: 'Planning & affectations', route: '/rh/planning' },
-      { name: 'Masse salariale', route: '/rh/masse-salariale' },
-      { name: 'Gestion véhicules', route: '/rh/vehicules' },
-      { name: 'Suivi des heures', route: '/rh/heures' }
+      { name: 'Employés', route: '/rh/employes' },
+      { name: 'Congés', route: '/rh/conges' },
+      { name: 'Formations', route: '/rh/formations' },
+      { name: 'Paie', route: '/rh/paie' },
+      { name: 'Planning', route: '/rh/planning' }
     ]
   },
   {
     id: 'analyse',
-    name: 'ANALYSE & REPORTING',
+    name: 'ANALYSE & RAPPORTS',
     icon: BarChart3,
-    color: gradients.finance,
+    color: 'gestalis-accent-orange',
+    bgColor: 'bg-[#F8A23B]',
+    hoverColor: 'hover:bg-[#E63946]',
     route: '/analyse',
     subModules: [
-      { name: 'KPI personnalisés', route: '/analyse/kpis' },
-      { name: 'Tableaux de bord', route: '/analyse/dashboard' },
-      { name: 'Rapports automatisés', route: '/analyse/rapports' },
-      { name: 'Analyses comparatives', route: '/analyse/comparaisons' },
-      { name: 'Notifications push', route: '/analyse/notifications' }
-    ]
-  },
-  {
-    id: 'logistique',
-    name: 'LOGISTIQUE & STOCKS',
-    icon: Package,
-    color: gradients.ops,
-    route: '/logistique',
-    subModules: [
-      { name: 'Gestion matériaux', route: '/logistique/materiaux' },
-      { name: 'Suivi livraisons', route: '/logistique/livraisons' },
-      { name: 'Géolocalisation', route: '/logistique/geolocalisation' },
-      { name: 'Gestion entrepôts', route: '/logistique/entrepots' },
-      { name: 'App mobile logistique', route: '/logistique/mobile' }
+      { name: 'Tableaux de bord', route: '/analyse/dashboards' },
+      { name: 'Rapports', route: '/analyse/rapports' },
+      { name: 'Indicateurs', route: '/analyse/indicateurs' },
+      { name: 'Exports', route: '/analyse/exports' }
     ]
   },
   {
     id: 'ia',
-    name: 'AUTOMATISATION & IA',
+    name: 'INTELLIGENCE ARTIFICIELLE',
     icon: Brain,
-    color: gradients.admin,
+    color: 'gestalis-accent-orange',
+    bgColor: 'bg-[#F8A23B]',
+    hoverColor: 'hover:bg-[#E63946]',
     route: '/ia',
     subModules: [
-      { name: 'OCR documents', route: '/ia/ocr' },
-      { name: 'Analyse photos', route: '/ia/photos' },
-      { name: 'Prédictions IA', route: '/ia/predictions' },
-      { name: 'Optimisations', route: '/ia/optimisations' }
+      { name: 'Prédictions', route: '/ia/predictions' },
+      { name: 'Analyse avancée', route: '/ia/analyse' },
+      { name: 'Recommandations', route: '/ia/recommandations' }
+    ]
+  },
+  {
+    id: 'comptabilite',
+    name: 'COMPTABILITÉ',
+    icon: Calculator,
+    color: 'gestalis-accent-orange',
+    bgColor: 'bg-[#F8A23B]',
+    hoverColor: 'hover:bg-[#E63946]',
+    route: '/comptabilite',
+    subModules: [
+      { name: 'Gestion comptable', route: '/comptabilite' },
+      { name: 'Historique exports', route: '/comptabilite/historique' },
+      { name: 'Statistiques', route: '/comptabilite/stats' }
     ]
   },
   {
     id: 'admin',
     name: 'ADMINISTRATION',
     icon: Settings,
-    color: gradients.admin,
+    color: 'gestalis-accent-red',
+    bgColor: 'bg-[#E63946]',
+    hoverColor: 'hover:bg-[#1B275A]',
     route: '/admin',
     subModules: [
       { name: 'Paramètres Société', route: '/admin/parametres-societe' },
@@ -206,18 +252,6 @@ const poles = [
       { name: 'Gestion Entreprises', route: '/gestion-entreprises' },
       { name: 'Sécurité', route: '/admin/securite' },
       { name: 'Sauvegardes', route: '/admin/sauvegardes' }
-    ]
-  },
-  {
-    id: 'comptabilite',
-    name: 'COMPTABILITÉ',
-    icon: Calculator,
-    color: gradients.finance,
-    route: '/comptabilite',
-    subModules: [
-      { name: 'Gestion comptable', route: '/comptabilite' },
-      { name: 'Historique exports', route: '/comptabilite/historique' },
-      { name: 'Statistiques', route: '/comptabilite/stats' }
     ]
   }
 ];
@@ -233,12 +267,37 @@ const Sidebar = ({ open, setOpen }) => {
     return pole.subModules && pole.subModules.length > 0;
   };
 
-  const getActiveClass = (color) => {
-    return `${color} text-white shadow-lg`;
+  const getActiveClass = (pole) => {
+    // Pour le TABLEAU DE BORD, on utilise le dégradé de la barre latérale
+    if (pole.id === 'dashboard') {
+      return `bg-gradient-to-b from-[#1B275A] to-[#3C7DD9] text-white shadow-lg transform scale-105`;
+    }
+    // Pour les modules gris, on utilise un dégradé gris → gris clair quand actif
+    else if (pole.bgColor.includes('9CA3AF') || pole.bgColor.includes('6B7280')) {
+      return `bg-gradient-to-r from-[#6B7280] to-[#9CA3AF] text-white shadow-lg transform scale-105`;
+    }
+    // Pour les modules verts, on utilise un dégradé vert → vert clair
+    else if (pole.bgColor.includes('4CAF50')) {
+      return `bg-gradient-to-r from-[#4CAF50] to-[#6EE7B7] text-white shadow-lg transform scale-105`;
+    }
+    // Pour les modules bleus, on utilise le même dégradé que "Nouveau chantier"
+    else if (pole.bgColor.includes('3C7DD9')) {
+      return `bg-gradient-to-r from-[#1B275A] to-[#06B6D4] text-white shadow-lg transform scale-105`;
+    }
+    // Pour les modules orange, on utilise un dégradé orange → orange clair
+    else if (pole.bgColor.includes('F8A23B')) {
+      return `bg-gradient-to-r from-[#F8A23B] to-[#FCD34D] text-white shadow-lg transform scale-105`;
+    }
+    // Pour les modules rouges, on utilise un dégradé rouge → rouge clair
+    else if (pole.bgColor.includes('E63946')) {
+      return `bg-gradient-to-r from-[#E63946] to-[#F87171] text-white shadow-lg transform scale-105`;
+    }
+    // Pour les autres modules, on garde leur couleur normale
+    return `${pole.bgColor} text-white shadow-lg transform scale-105`;
   };
 
-  const getInactiveClass = (color) => {
-    return `text-slate-700 hover:bg-slate-100 hover:text-slate-900 border-l-2 border-transparent hover:border-transparent transition-all duration-300`;
+  const getInactiveClass = (pole) => {
+    return `text-white hover:${pole.hoverColor} hover:text-white border-l-4 border-transparent hover:border-white transition-all duration-300 hover:shadow-lg hover:scale-105`;
   };
 
   const togglePole = (poleId) => {
@@ -279,37 +338,47 @@ const Sidebar = ({ open, setOpen }) => {
     });
 
     return (
-      <div key={pole.id}>
+      <div key={pole.id} className="mb-2">
         <button
           onClick={() => pole.subModules ? togglePole(pole.id) : null}
-          className={`w-full group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-300 ${
+          className={`w-full group flex items-center px-4 py-3 text-sm font-semibold rounded-xl transition-all duration-300 ${
             isActive
-              ? getActiveClass(pole.color)
-              : getInactiveClass(pole.color)
+              ? getActiveClass(pole)
+              : getInactiveClass(pole)
           }`}
         >
-          <pole.icon className="mr-3 h-5 w-5" />
+          <div className={`w-10 h-10 rounded-lg flex items-center justify-center mr-3 ${
+            isActive ? 'bg-white/20' : `${pole.bgColor}`
+          }`}>
+            <pole.icon className="h-5 w-5" />
+          </div>
           <span className="flex-1 text-left">{pole.name}</span>
           {pole.subModules && showSubModules && (
-            isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />
+            <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+              isActive ? 'bg-white/20' : 'bg-white/10'
+            }`}>
+              {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+            </div>
           )}
         </button>
         
         {pole.subModules && isExpanded && showSubModules && (
-          <div className="ml-6 mt-1 space-y-1">
+          <div className="ml-8 mt-2 space-y-1 animate-fadeIn">
             {pole.subModules.map((subModule) => (
               <Link
                 key={subModule.route}
                 to={subModule.route}
-                className={`block px-3 py-2 text-sm rounded-md transition-colors ${
+                className={`block px-4 py-2 text-sm rounded-lg transition-all duration-200 ${
                   isSubModuleActive(subModule)
-                    ? 'bg-slate-100 text-slate-800 font-medium'
-                    : 'text-slate-600 hover:text-slate-800 hover:bg-slate-50'
+                    ? `${pole.bgColor} text-white font-medium shadow-md`
+                    : 'text-white/80 hover:text-white hover:bg-white/10 hover:shadow-sm'
                 }`}
                 onClick={() => setOpen(false)}
               >
                 <div className="flex items-center">
-                  <div className="w-1 h-1 bg-slate-400 rounded-full mr-3"></div>
+                  <div className={`w-2 h-2 rounded-full mr-3 ${
+                    isSubModuleActive(subModule) ? 'bg-white' : pole.bgColor
+                  }`}></div>
                   {subModule.name}
                 </div>
               </Link>
@@ -321,47 +390,49 @@ const Sidebar = ({ open, setOpen }) => {
   };
 
   return (
-    <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-xl transform transition-transform duration-300 ease-in-out ${open ? 'translate-x-0' : '-translate-x-full'}`}>
+    <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-[#1B275A] transform transition-transform duration-300 ease-in-out ${open ? 'translate-x-0' : '-translate-x-full'}`}>
       <div className="flex flex-col h-full">
-        {/* Header moderne */}
-        <div className="flex items-center justify-between p-6 border-b border-slate-200">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-gestalis-primary to-gestalis-secondary rounded-lg flex items-center justify-center">
-              <Building2 className="w-5 h-5 text-white" />
+        {/* Header moderne avec dégradé signature GESTALIS */}
+        <div className="p-6 border-b border-white/10">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                <Building2 className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-white">GESTALIS</h1>
+                <p className="text-xs text-blue-100">ERP BTP</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-xl font-bold text-slate-800">GESTALIS</h1>
-              <p className="text-xs text-slate-500">ERP BTP</p>
-            </div>
+            <button
+              onClick={() => setOpen(false)}
+              className="p-2 rounded-lg hover:bg-white/20 transition-colors backdrop-blur-sm"
+            >
+              <X className="w-5 h-5 text-white" />
+            </button>
           </div>
-          <button
-            onClick={() => setOpen(false)}
-            className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
-          >
-            <X className="w-5 h-5 text-slate-600" />
-          </button>
         </div>
 
-        {/* Navigation principale */}
-        <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+        {/* Navigation principale avec scroll personnalisé */}
+        <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-transparent">
           {poles.map((pole) => renderPoleItem(pole))}
         </nav>
 
-        {/* Footer utilisateur */}
-        <div className="p-4 border-t border-slate-200">
-          <div className="flex items-center space-x-3 p-3 rounded-lg bg-slate-50">
-            <div className="w-8 h-8 bg-gradient-to-br from-gestalis-primary to-gestalis-secondary rounded-full flex items-center justify-center">
-              <User className="w-4 h-4 text-white" />
+        {/* Footer utilisateur avec style GESTALIS */}
+        <div className="p-4 border-t border-white/10">
+          <div className="flex items-center space-x-3 p-3 rounded-xl bg-white/10 shadow-sm border border-white/20">
+            <div className="w-10 h-10 bg-[#3C7DD9] rounded-full flex items-center justify-center">
+              <User className="w-5 h-5 text-white" />
             </div>
             <div className="flex-1">
-              <p className="text-sm font-medium text-slate-800">testuser</p>
-              <p className="text-xs text-slate-500">viewer</p>
+              <p className="text-sm font-medium text-white">testuser</p>
+              <p className="text-xs text-white/70">viewer</p>
             </div>
             <button
               onClick={() => {/* Logout logic */}}
-              className="p-2 rounded-lg hover:bg-slate-200 transition-colors"
+              className="p-2 rounded-lg hover:bg-white/20 transition-colors"
             >
-              <LogOut className="w-4 h-4 text-slate-600" />
+              <LogOut className="w-4 h-4 text-white" />
             </button>
           </div>
         </div>
