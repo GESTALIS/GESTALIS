@@ -140,12 +140,14 @@ const poles = [
     color: 'gestalis-primary-light',
     bgColor: 'bg-[#3C7DD9]',
     hoverColor: 'hover:bg-[#1B275A]',
-    route: '/sous-traitant',
+    route: '/sous-traitants',
     subModules: [
-      { name: 'Gestion sous-traitants', route: '/sous-traitant' },
-      { name: 'Contrats', route: '/sous-traitant/contrats' },
-      { name: 'Suivi travaux', route: '/sous-traitant/suivi' },
-      { name: 'Facturation', route: '/sous-traitant/facturation' }
+      { name: 'Vue d\'ensemble', route: '/sous-traitants' },
+      { name: 'Sous-traitants', route: '/sous-traitants?tab=sous-traitants' },
+      { name: 'Contrats', route: '/sous-traitants?tab=contrats' },
+      { name: 'Situations', route: '/sous-traitants?tab=situations' },
+      { name: 'Demandes de prix', route: '/sous-traitants?tab=demandes-prix' },
+      { name: 'Analytics', route: '/sous-traitants?tab=analytics' }
     ]
   },
   {

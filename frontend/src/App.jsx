@@ -26,6 +26,7 @@ import ParametresNumerotation from './pages/ParametresNumerotation';
 import ParametresComptables from './pages/ParametresComptables';
 import './styles/tailwind.css';
 import Comptabilite from './pages/Comptabilite';
+import SousTraitants from './pages/SousTraitants';
 
 const PrivateRoute = ({ children }) => {
   // Temporairement désactivé pour tester Supabase
@@ -73,6 +74,7 @@ const App = () => {
                   <Route path="/parametres-comptables" element={<ParametresComptables />} />
                   <Route path="/test-sidebar" element={<SidebarTest />} />
                   <Route path="/comptabilite" element={<Comptabilite />} />
+                  <Route path="/sous-traitants" element={<SousTraitants />} />
                 </Routes>
               </Layout>
             </PrivateRoute>

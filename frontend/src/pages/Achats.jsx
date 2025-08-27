@@ -60,24 +60,24 @@ const Achats = () => {
       
       // Si on doit créer quelque chose, ouvrir le modal approprié
       if (createParam === 'true') {
-        // Récupérer les données du localStorage
-        const createData = localStorage.getItem('createFromSearch');
-        if (createData) {
-          try {
-            const { type, searchTerm } = JSON.parse(createData);
-            console.log('🚀 Ouverture automatique du modal de création:', type, searchTerm);
-            
-            // Pré-remplir les champs selon le type
-            if (type === 'fournisseur') {
-              setNewFournisseur(prev => ({ ...prev, raisonSociale: searchTerm || '' }));
-              setShowCreateModal(true);
+        // Si on est dans l'onglet fournisseurs, ouvrir directement le modal
+        if (tabParam === 'fournisseurs') {
+          console.log('🚀 Ouverture automatique du modal de création de fournisseur');
+          setShowCreateModal(true);
+          
+          // Pré-remplir avec les données du localStorage si disponibles
+          const createData = localStorage.getItem('createFromSearch');
+          if (createData) {
+            try {
+              const { type, searchTerm } = JSON.parse(createData);
+              if (type === 'fournisseur' && searchTerm) {
+                setNewFournisseur(prev => ({ ...prev, raisonSociale: searchTerm }));
+              }
+              // Nettoyer le localStorage
+              localStorage.removeItem('createFromSearch');
+            } catch (error) {
+              console.error('Erreur lors du parsing des données de création:', error);
             }
-            // Note: Les chantiers et utilisateurs sont gérés dans leurs pages respectives
-            
-            // Nettoyer le localStorage
-            localStorage.removeItem('createFromSearch');
-          } catch (error) {
-            console.error('Erreur lors du parsing des données de création:', error);
           }
         }
       }
