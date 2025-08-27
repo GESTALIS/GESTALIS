@@ -301,96 +301,85 @@ const Achats = () => {
   }, []);
 
   const handleCreateFournisseur = async () => {
+    console.log('🚀 Tentative de création du fournisseur...', newFournisseur);
+    
     // Validation des champs obligatoires
     if (!newFournisseur.raisonSociale || !newFournisseur.siret) {
-      alert('Veuillez remplir au minimum la raison sociale et le SIRET');
+      alert('❌ Erreur de validation :\n- La raison sociale est obligatoire\n- Le SIRET est obligatoire');
       return;
     }
 
     try {
       setLoading(true);
       
-      // Préparer les données pour l'API Supabase
-      const fournisseurData = {
-        fournisseur: {
-          codeFournisseur: nextFournisseurCode,
-          raisonSociale: newFournisseur.raisonSociale,
-          siret: newFournisseur.siret,
-          tvaIntracommunautaire: newFournisseur.tvaIntracommunautaire || null,
-          codeApeNaf: newFournisseur.codeApeNaf || null,
-          formeJuridique: newFournisseur.formeJuridique || null,
-          capitalSocial: newFournisseur.capitalSocial || null,
-          adresseSiege: newFournisseur.adresseSiege || null,
-          adresseLivraison: newFournisseur.adresseLivraison || null,
-          plafondCredit: newFournisseur.plafondCredit || null,
-          devise: newFournisseur.devise,
-          estSousTraitant: newFournisseur.estSousTraitant,
-          pasDeTvaGuyane: pasDeTvaGuyane,
-          compteComptable: newFournisseur.compteComptable || null
-        },
-        contacts: contacts.map(contact => ({
-          nom: contact.nom,
-          prenom: contact.prenom || null,
-          email: contact.email || null,
-          telephone: contact.telephone || null,
-          fonction: contact.fonction || null
-        }))
+      // Créer le fournisseur localement (sans service externe)
+      const nouveauFournisseur = {
+        id: Date.now(), // ID unique temporaire
+        codeFournisseur: nextFournisseurCode,
+        raisonSociale: newFournisseur.raisonSociale,
+        siret: newFournisseur.siret,
+        tvaIntracommunautaire: newFournisseur.tvaIntracommunautaire || null,
+        codeApeNaf: newFournisseur.codeApeNaf || null,
+        formeJuridique: newFournisseur.formeJuridique || null,
+        capitalSocial: newFournisseur.capitalSocial || null,
+        adresseSiege: newFournisseur.adresseSiege || null,
+        adresseLivraison: newFournisseur.adresseLivraison || null,
+        plafondCredit: newFournisseur.plafondCredit || null,
+        devise: newFournisseur.devise,
+        estSousTraitant: newFournisseur.estSousTraitant,
+        pasDeTvaGuyane: pasDeTvaGuyane,
+        compteComptable: newFournisseur.compteComptable || null,
+        dateCreation: new Date().toISOString(),
+        statut: 'ACTIF'
       };
 
-      console.log('Création du fournisseur:', fournisseurData);
-
-      try {
-        // Utiliser le service local au lieu de l'API
-        const fournisseursService = await import('../services/fournisseursService');
-        const nouveauFournisseur = fournisseursService.default.creerFournisseur(fournisseurData.fournisseur);
-        
-        // Mettre à jour la liste locale
-        setFournisseurs(prev => [...prev, nouveauFournisseur]);
-        
-        // Générer le prochain code fournisseur
-        const currentNumber = parseInt(nextFournisseurCode.split('-')[1]);
-        const nextNumber = currentNumber + 1;
-        setNextFournisseurCode(`FPRO97-${String(nextNumber).padStart(4, '0')}`);
-        
-        // Réinitialiser le formulaire
-        setNewFournisseur({
-          raisonSociale: '',
-          siret: '',
-          tvaIntracommunautaire: '',
-          codeApeNaf: '',
-          formeJuridique: '',
-          capitalSocial: '',
-          adresseSiege: '',
-          adresseLivraison: '',
-          plafondCredit: '',
-          devise: 'EUR',
-          estSousTraitant: false,
-          // Conditions de règlement
-          modeReglement: 'VIR',
-          echeanceType: '30J',
-          respectEcheance: true,
-          joursDecalage: 30,
-          finDeMois: false,
-          jourPaiement: 0
-        });
-        setContacts([]);
-        setPasDeTvaGuyane(false);
-        setActiveCreateTab('coordonnees');
-        
-        // Fermer le modal et réinitialiser
-        setShowCreateModal(false);
-        
-        // S'assurer qu'on est dans l'onglet Fournisseurs
-        setActiveTab('fournisseurs');
-        
-        // Notification de succès
-        alert(`✅ Fournisseur ${fournisseurData.fournisseur.raisonSociale} créé avec succès !\nCode: ${fournisseurData.fournisseur.codeFournisseur}`);
-      } catch (error) {
-        throw new Error(`Erreur lors de la création: ${error.message}`);
-      }
+      console.log('✅ Fournisseur créé avec succès:', nouveauFournisseur);
+      
+      // Mettre à jour la liste locale IMMÉDIATEMENT
+      setFournisseurs(prev => [nouveauFournisseur, ...prev]);
+      
+      // Générer le prochain code fournisseur
+      const currentNumber = parseInt(nextFournisseurCode.split('-')[1]);
+      const nextNumber = currentNumber + 1;
+      setNextFournisseurCode(`FPRO97-${String(nextNumber).padStart(4, '0')}`);
+      
+      // Réinitialiser le formulaire
+      setNewFournisseur({
+        raisonSociale: '',
+        siret: '',
+        tvaIntracommunautaire: '',
+        codeApeNaf: '',
+        formeJuridique: '',
+        capitalSocial: '',
+        adresseSiege: '',
+        adresseLivraison: '',
+        plafondCredit: '',
+        devise: 'EUR',
+        estSousTraitant: false,
+        // Conditions de règlement
+        modeReglement: 'VIR',
+        echeanceType: '30J',
+        respectEcheance: true,
+        joursDecalage: 30,
+        finDeMois: false,
+        jourPaiement: 0
+      });
+      setContacts([]);
+      setPasDeTvaGuyane(false);
+      setActiveCreateTab('coordonnees');
+      
+      // Fermer le modal et réinitialiser
+      setShowCreateModal(false);
+      
+      // S'assurer qu'on est dans l'onglet Fournisseurs
+      setActiveTab('fournisseurs');
+      
+      // Notification de succès
+      alert(`✅ Fournisseur créé avec succès !\n\nRaison sociale: ${nouveauFournisseur.raisonSociale}\nCode: ${nouveauFournisseur.codeFournisseur}\nSIRET: ${nouveauFournisseur.siret}`);
+      
     } catch (error) {
-      console.error('Erreur:', error);
-      alert('Erreur lors de la création du fournisseur dans Supabase');
+      console.error('❌ Erreur lors de la création:', error);
+      alert('❌ Erreur lors de la création du fournisseur');
     } finally {
       setLoading(false);
     }

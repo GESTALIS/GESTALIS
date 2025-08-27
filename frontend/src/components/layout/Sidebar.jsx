@@ -229,15 +229,19 @@ const poles = [
   {
     id: 'comptabilite',
     name: 'COMPTABILITÉ',
-    icon: Calculator,
+    icon: Database,
     color: 'gestalis-accent-orange',
     bgColor: 'bg-[#F8A23B]',
     hoverColor: 'hover:bg-[#E63946]',
     route: '/comptabilite',
     subModules: [
-      { name: 'Gestion comptable', route: '/comptabilite' },
-      { name: 'Historique exports', route: '/comptabilite/historique' },
-      { name: 'Statistiques', route: '/comptabilite/stats' }
+      { name: 'Vue d\'ensemble', route: '/comptabilite' },
+      { name: 'Plan comptable', route: '/comptabilite?tab=plan-comptable' },
+      { name: 'Journaux', route: '/comptabilite?tab=journaux' },
+      { name: 'Factures à intégrer', route: '/comptabilite?tab=factures' },
+      { name: 'Export comptable', route: '/comptabilite?tab=export' },
+      { name: 'Contrôles', route: '/comptabilite?tab=controles' },
+      { name: 'Rapports', route: '/comptabilite?tab=rapports' }
     ]
   },
   {
