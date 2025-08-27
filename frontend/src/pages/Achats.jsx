@@ -114,22 +114,74 @@ const Achats = () => {
     jourPaiement: 0
   });
 
-  // Charger les fournisseurs depuis Supabase
+  // Charger les fournisseurs depuis localStorage ou service
   useEffect(() => {
     fetchFournisseurs();
     fetchPlanComptable();
   }, []);
 
+  // Charger les fournisseurs depuis localStorage au montage du composant
+  useEffect(() => {
+    const fournisseursLocal = localStorage.getItem('gestalis-fournisseurs');
+    if (fournisseursLocal) {
+      try {
+        const fournisseursParsed = JSON.parse(fournisseursLocal);
+        setFournisseurs(fournisseursParsed);
+        console.log('📱 Fournisseurs chargés au montage du composant:', fournisseursParsed);
+      } catch (error) {
+        console.error('Erreur lors du parsing localStorage au montage:', error);
+      }
+    }
+  }, []); // Se déclenche une seule fois au montage
+
+  // Recharger les fournisseurs à chaque changement d'onglet ET au montage du composant
+  useEffect(() => {
+    const fournisseursLocal = localStorage.getItem('gestalis-fournisseurs');
+    if (fournisseursLocal) {
+      try {
+        const fournisseursParsed = JSON.parse(fournisseursLocal);
+        setFournisseurs(fournisseursParsed);
+        console.log('🔄 Fournisseurs rechargés depuis localStorage:', fournisseursParsed);
+      } catch (error) {
+        console.error('Erreur lors du parsing localStorage:', error);
+      }
+    }
+  }, [activeTab]); // Se déclenche à chaque changement d'onglet
+
   const fetchFournisseurs = async () => {
     try {
       setLoading(true);
-      // Utiliser le service local au lieu de l'API
-      const fournisseursService = await import('../services/fournisseursService');
-      const data = fournisseursService.default.obtenirFournisseurs();
-      setFournisseurs(data);
+      
+      // Vérifier d'abord le localStorage pour les fournisseurs récents
+      const fournisseursLocal = localStorage.getItem('gestalis-fournisseurs');
+      if (fournisseursLocal) {
+        try {
+          const fournisseursParsed = JSON.parse(fournisseursLocal);
+          setFournisseurs(fournisseursParsed);
+          console.log('✅ Fournisseurs chargés depuis localStorage:', fournisseursParsed);
+          setLoading(false);
+          return;
+        } catch (parseError) {
+          console.error('Erreur lors du parsing localStorage:', parseError);
+          localStorage.removeItem('gestalis-fournisseurs'); // Nettoyer le localStorage corrompu
+        }
+      }
+      
+      // Sinon, essayer le service local
+      try {
+        const fournisseursService = await import('../services/fournisseursService');
+        const data = fournisseursService.default.obtenirFournisseurs();
+        setFournisseurs(data);
+        // Sauvegarder dans localStorage pour la prochaine fois
+        localStorage.setItem('gestalis-fournisseurs', JSON.stringify(data));
+        console.log('💾 Fournisseurs sauvegardés depuis le service:', data);
+      } catch (serviceError) {
+        console.error('Erreur avec le service fournisseurs:', serviceError);
+        // Utiliser des données par défaut en cas d'erreur
+        setFournisseurs([]);
+      }
     } catch (error) {
       console.error('Erreur lors du chargement des fournisseurs:', error);
-      // Utiliser des données par défaut en cas d'erreur
       setFournisseurs([]);
     } finally {
       setLoading(false);
@@ -138,18 +190,55 @@ const Achats = () => {
 
   const fetchPlanComptable = async () => {
     try {
-      // Utiliser les données par défaut du plan comptable
+      // Essayer de récupérer les comptes depuis le localStorage du module Comptabilité
+      const comptesComptabilite = localStorage.getItem('gestalis-comptes');
+      let comptesDisponibles = [];
+      
+      if (comptesComptabilite) {
+        try {
+          const comptesParsed = JSON.parse(comptesComptabilite);
+          // Filtrer les comptes de type fournisseur ou créer des comptes adaptés
+          comptesDisponibles = comptesParsed
+            .filter(compte => compte.type === 'charge' || compte.type === 'passif' || compte.classe?.includes('Tiers'))
+            .map(compte => ({
+              numeroCompte: compte.numero,
+              intitule: compte.nom,
+              type: compte.type,
+              classe: compte.classe
+            }));
+          console.log('✅ Comptes comptables récupérés depuis Comptabilité:', comptesDisponibles);
+        } catch (parseError) {
+          console.error('Erreur lors du parsing des comptes comptables:', parseError);
+        }
+      }
+      
+      // Si aucun compte trouvé, utiliser les données par défaut
+      if (comptesDisponibles.length === 0) {
+        console.log('📊 Utilisation des comptes par défaut');
+        comptesDisponibles = [
+          { numeroCompte: '401', intitule: 'Fournisseurs - Général', type: 'passif', classe: '4 - Tiers' },
+          { numeroCompte: '401001', intitule: 'Fournisseurs - Matériaux', type: 'passif', classe: '4 - Tiers' },
+          { numeroCompte: '401002', intitule: 'Fournisseurs - Sous-traitance', type: 'passif', classe: '4 - Tiers' },
+          { numeroCompte: '401003', intitule: 'Fournisseurs - Services', type: 'passif', classe: '4 - Tiers' },
+          { numeroCompte: '606', intitule: 'Achats - Matériaux', type: 'charge', classe: '6 - Charges' },
+          { numeroCompte: '607', intitule: 'Achats - Services', type: 'charge', classe: '6 - Charges' },
+        ];
+      }
+      
+      setPlanComptable(comptesDisponibles);
+      setFilteredPlanComptable(comptesDisponibles);
+      console.log('💾 Plan comptable mis à jour:', comptesDisponibles);
+      
+    } catch (error) {
+      console.error('Erreur lors du chargement du plan comptable:', error);
+      // En cas d'erreur, utiliser les données par défaut
       const planComptableDefault = [
-        { numeroCompte: 'F0001', intitule: 'Fournisseurs' },
-        { numeroCompte: 'F0002', intitule: 'Fournisseurs - Sous-traitants' },
-        { numeroCompte: 'F0003', intitule: 'Fournisseurs - Frais de transport' },
-        { numeroCompte: 'F0004', intitule: 'Fournisseurs - Frais de dépôt' },
-        { numeroCompte: 'F0005', intitule: 'Fournisseurs - Frais de douane' },
+        { numeroCompte: '401', intitule: 'Fournisseurs - Général', type: 'passif', classe: '4 - Tiers' },
+        { numeroCompte: '401001', intitule: 'Fournisseurs - Matériaux', type: 'passif', classe: '4 - Tiers' },
+        { numeroCompte: '401002', intitule: 'Fournisseurs - Sous-traitance', type: 'passif', classe: '4 - Tiers' },
       ];
       setPlanComptable(planComptableDefault);
       setFilteredPlanComptable(planComptableDefault);
-    } catch (error) {
-      console.error('Erreur lors du chargement du plan comptable:', error);
     }
   };
 
@@ -315,19 +404,19 @@ const Achats = () => {
       // Créer le fournisseur localement (sans service externe)
       const nouveauFournisseur = {
         id: Date.now(), // ID unique temporaire
-        codeFournisseur: nextFournisseurCode,
-        raisonSociale: newFournisseur.raisonSociale,
-        siret: newFournisseur.siret,
-        tvaIntracommunautaire: newFournisseur.tvaIntracommunautaire || null,
-        codeApeNaf: newFournisseur.codeApeNaf || null,
-        formeJuridique: newFournisseur.formeJuridique || null,
-        capitalSocial: newFournisseur.capitalSocial || null,
-        adresseSiege: newFournisseur.adresseSiege || null,
-        adresseLivraison: newFournisseur.adresseLivraison || null,
-        plafondCredit: newFournisseur.plafondCredit || null,
-        devise: newFournisseur.devise,
-        estSousTraitant: newFournisseur.estSousTraitant,
-        pasDeTvaGuyane: pasDeTvaGuyane,
+          codeFournisseur: nextFournisseurCode,
+          raisonSociale: newFournisseur.raisonSociale,
+          siret: newFournisseur.siret,
+          tvaIntracommunautaire: newFournisseur.tvaIntracommunautaire || null,
+          codeApeNaf: newFournisseur.codeApeNaf || null,
+          formeJuridique: newFournisseur.formeJuridique || null,
+          capitalSocial: newFournisseur.capitalSocial || null,
+          adresseSiege: newFournisseur.adresseSiege || null,
+          adresseLivraison: newFournisseur.adresseLivraison || null,
+          plafondCredit: newFournisseur.plafondCredit || null,
+          devise: newFournisseur.devise,
+          estSousTraitant: newFournisseur.estSousTraitant,
+          pasDeTvaGuyane: pasDeTvaGuyane,
         compteComptable: newFournisseur.compteComptable || null,
         dateCreation: new Date().toISOString(),
         statut: 'ACTIF'
@@ -336,45 +425,53 @@ const Achats = () => {
       console.log('✅ Fournisseur créé avec succès:', nouveauFournisseur);
       
       // Mettre à jour la liste locale IMMÉDIATEMENT
-      setFournisseurs(prev => [nouveauFournisseur, ...prev]);
-      
-      // Générer le prochain code fournisseur
-      const currentNumber = parseInt(nextFournisseurCode.split('-')[1]);
-      const nextNumber = currentNumber + 1;
-      setNextFournisseurCode(`FPRO97-${String(nextNumber).padStart(4, '0')}`);
-      
-      // Réinitialiser le formulaire
-      setNewFournisseur({
-        raisonSociale: '',
-        siret: '',
-        tvaIntracommunautaire: '',
-        codeApeNaf: '',
-        formeJuridique: '',
-        capitalSocial: '',
-        adresseSiege: '',
-        adresseLivraison: '',
-        plafondCredit: '',
-        devise: 'EUR',
-        estSousTraitant: false,
-        // Conditions de règlement
-        modeReglement: 'VIR',
-        echeanceType: '30J',
-        respectEcheance: true,
-        joursDecalage: 30,
-        finDeMois: false,
-        jourPaiement: 0
+      setFournisseurs(prev => {
+        const newFournisseurs = [nouveauFournisseur, ...prev];
+        
+        // Sauvegarder dans localStorage pour partager avec le module Sous-traitants
+        localStorage.setItem('gestalis-fournisseurs', JSON.stringify(newFournisseurs));
+        console.log('💾 Fournisseurs sauvegardés dans localStorage:', newFournisseurs);
+        
+        return newFournisseurs;
       });
-      setContacts([]);
-      setPasDeTvaGuyane(false);
-      setActiveCreateTab('coordonnees');
-      
+        
+        // Générer le prochain code fournisseur
+        const currentNumber = parseInt(nextFournisseurCode.split('-')[1]);
+        const nextNumber = currentNumber + 1;
+        setNextFournisseurCode(`FPRO97-${String(nextNumber).padStart(4, '0')}`);
+        
+        // Réinitialiser le formulaire
+        setNewFournisseur({
+          raisonSociale: '',
+          siret: '',
+          tvaIntracommunautaire: '',
+          codeApeNaf: '',
+          formeJuridique: '',
+          capitalSocial: '',
+          adresseSiege: '',
+          adresseLivraison: '',
+          plafondCredit: '',
+          devise: 'EUR',
+          estSousTraitant: false,
+          // Conditions de règlement
+          modeReglement: 'VIR',
+          echeanceType: '30J',
+          respectEcheance: true,
+          joursDecalage: 30,
+          finDeMois: false,
+          jourPaiement: 0
+        });
+        setContacts([]);
+        setPasDeTvaGuyane(false);
+        setActiveCreateTab('coordonnees');
+        
       // Fermer le modal et réinitialiser
-      setShowCreateModal(false);
+        setShowCreateModal(false);
       
       // S'assurer qu'on est dans l'onglet Fournisseurs
       setActiveTab('fournisseurs');
-      
-      // Notification de succès
+        
+        // Notification de succès
       alert(`✅ Fournisseur créé avec succès !\n\nRaison sociale: ${nouveauFournisseur.raisonSociale}\nCode: ${nouveauFournisseur.codeFournisseur}\nSIRET: ${nouveauFournisseur.siret}`);
       
     } catch (error) {
@@ -407,14 +504,14 @@ const Achats = () => {
     setContacts(contacts.filter(contact => contact.id !== id));
   };
 
-    const handleDeleteFournisseur = async (id) => {
+  const handleDeleteFournisseur = async (id) => {
     try {
       // Utiliser le service local au lieu de l'API
       const fournisseursService = await import('../services/fournisseursService');
       fournisseursService.default.supprimerFournisseur(id);
       
       // Mettre à jour la liste locale
-      setFournisseurs(prev => prev.filter(f => f.id !== id));
+        setFournisseurs(prev => prev.filter(f => f.id !== id));
       alert('Fournisseur supprimé avec succès !');
     } catch (error) {
       console.error('Erreur lors de la suppression:', error);
@@ -551,9 +648,9 @@ const Achats = () => {
       {/* AchatsBanner STICKY - reste fixé en haut */}
       <div className="sticky top-0 z-30 bg-white shadow-sm border-b border-gray-200">
         <div className="px-6 py-4">
-          <div className="max-w-7xl mx-auto">
+         <div className="max-w-7xl mx-auto">
             <AchatsBanner />
-          </div>
+           </div>
         </div>
       </div>
 
@@ -584,7 +681,7 @@ const Achats = () => {
             ))}
           </nav>
         </div>
-      </div>
+        </div>
 
       {/* Contenu principal avec padding-top pour compenser les éléments sticky */}
       <div className="max-w-7xl mx-auto px-6 py-8 pt-4">
@@ -777,6 +874,20 @@ const Achats = () => {
               </GestalisCardContent>
             </GestalisCard>
 
+            {/* En-tête avec bouton d'ajout */}
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Fournisseurs ({fournisseurs.length})
+              </h3>
+              <GestalisButton 
+                onClick={() => setShowCreateModal(true)}
+                className="bg-gradient-to-r from-blue-500 to-teal-600 hover:from-blue-600 hover:to-teal-700 text-white"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Ajouter un fournisseur
+              </GestalisButton>
+            </div>
+
             {/* Liste des fournisseurs */}
             {loading ? (
               <div className="flex items-center justify-center h-64">
@@ -787,13 +898,6 @@ const Achats = () => {
                 <Building2 className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-xl font-medium text-gray-900 mb-2">Aucun fournisseur trouvé</h3>
                 <p className="text-gray-500 mb-6">Commencez par ajouter votre premier fournisseur</p>
-                <GestalisButton 
-                  onClick={() => setShowCreateModal(true)}
-                  className="bg-gradient-to-r from-blue-500 to-teal-600 hover:from-blue-600 hover:to-teal-700 text-white"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Ajouter un fournisseur
-                </GestalisButton>
               </div>
             ) : (
               <div className="grid gap-4">
@@ -804,9 +908,16 @@ const Achats = () => {
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-4">
                             <h3 className="text-xl font-semibold text-gray-900">{fournisseur.raisonSociale}</h3>
-                            <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                              Actif
-                            </span>
+                            <div className="flex gap-2">
+                              <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                Actif
+                              </span>
+                              {fournisseur.estSousTraitant && (
+                                <span className="px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800 flex items-center gap-1">
+                                  🏗️ Sous-traitant
+                                </span>
+                              )}
+                            </div>
                           </div>
                           
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -831,6 +942,7 @@ const Achats = () => {
                         
                         <div className="flex items-center gap-2 ml-4">
                           <GestalisButton 
+                            onClick={() => handleViewFournisseur(fournisseur)}
                             variant="outline" 
                             size="sm" 
                             className="border-blue-500 text-blue-600 hover:bg-blue-50"
@@ -839,6 +951,7 @@ const Achats = () => {
                             <Eye className="h-4 w-4" />
                           </GestalisButton>
                           <GestalisButton 
+                            onClick={() => handleEditFournisseur(fournisseur)}
                             variant="outline" 
                             size="sm"
                             className="border-green-500 text-green-600 hover:bg-green-50"
@@ -847,6 +960,7 @@ const Achats = () => {
                             <Edit className="h-4 w-4" />
                           </GestalisButton>
                           <GestalisButton 
+                            onClick={() => handleDeleteFournisseur(fournisseur.id)}
                             variant="danger" 
                             size="sm" 
                             className="bg-red-600 hover:bg-red-700 text-white"
@@ -855,9 +969,9 @@ const Achats = () => {
                             <Trash2 className="h-4 w-4" />
                           </GestalisButton>
                         </div>
-                      </div>
-                    </GestalisCardContent>
-                  </GestalisCard>
+                        </div>
+                      </GestalisCardContent>
+                    </GestalisCard>
                 ))}
               </div>
             )}
@@ -1345,9 +1459,25 @@ const Achats = () => {
                                        }}
                                        className="px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0"
                                      >
-                                       <div className="font-medium text-gray-900">{compte.numeroCompte}</div>
-                                       <div className="text-sm text-gray-600">{compte.intitule}</div>
-                    </div>
+                                       <div className="flex items-center justify-between">
+                                         <div className="flex-1">
+                                           <div className="font-medium text-gray-900">{compte.numeroCompte}</div>
+                                           <div className="text-sm text-gray-600">{compte.intitule}</div>
+                                         </div>
+                                         <div className="flex flex-col items-end text-xs">
+                                           <span className={`px-2 py-1 rounded-full ${
+                                             compte.type === 'passif' ? 'bg-blue-100 text-blue-800' :
+                                             compte.type === 'charge' ? 'bg-red-100 text-red-800' :
+                                             'bg-gray-100 text-gray-800'
+                                           }`}>
+                                             {compte.type}
+                                           </span>
+                                           {compte.classe && (
+                                             <span className="text-gray-500 mt-1">{compte.classe}</span>
+                                           )}
+                                         </div>
+                                       </div>
+                                     </div>
                                    ))
                                  ) : (
                                    <div className="px-4 py-3 text-gray-500 text-center">
@@ -1359,12 +1489,17 @@ const Achats = () => {
                            </div>
                            
                            <button
-                             onClick={() => setShowCreateCompteModal(true)}
-                             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center gap-2"
-                             title="Créer un nouveau compte"
+                             onClick={() => {
+                               // Stocker une instruction pour ouvrir le modal de création de compte
+                               localStorage.setItem('gestalis-open-compte-modal', 'true');
+                               // Rediriger vers le module Comptabilité
+                               window.location.href = '/comptabilite?tab=plan-comptable';
+                             }}
+                             className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center gap-1"
+                             title="Créer un nouveau compte dans Comptabilité"
                            >
-                             <Plus className="h-4 w-4" />
-                             <span className="text-sm font-medium">Nouveau</span>
+                             <Plus className="h-3 w-3" />
+                             <span className="text-xs font-medium">Nouveau</span>
                            </button>
                          </div>
                          
@@ -1555,7 +1690,7 @@ const Achats = () => {
                       Précédent
                     </button>
                   )}
-                </div>
+          </div>
 
                 <div className="flex gap-3">
                   {activeCreateTab !== 'compta' && (

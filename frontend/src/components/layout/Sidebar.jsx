@@ -31,7 +31,8 @@ import {
   History,
   ArrowRight,
   Target,
-  ClipboardList
+  ClipboardList,
+  Database
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { GestalisCard, GestalisCardContent, GestalisCardHeader, GestalisCardTitle } from '../ui/GestalisCard';

@@ -27,6 +27,7 @@ import ParametresComptables from './pages/ParametresComptables';
 import './styles/tailwind.css';
 import Comptabilite from './pages/Comptabilite';
 import SousTraitants from './pages/SousTraitants';
+import RessourcesHumaines from './pages/RessourcesHumaines';
 
 const PrivateRoute = ({ children }) => {
   // Temporairement désactivé pour tester Supabase
@@ -62,7 +63,8 @@ const App = () => {
                   <Route path="/commercial" element={<GestionCommerciale />} />
                   <Route path="/tresorerie" element={<div>Règlements & Trésorerie</div>} />
                   <Route path="/tiers" element={<Tiers />} />
-                  <Route path="/rh" element={<div>Ressources Humaines</div>} />
+                  <Route path="/rh" element={<RessourcesHumaines />} />
+                  <Route path="/rh-test" element={<div style={{backgroundColor: 'blue', color: 'white', padding: '50px', fontSize: '24px'}}>🔵 ROUTE TEST RH-TEST 🔵</div>} />
                   <Route path="/analyse" element={<div>Analyse & Reporting</div>} />
                   <Route path="/logistique" element={<div>Logistique & Stocks</div>} />
                   <Route path="/ia" element={<div>Automatisation & IA</div>} />

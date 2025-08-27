@@ -435,6 +435,18 @@ const Comptabilite = () => {
     }
   }, []);
 
+  // Vérifier s'il faut ouvrir automatiquement le modal de création de compte
+  useEffect(() => {
+    const shouldOpenCompteModal = localStorage.getItem('gestalis-open-compte-modal');
+    if (shouldOpenCompteModal === 'true') {
+      // Ouvrir le modal de création de compte
+      setShowCompteModal(true);
+      // Nettoyer l'instruction
+      localStorage.removeItem('gestalis-open-compte-modal');
+      console.log('🚀 Modal de création de compte ouvert automatiquement depuis Achats');
+    }
+  }, []);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
       {/* ComptabiliteBanner STICKY - reste fixé en haut */}

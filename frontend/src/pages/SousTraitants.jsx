@@ -225,43 +225,68 @@ const SousTraitants = () => {
   const loadSousTraitants = async () => {
     setLoading(true);
     try {
-      // Simulation de chargement - à remplacer par l'API réelle
-      const mockSousTraitants = [
-        {
-          id: 1,
-          codeSousTraitant: 'STPRO97-0001',
-          raisonSociale: 'BTP Construction',
-          siret: '12345678901234',
-          qualification: 'Gros œuvre',
-          domaineActivite: 'Construction',
-          statut: 'ACTIF',
-          assuranceRC: '2025-12-31',
-          assuranceDecennale: '2025-12-31',
-          urssaf: '2025-12-31',
-          kbis: '2025-12-31',
-          rib: 'FR76 1234 5678 9012 3456 7890 123',
-          compteComptable: 'F0001',
-          adresseSiege: '123 Rue de la Construction, 97300 Cayenne'
-        },
-        {
-          id: 2,
-          codeSousTraitant: 'STPRO97-0002',
-          raisonSociale: 'ST Pro Services',
-          siret: '23456789012345',
-          qualification: 'Second œuvre',
-          domaineActivite: 'Rénovation',
-          statut: 'ACTIF',
-          assuranceRC: '2025-11-30',
-          assuranceDecennale: '2025-11-30',
-          urssaf: '2025-11-30',
-          kbis: '2025-11-30',
-          rib: 'FR76 2345 6789 0123 4567 8901 234',
-          compteComptable: 'F0001',
-          adresseSiege: '456 Avenue des Services, 97300 Cayenne'
-        }
-      ];
+      // Récupérer les vrais fournisseurs marqués comme sous-traitants
+      // Depuis le localStorage ou la session (partagé avec le module Achats)
+      const fournisseursData = localStorage.getItem('gestalis-fournisseurs');
+      let vraisSousTraitants = [];
       
-      setSousTraitants(mockSousTraitants);
+      if (fournisseursData) {
+        const fournisseurs = JSON.parse(fournisseursData);
+        // Filtrer uniquement les fournisseurs marqués comme sous-traitants
+        vraisSousTraitants = fournisseurs
+          .filter(f => f.estSousTraitant === true)
+          .map(f => ({
+            id: f.id,
+            codeSousTraitant: f.codeFournisseur,
+            raisonSociale: f.raisonSociale,
+            siret: f.siret,
+            qualification: f.qualification || 'Non spécifiée',
+            domaineActivite: f.domaineActivite || 'Non spécifié',
+            statut: f.statut || 'ACTIF',
+            assuranceRC: f.assuranceRC || 'Non spécifiée',
+            assuranceDecennale: f.assuranceDecennale || 'Non spécifiée',
+            urssaf: f.urssaf || 'Non spécifié',
+            kbis: f.kbis || 'Non spécifié',
+            rib: f.rib || 'Non spécifié',
+            compteComptable: f.compteComptable || 'Non spécifié',
+            adresseSiege: f.adresseSiege || 'Non spécifiée',
+            tvaIntracommunautaire: f.tvaIntracommunautaire,
+            codeApeNaf: f.codeApeNaf,
+            formeJuridique: f.formeJuridique,
+            capitalSocial: f.capitalSocial,
+            adresseLivraison: f.adresseLivraison,
+            plafondCredit: f.plafondCredit,
+            devise: f.devise,
+            pasDeTvaGuyane: f.pasDeTvaGuyane,
+            dateCreation: f.dateCreation
+          }));
+      }
+      
+      // Si aucun vrai sous-traitant, utiliser les données par défaut
+      if (vraisSousTraitants.length === 0) {
+        console.log('Aucun fournisseur marqué comme sous-traitant trouvé');
+        vraisSousTraitants = [
+          {
+            id: 1,
+            codeSousTraitant: 'STPRO97-0001',
+            raisonSociale: 'BTP Construction',
+            siret: '12345678901234',
+            qualification: 'Gros œuvre',
+            domaineActivite: 'Construction',
+            statut: 'ACTIF',
+            assuranceRC: '2025-12-31',
+            assuranceDecennale: '2025-12-31',
+            urssaf: '2025-12-31',
+            kbis: '2025-12-31',
+            rib: 'FR76 1234 5678 9012 3456 7890 123',
+            compteComptable: 'F0001',
+            adresseSiege: '123 Rue de la Construction, 97300 Cayenne'
+          }
+        ];
+      }
+      
+      setSousTraitants(vraisSousTraitants);
+      console.log('✅ Sous-traitants chargés:', vraisSousTraitants);
     } catch (error) {
       console.error('Erreur lors du chargement des sous-traitants:', error);
     } finally {

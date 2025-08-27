@@ -13,7 +13,11 @@ import {
   Package,
   Search,
   X,
-  ArrowLeft
+  ArrowLeft,
+  Briefcase,
+  Mail,
+  Info,
+  UserPlus
 } from 'lucide-react';
 import { GestalisCard, GestalisCardContent, GestalisCardHeader, GestalisCardTitle } from '../../components/ui/GestalisCard';
 import { GestalisButton } from '../../components/ui/gestalis-button';
@@ -59,6 +63,7 @@ const CreationBonCommande = () => {
   const [fournisseurs, setFournisseurs] = useState([]);
   const [chantiers, setChantiers] = useState([]);
   const [users, setUsers] = useState([]);
+  const [employes, setEmployes] = useState([]); // Employés RH
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   
@@ -83,6 +88,7 @@ const CreationBonCommande = () => {
   const [showCreateChantierModal, setShowCreateChantierModal] = useState(false);
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
   const [showCreateArticleModal, setShowCreateArticleModal] = useState(false);
+  const [showCreateEmployeModal, setShowCreateEmployeModal] = useState(false); // Modal employé
 
   // États pour les nouveaux éléments
   const [newFournisseur, setNewFournisseur] = useState({
@@ -111,6 +117,21 @@ const CreationBonCommande = () => {
     designation: '',
     description: '',
     unite: 'U'
+  });
+
+  const [newEmploye, setNewEmploye] = useState({
+    matricule: '',
+    nom: '',
+    prenom: '',
+    dateNaissance: '',
+    poste: '',
+    email: '',
+    telephone: '',
+    adresse: '',
+    dateEmbauche: '',
+    statut: 'actif',
+    salaire: '',
+    commentaires: ''
   });
 
   useEffect(() => {
@@ -147,6 +168,18 @@ const CreationBonCommande = () => {
       const usersResponse = await api.get('/api/users');
       setUsers(usersResponse.data);
       console.log('✅ Utilisateurs chargés:', usersResponse.data.length);
+      
+      // Charger les employés RH depuis localStorage
+      const employesLocal = localStorage.getItem('gestalis-employes');
+      if (employesLocal) {
+        try {
+          const employesParsed = JSON.parse(employesLocal);
+          setEmployes(employesParsed);
+          console.log('✅ Employés RH chargés:', employesParsed.length);
+        } catch (error) {
+          console.error('Erreur lors du parsing des employés RH:', error);
+        }
+      }
       
       // Générer le numéro de commande
       console.log('🔢 Génération du numéro de commande...');
@@ -263,29 +296,31 @@ const CreationBonCommande = () => {
     setShowSearchResultsChantier(false);
   };
 
-  // Recherche intelligente des demandeurs
-  const filteredDemandeurs = users.filter(user => 
-    user.prenom.toLowerCase().includes(searchTermDemandeur.toLowerCase()) ||
-    user.nom.toLowerCase().includes(searchTermDemandeur.toLowerCase()) ||
-    user.role.toLowerCase().includes(searchTermDemandeur.toLowerCase())
+    // Recherche intelligente des demandeurs (employés RH)
+  const filteredDemandeurs = employes.filter(employe =>
+    employe.prenom.toLowerCase().includes(searchTermDemandeur.toLowerCase()) ||
+    employe.nom.toLowerCase().includes(searchTermDemandeur.toLowerCase()) ||
+    employe.poste.toLowerCase().includes(searchTermDemandeur.toLowerCase()) ||
+    employe.matricule.toLowerCase().includes(searchTermDemandeur.toLowerCase())
   );
 
-  const selectDemandeur = (user) => {
-    setBonCommande(prev => ({ ...prev, demandeurId: user.id }));
-    setSearchTermDemandeur(`${user.prenom} ${user.nom} (${user.role})`);
+  const selectDemandeur = (employe) => {
+    setBonCommande(prev => ({ ...prev, demandeurId: employe.id }));
+    setSearchTermDemandeur(`${employe.prenom} ${employe.nom} (${employe.poste})`);
     setShowSearchResultsDemandeur(false);
   };
 
   // Recherche intelligente des createurs
-  const filteredCreateurs = users.filter(user => 
-    user.prenom.toLowerCase().includes(searchTermCreateur.toLowerCase()) ||
-    user.nom.toLowerCase().includes(searchTermCreateur.toLowerCase()) ||
-    user.role.toLowerCase().includes(searchTermCreateur.toLowerCase())
+    const filteredCreateurs = employes.filter(employe =>
+    employe.prenom.toLowerCase().includes(searchTermCreateur.toLowerCase()) ||
+    employe.nom.toLowerCase().includes(searchTermCreateur.toLowerCase()) ||
+    employe.poste.toLowerCase().includes(searchTermCreateur.toLowerCase()) ||
+    employe.matricule.toLowerCase().includes(searchTermCreateur.toLowerCase())
   );
 
-  const selectCreateur = (user) => {
-    setBonCommande(prev => ({ ...prev, createurId: user.id }));
-    setSearchTermCreateur(`${user.prenom} ${user.nom} (${user.role})`);
+  const selectCreateur = (employe) => {
+    setBonCommande(prev => ({ ...prev, createurId: employe.id }));
+    setSearchTermCreateur(`${employe.prenom} ${employe.nom} (${employe.poste})`);
     setShowSearchResultsCreateur(false);
   };
 
@@ -307,7 +342,16 @@ const CreationBonCommande = () => {
         window.location.href = '/chantiers?create=true';
         break;
       case 'user':
-        window.location.href = '/admin/users?create=true';
+        // Pré-remplir le formulaire employé avec le terme de recherche
+        const [nom, prenom] = searchTerm.split(' ');
+        setNewEmploye(prev => ({
+          ...prev,
+          nom: nom || '',
+          prenom: prenom || '',
+          matricule: 'EMP' + String(Date.now()).slice(-3)
+        }));
+        // Ouvrir le modal de création d'employé
+        setShowCreateEmployeModal(true);
         break;
       case 'article':
         // Pour les articles, on utilise le modal existant mais avec le terme pré-rempli
@@ -410,6 +454,62 @@ const CreationBonCommande = () => {
     } catch (error) {
       console.error('Erreur lors de la création du chantier:', error);
       alert('❌ Erreur lors de la création du chantier');
+    }
+  };
+
+  const handleCreateEmploye = () => {
+    try {
+      // Validation basique
+      if (!newEmploye.nom || !newEmploye.prenom || !newEmploye.poste || !newEmploye.email) {
+        alert('❌ Veuillez remplir tous les champs obligatoires');
+        return;
+      }
+
+      // Créer l'employé avec un ID unique
+      const nouvelEmploye = {
+        ...newEmploye,
+        id: Date.now(),
+        dateCreation: new Date().toISOString()
+      };
+
+      // Ajouter à la liste locale des employés
+      setEmployes(prev => [nouvelEmploye, ...prev]);
+
+      // Sauvegarder dans localStorage pour synchroniser avec le module RH
+      const employesExistants = JSON.parse(localStorage.getItem('gestalis-employes') || '[]');
+      const tousEmployes = [nouvelEmploye, ...employesExistants];
+      localStorage.setItem('gestalis-employes', JSON.stringify(tousEmployes));
+
+      // Sélectionner automatiquement selon le contexte
+      if (searchTermDemandeur && searchTermDemandeur.includes(newEmploye.nom)) {
+        selectDemandeur(nouvelEmploye);
+        setSearchTermDemandeur(`${nouvelEmploye.prenom} ${nouvelEmploye.nom} (${nouvelEmploye.poste})`);
+      } else if (searchTermCreateur && searchTermCreateur.includes(newEmploye.nom)) {
+        selectCreateur(nouvelEmploye);
+        setSearchTermCreateur(`${nouvelEmploye.prenom} ${nouvelEmploye.nom} (${nouvelEmploye.poste})`);
+      }
+
+      // Fermer le modal et réinitialiser
+      setShowCreateEmployeModal(false);
+      setNewEmploye({
+        matricule: '',
+        nom: '',
+        prenom: '',
+        dateNaissance: '',
+        poste: '',
+        email: '',
+        telephone: '',
+        adresse: '',
+        dateEmbauche: '',
+        statut: 'actif',
+        salaire: '',
+        commentaires: ''
+      });
+
+      alert(`✅ Employé "${nouvelEmploye.nom} ${nouvelEmploye.prenom}" créé avec succès !`);
+    } catch (error) {
+      console.error('Erreur lors de la création de l\'employé:', error);
+      alert('❌ Erreur lors de la création de l\'employé');
     }
   };
 
@@ -550,8 +650,8 @@ const CreationBonCommande = () => {
   const generatePDFContent = () => {
     const fournisseur = fournisseurs.find(f => f.id === bonCommande.fournisseurId);
     const chantier = chantiers.find(c => c.id === bonCommande.chantierId);
-    const demandeur = users.find(u => u.id === bonCommande.demandeurId);
-    const createur = users.find(u => u.id === bonCommande.createurId);
+    const demandeur = employes.find(e => e.id === bonCommande.demandeurId);
+    const createur = employes.find(e => e.id === bonCommande.createurId);
 
     return `
 <!DOCTYPE html>
@@ -593,8 +693,8 @@ const CreationBonCommande = () => {
     <div class="order-details">
         <h3>Détails de la commande</h3>
         <p><strong>Chantier:</strong> ${chantier ? `${chantier.codeChantier} - ${chantier.nom}` : 'Non spécifié'}</p>
-        <p><strong>Demandeur:</strong> ${demandeur ? `${demandeur.prenom} ${demandeur.nom}` : 'Non spécifié'}</p>
-        <p><strong>Créateur:</strong> ${createur ? `${createur.prenom} ${createur.nom}` : 'Non spécifié'}</p>
+        <p><strong>Demandeur:</strong> ${demandeur ? `${demandeur.prenom} ${demandeur.nom} (${demandeur.poste})` : 'Non spécifié'}</p>
+        <p><strong>Créateur:</strong> ${createur ? `${createur.prenom} ${createur.nom} (${createur.poste})` : 'Non spécifié'}</p>
         ${bonCommande.dateLivraisonSouhaitee ? `<p><strong>Date de livraison souhaitée:</strong> ${new Date(bonCommande.dateLivraisonSouhaitee).toLocaleDateString('fr-FR')}</p>` : ''}
     </div>
     
@@ -813,14 +913,14 @@ const CreationBonCommande = () => {
                        {showSearchResultsDemandeur && (
                          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
                            {filteredDemandeurs.length > 0 ? (
-                             filteredDemandeurs.map(user => (
+                             filteredDemandeurs.map(employe => (
                                <button
-                                 key={user.id}
-                                 onClick={() => selectDemandeur(user)}
+                                 key={employe.id}
+                                 onClick={() => selectDemandeur(employe)}
                                  className="w-full text-left px-4 py-2 hover:bg-gray-100 border-b border-gray-100 last:border-b-0"
                                >
-                                 <div className="font-medium">{user.prenom} {user.nom}</div>
-                                 <div className="text-sm text-gray-600">{user.role}</div>
+                                 <div className="font-medium">{employe.prenom} {employe.nom}</div>
+                                 <div className="text-sm text-gray-600">{employe.poste} - {employe.matricule}</div>
                                </button>
                              ))
                            ) : (
@@ -892,19 +992,19 @@ const CreationBonCommande = () => {
                        {showSearchResultsCreateur && (
                          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
                            {filteredCreateurs.length > 0 ? (
-                             filteredCreateurs.map(user => (
+                             filteredCreateurs.map(employe => (
                                <button
-                                 key={user.id}
-                                 onClick={() => selectCreateur(user)}
+                                 key={employe.id}
+                                 onClick={() => selectCreateur(employe)}
                                  className="w-full text-left px-4 py-2 hover:bg-gray-100 border-b border-gray-100 last:border-b-0"
                                >
-                                 <div className="font-medium">{user.prenom} {user.nom}</div>
-                                 <div className="text-sm text-gray-600">{user.role}</div>
+                                 <div className="font-medium">{employe.prenom} {employe.nom}</div>
+                                 <div className="text-sm text-gray-600">{employe.poste} - {employe.matricule}</div>
                                </button>
                              ))
                            ) : (
                              <div className="px-4 py-2 text-gray-500">
-                               Aucun utilisateur trouvé
+                               Aucun employé trouvé
                                <button
                                  onClick={() => openCreateInTab('user', searchTermCreateur)}
                                  className="ml-2 text-blue-600 hover:text-blue-800 underline"
@@ -1652,6 +1752,231 @@ const CreationBonCommande = () => {
                >
                  Créer
                </button>
+             </div>
+           </div>
+         </div>
+       )}
+
+       {/* Modal Créer Employé */}
+       {showCreateEmployeModal && (
+         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+             {/* Header du modal */}
+             <div className="bg-gradient-to-r from-orange-500 to-red-600 p-6 text-white rounded-t-2xl">
+               <div className="flex items-center justify-between">
+                 <h3 className="text-xl font-semibold">Nouvel Employé</h3>
+                 <button
+                   onClick={() => setShowCreateEmployeModal(false)}
+                   className="text-white/80 hover:text-white"
+                 >
+                   <X className="h-6 w-6" />
+                 </button>
+               </div>
+             </div>
+             
+             {/* Contenu du modal */}
+             <div className="p-6">
+               <div className="grid grid-cols-2 gap-6">
+                 {/* Informations personnelles */}
+                 <div className="space-y-4">
+                   <h4 className="font-medium text-gray-900 flex items-center gap-2">
+                     <User className="h-4 w-4" />
+                     Informations personnelles
+                   </h4>
+                   
+                   <div>
+                     <label className="block text-sm font-medium text-gray-700 mb-2">
+                       Matricule <span className="text-red-500">*</span>
+                     </label>
+                     <input
+                       type="text"
+                       placeholder="ex: EMP001"
+                       value={newEmploye.matricule}
+                       onChange={(e) => setNewEmploye({...newEmploye, matricule: e.target.value.toUpperCase()})}
+                       className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-orange-500 focus:outline-none"
+                     />
+                   </div>
+                   
+                   <div className="grid grid-cols-2 gap-4">
+                     <div>
+                       <label className="block text-sm font-medium text-gray-700 mb-2">
+                         Nom <span className="text-red-500">*</span>
+                       </label>
+                       <input
+                         type="text"
+                         placeholder="Nom de famille"
+                         value={newEmploye.nom}
+                         onChange={(e) => setNewEmploye({...newEmploye, nom: e.target.value})}
+                         className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-orange-500 focus:outline-none"
+                       />
+                     </div>
+                     
+                     <div>
+                       <label className="block text-sm font-medium text-gray-700 mb-2">
+                         Prénom <span className="text-red-500">*</span>
+                       </label>
+                       <input
+                         type="text"
+                         placeholder="Prénom"
+                         value={newEmploye.prenom}
+                         onChange={(e) => setNewEmploye({...newEmploye, prenom: e.target.value})}
+                         className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-orange-500 focus:outline-none"
+                       />
+                     </div>
+                   </div>
+                   
+                   <div>
+                     <label className="block text-sm font-medium text-gray-700 mb-2">Date de naissance</label>
+                     <input
+                       type="date"
+                       value={newEmploye.dateNaissance}
+                       onChange={(e) => setNewEmploye({...newEmploye, dateNaissance: e.target.value})}
+                       className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-orange-500 focus:outline-none"
+                     />
+                   </div>
+                 </div>
+
+                 {/* Informations professionnelles */}
+                 <div className="space-y-4">
+                   <h4 className="font-medium text-gray-900 flex items-center gap-2">
+                     <Briefcase className="h-4 w-4" />
+                     Informations professionnelles
+                   </h4>
+                   
+                   <div>
+                     <label className="block text-sm font-medium text-gray-700 mb-2">
+                       Poste <span className="text-red-500">*</span>
+                     </label>
+                     <input
+                       type="text"
+                       placeholder="ex: Comptable, Acheteur, Responsable..."
+                       value={newEmploye.poste}
+                       onChange={(e) => setNewEmploye({...newEmploye, poste: e.target.value})}
+                       className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-orange-500 focus:outline-none"
+                     />
+                   </div>
+                   
+                   <div>
+                     <label className="block text-sm font-medium text-gray-700 mb-2">
+                       Date d'embauche <span className="text-red-500">*</span>
+                     </label>
+                     <input
+                       type="date"
+                       value={newEmploye.dateEmbauche}
+                       onChange={(e) => setNewEmploye({...newEmploye, dateEmbauche: e.target.value})}
+                       className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-orange-500 focus:outline-none"
+                     />
+                   </div>
+                   
+                   <div>
+                     <label className="block text-sm font-medium text-gray-700 mb-2">Statut</label>
+                     <select
+                       value={newEmploye.statut}
+                       onChange={(e) => setNewEmploye({...newEmploye, statut: e.target.value})}
+                       className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-orange-500 focus:outline-none"
+                     >
+                       <option value="actif">Actif</option>
+                       <option value="inactif">Inactif</option>
+                       <option value="congé">En congé</option>
+                       <option value="formation">En formation</option>
+                     </select>
+                   </div>
+                 </div>
+               </div>
+
+               {/* Informations de contact */}
+               <div className="mt-6 space-y-4">
+                 <h4 className="font-medium text-gray-900 flex items-center gap-2">
+                   <Mail className="h-4 w-4" />
+                   Informations de contact
+                 </h4>
+                 
+                 <div className="grid grid-cols-2 gap-6">
+                   <div>
+                     <label className="block text-sm font-medium text-gray-700 mb-2">
+                       Email <span className="text-red-500">*</span>
+                     </label>
+                     <input
+                       type="email"
+                       placeholder="ex: nom@gestalis.com"
+                       value={newEmploye.email}
+                       onChange={(e) => setNewEmploye({...newEmploye, email: e.target.value})}
+                       className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-orange-500 focus:outline-none"
+                     />
+                   </div>
+                   
+                   <div>
+                     <label className="block text-sm font-medium text-gray-700 mb-2">Téléphone</label>
+                     <input
+                       type="tel"
+                       placeholder="ex: 0594 12 34 56"
+                       value={newEmploye.telephone}
+                       onChange={(e) => setNewEmploye({...newEmploye, telephone: e.target.value})}
+                       className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-orange-500 focus:outline-none"
+                     />
+                   </div>
+                 </div>
+                 
+                 <div>
+                   <label className="block text-sm font-medium text-gray-700 mb-2">Adresse</label>
+                   <input
+                     type="text"
+                     placeholder="Adresse complète"
+                     value={newEmploye.adresse}
+                     onChange={(e) => setNewEmploye({...newEmploye, adresse: e.target.value})}
+                     className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-orange-500 focus:outline-none"
+                   />
+                 </div>
+               </div>
+
+               {/* Informations complémentaires */}
+               <div className="mt-6 space-y-4">
+                 <h4 className="font-medium text-gray-900 flex items-center gap-2">
+                   <Info className="h-4 w-4" />
+                   Informations complémentaires
+                 </h4>
+                 
+                 <div className="grid grid-cols-2 gap-6">
+                   <div>
+                     <label className="block text-sm font-medium text-gray-700 mb-2">Salaire (€)</label>
+                     <input
+                       type="number"
+                       placeholder="ex: 3000"
+                       value={newEmploye.salaire}
+                       onChange={(e) => setNewEmploye({...newEmploye, salaire: e.target.value})}
+                       className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-orange-500 focus:outline-none"
+                     />
+                   </div>
+                   
+                   <div>
+                     <label className="block text-sm font-medium text-gray-700 mb-2">Commentaires</label>
+                     <textarea
+                       placeholder="Informations supplémentaires..."
+                       value={newEmploye.commentaires}
+                       onChange={(e) => setNewEmploye({...newEmploye, commentaires: e.target.value})}
+                       className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-orange-500 focus:outline-none"
+                       rows={3}
+                     />
+                   </div>
+                 </div>
+               </div>
+
+               {/* Boutons d'action */}
+               <div className="flex gap-3 mt-8 pt-6 border-t border-gray-200">
+                 <button
+                   onClick={() => setShowCreateEmployeModal(false)}
+                   className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                 >
+                   Annuler
+                 </button>
+                 <button
+                   onClick={handleCreateEmploye}
+                   className="flex-1 px-4 py-3 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white rounded-lg transition-all duration-200 font-medium"
+                 >
+                   <UserPlus className="h-4 w-4 inline mr-2" />
+                   Créer l'employé
+                 </button>
+               </div>
              </div>
            </div>
          </div>

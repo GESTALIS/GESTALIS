@@ -1,0 +1,29 @@
+{
+  "name": "gestalis",
+  "version": "1.0.0",
+  "description": "Application GESTALIS - Gestion des achats et fournisseurs",
+  "main": "index.js",
+  "scripts": {
+    "build": "cd frontend && npm install && npm run build",
+    "start": "cd frontend && npm start",
+    "dev": "cd frontend && npm run dev"
+  },
+  "keywords": [
+    "gestalis",
+    "achats",
+    "fournisseurs",
+    "gestion",
+    "react",
+    "nodejs"
+  ],
+  "author": "PRO97",
+  "license": "MIT",
+  "engines": {
+    "node": "18.18.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/GESTALIS/GESTALIS.git"
+  }
+}
