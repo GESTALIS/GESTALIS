@@ -187,82 +187,36 @@ const Achats = () => {
     'Divers TP': 'DIV'
   };
 
-  // Charger les fournisseurs depuis localStorage ou service
+  // Charger les fournisseurs depuis Supabase au montage
   useEffect(() => {
-    fetchFournisseurs();
+    const chargerFournisseurs = async () => {
+      try {
+        const fournisseurs = await fournisseursService.recupererTous();
+        setFournisseurs(fournisseurs);
+        setFilteredFournisseurs(fournisseurs);
+        console.log('✅ Fournisseurs chargés depuis Supabase:', fournisseurs);
+      } catch (error) {
+        console.error('❌ Erreur chargement fournisseurs:', error);
+        setFournisseurs([]);
+        setFilteredFournisseurs([]);
+      }
+    };
+
+    chargerFournisseurs();
     fetchPlanComptable();
-  }, []);
-
-  // Charger les fournisseurs depuis localStorage au montage du composant
-  useEffect(() => {
-    const fournisseursLocal = localStorage.getItem('gestalis-fournisseurs');
-    if (fournisseursLocal) {
-      try {
-        const fournisseursParsed = JSON.parse(fournisseursLocal);
-        setFournisseurs(fournisseursParsed);
-        console.log('📱 Fournisseurs chargés au montage du composant:', fournisseursParsed);
-      } catch (error) {
-        console.error('Erreur lors du parsing localStorage au montage:', error);
-      }
-    }
-
-    // Charger les produits depuis localStorage
-    const produitsLocal = localStorage.getItem('gestalis-produits');
-    if (produitsLocal) {
-      try {
-        const produitsParsed = JSON.parse(produitsLocal);
-        setProduits(produitsParsed);
-        console.log('📦 Produits chargés au montage du composant:', produitsParsed);
-      } catch (error) {
-        console.error('❌ Erreur lors du parsing des produits:', error);
-      }
-    }
   }, []); // Se déclenche une seule fois au montage
 
-  // Recharger les fournisseurs à chaque changement d'onglet ET au montage du composant
-  useEffect(() => {
-    const fournisseursLocal = localStorage.getItem('gestalis-fournisseurs');
-    if (fournisseursLocal) {
-      try {
-        const fournisseursParsed = JSON.parse(fournisseursLocal);
-        setFournisseurs(fournisseursParsed);
-        console.log('🔄 Fournisseurs rechargés depuis localStorage:', fournisseursParsed);
-      } catch (error) {
-        console.error('Erreur lors du parsing localStorage:', error);
-      }
-    }
-
-    // Recharger les produits à chaque changement d'onglet
-    const produitsLocal = localStorage.getItem('gestalis-produits');
-    if (produitsLocal) {
-      try {
-        const produitsParsed = JSON.parse(produitsLocal);
-        setProduits(produitsParsed);
-        console.log('🔄 Produits rechargés depuis localStorage:', produitsParsed);
-      } catch (error) {
-        console.error('❌ Erreur lors du parsing des produits:', error);
-      }
-    }
-  }, [activeTab]); // Se déclenche à chaque changement d'onglet
-
-  const fetchFournisseurs = async () => {
+  // Charger les produits depuis localStorage
+  const produitsLocal = localStorage.getItem('gestalis-produits');
+  if (produitsLocal) {
     try {
-      setLoading(true);
-      
-      // Charger les fournisseurs depuis Supabase
-      const fournisseurs = await fournisseursService.recupererTous();
-      setFournisseurs(fournisseurs);
-      setFilteredFournisseurs(fournisseurs);
-      console.log('✅ Fournisseurs chargés depuis Supabase:', fournisseurs);
-      
+      const produitsParsed = JSON.parse(produitsLocal);
+      setProduits(produitsParsed);
+      console.log('📦 Produits chargés au montage du composant:', produitsParsed);
     } catch (error) {
-      console.error('❌ Erreur lors du chargement des fournisseurs:', error);
-      setFournisseurs([]);
-      setFilteredFournisseurs([]);
-    } finally {
-      setLoading(false);
+      console.error('❌ Erreur lors du parsing des produits:', error);
     }
-  };
+  }
 
   const fetchPlanComptable = async () => {
     try {
