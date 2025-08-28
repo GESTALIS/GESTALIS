@@ -7,13 +7,19 @@ class FacturesService {
   constructor() {
     this.storageKey = 'gestalis_factures';
     this.batchesKey = 'gestalis_batches_comptables';
-    this.initialiserDonneesTest();
+    // DÉSACTIVÉ : this.initialiserDonneesTest();
   }
 
   /**
-   * Initialiser des données de test
+   * Initialiser des données de test - DÉSACTIVÉ
    */
   initialiserDonneesTest() {
+    // DÉSACTIVÉ : Plus d'initialisation automatique de données de test
+    console.log('⚠️ Initialisation des données de test désactivée');
+    return;
+    
+    // Code d'initialisation commenté pour éviter la régénération
+    /*
     const facturesExistantes = this.obtenirFactures();
     if (facturesExistantes.length === 0) {
       const facturesTest = [
@@ -120,6 +126,7 @@ class FacturesService {
       localStorage.setItem(this.storageKey, JSON.stringify(facturesTest));
       console.log('✅ Données de test des factures initialisées');
     }
+    */
   }
 
   /**
