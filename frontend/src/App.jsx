@@ -39,7 +39,7 @@ import { createClient } from '@supabase/supabase-js';
 // Configuration Supabase
 const supabase = createClient(
   'https://esczdkgknrozwovlfbki.supabase.co',
-  '9uGziNgoG46oYBg0plVBKEYxEp8uO-zCA'
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVzY3pka2drbnJvendvdmxmYmtpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU4MjM2NTIsImV4cCI6MjA3MTM5OTY1Mn0.OUoTvXOayb9u6zjNgp646qYRg6pIVRKFYyFn8u0-zCA'
 );
 
 // Fonction de migration automatique

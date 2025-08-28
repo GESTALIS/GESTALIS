@@ -32,12 +32,19 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { DashboardBanner } from '../components/layout/ModuleBanner';
+import { createClient } from '@supabase/supabase-js';
 
 // Fonction de migration automatique
 const migrerVersSupabase = async () => {
   try {
     console.log('🚀 DÉBUT DE LA MIGRATION AUTOMATIQUE...');
     
+    // Configuration Supabase (now direct import)
+    const supabase = createClient(
+      'https://esczdkgknrozwovlfbki.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVzY3pka2drbnJvendvdmxmYmtpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU4MjM2NTIsImV4cCI6MjA3MTM5OTY1Mn0.OUoTvXOayb9u6zjNgp646qYRg6pIVRKFYyFn8u0-zCA'
+    );
+
     // Migration des fournisseurs
     const fournisseursData = localStorage.getItem('fournisseurs');
     if (fournisseursData) {

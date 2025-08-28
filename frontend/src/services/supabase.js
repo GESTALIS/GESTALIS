@@ -7,7 +7,7 @@ import { createClient } from '@supabase/supabase-js';
 
 // Configuration Supabase (clés du projet GESTALIS BTP)
 const SUPABASE_URL = 'https://esczdkgknrozwovlfbki.supabase.co';
-const SUPABASE_ANON_KEY = '9uGziNgoG46oYBg0plVBKEYxEp8uO-zCA';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVzY3pka2drbnJvendvdmxmYmtpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU4MjM2NTIsImV4cCI6MjA3MTM5OTY1Mn0.OUoTvXOayb9u6zjNgp646qYRg6pIVRKFYyFn8u0-zCA';
 
 // Créer une seule instance Supabase partagée
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
