@@ -107,9 +107,9 @@ async function migrerChantiers() {
     }
 }
 
-// Migration des cessions de créance
+// Migration des cessions
 async function migrerCessions() {
-    console.log('🔄 Migration des cessions de créance...');
+    console.log('🔄 Migration des cessions...');
     
     try {
         const cessionsData = localStorage.getItem('cessions');
@@ -122,28 +122,15 @@ async function migrerCessions() {
         console.log(`📊 ${cessions.length} cessions à migrer`);
 
         for (const cession of cessions) {
-            // Récupérer les IDs des références
-            const { data: chantierData } = await supabase
-                .from('chantiers')
-                .select('id')
-                .eq('code', cession.chantier)
-                .single();
-
-            const { data: fournisseurData } = await supabase
-                .from('fournisseurs')
-                .select('id')
-                .eq('code_fournisseur', cession.fournisseur)
-                .single();
-
             const { data, error } = await supabase
                 .from('cessions_creance')
                 .insert({
                     reference: cession.reference,
-                    chantier_id: chantierData?.id,
-                    fournisseur_id: fournisseurData?.id,
-                    montant_cession: cession.montantCession,
                     date_cession: cession.dateCession,
-                    date_echeance: cession.dateEcheance,
+                    montant: cession.montant,
+                    client: cession.client,
+                    chantier: cession.chantier,
+                    fournisseur: cession.fournisseur,
                     statut: cession.statut || 'en_cours',
                     notes: cession.notes
                 });
@@ -174,32 +161,24 @@ async function migrerProduits() {
         console.log(`📊 ${produits.length} produits à migrer`);
 
         for (const produit of produits) {
-            // Récupérer l'ID de la catégorie
-            const { data: categorieData } = await supabase
-                .from('categories_produits')
-                .select('id')
-                .eq('nom', produit.categorie || 'Matériaux')
-                .single();
-
             const { data, error } = await supabase
                 .from('produits')
                 .insert({
-                    code_produit: produit.codeProduit || produit.code,
-                    designation: produit.designation || produit.nom,
+                    code: produit.code,
+                    nom: produit.nom,
                     description: produit.description,
-                    categorie_id: categorieData?.id,
-                    prix_unitaire_ht: produit.prixUnitaire || produit.prix,
-                    unite: produit.unite || 'unité',
-                    tva: produit.tva || 20.00,
-                    stock_actuel: produit.stockActuel || 0,
-                    stock_minimum: produit.stockMinimum || 0,
+                    prix_ht: produit.prixHT,
+                    prix_ttc: produit.prixTTC,
+                    unite: produit.unite,
+                    categorie_id: produit.categorieId || 1,
+                    fournisseur_id: produit.fournisseurId,
                     statut: produit.statut || 'actif'
                 });
 
             if (error) {
-                console.error(`❌ Erreur migration produit ${produit.codeProduit}:`, error);
+                console.error(`❌ Erreur migration produit ${produit.code}:`, error);
             } else {
-                console.log(`✅ Produit migré: ${produit.codeProduit}`);
+                console.log(`✅ Produit migré: ${produit.code}`);
             }
         }
     } catch (error) {
@@ -222,72 +201,25 @@ async function migrerFactures() {
         console.log(`📊 ${factures.length} factures à migrer`);
 
         for (const facture of factures) {
-            // Récupérer l'ID du fournisseur
-            const { data: fournisseurData } = await supabase
-                .from('fournisseurs')
-                .select('id')
-                .eq('code_fournisseur', facture.fournisseur)
-                .single();
-
-            // Récupérer l'ID du chantier
-            let chantierId = null;
-            if (facture.chantier) {
-                const { data: chantierData } = await supabase
-                    .from('chantiers')
-                    .select('id')
-                    .eq('code', facture.chantier)
-                    .single();
-                chantierId = chantierData?.id;
-            }
-
-            // Insérer la facture
-            const { data: factureData, error: factureError } = await supabase
+            const { data, error } = await supabase
                 .from('factures')
                 .insert({
-                    numero_facture: facture.numeroFacture || facture.numero,
-                    fournisseur_id: fournisseurData?.id,
-                    chantier_id: chantierId,
-                    date_facture: facture.dateFacture || facture.date,
+                    numero: facture.numero,
+                    date_facture: facture.dateFacture,
                     date_echeance: facture.dateEcheance,
-                    montant_ht: facture.montantHt || facture.montant,
-                    montant_tva: facture.montantTva || 0,
-                    montant_ttc: facture.montantTtc || facture.montant,
+                    fournisseur_id: facture.fournisseurId,
+                    chantier_id: facture.chantierId,
+                    montant_ht: facture.montantHT,
+                    montant_ttc: facture.montantTTC,
                     statut: facture.statut || 'en_attente',
-                    conditions_paiement: facture.conditionsPaiement,
                     notes: facture.notes
-                })
-                .select()
-                .single();
+                });
 
-            if (factureError) {
-                console.error(`❌ Erreur migration facture ${facture.numeroFacture}:`, factureError);
-                continue;
+            if (error) {
+                console.error(`❌ Erreur migration facture ${facture.numero}:`, error);
+            } else {
+                console.log(`✅ Facture migrée: ${facture.numero}`);
             }
-
-            // Migrer les lignes de facture
-            if (facture.lignes && Array.isArray(facture.lignes)) {
-                for (const ligne of facture.lignes) {
-                    const { error: ligneError } = await supabase
-                        .from('lignes_facture')
-                        .insert({
-                            facture_id: factureData.id,
-                            designation: ligne.designation || ligne.produit,
-                            quantite: ligne.quantite || 1,
-                            prix_unitaire_ht: ligne.prixUnitaire || ligne.prix,
-                            montant_ht: ligne.montantHt || ligne.montant,
-                            tva: ligne.tva || 20.00,
-                            montant_tva: ligne.montantTva || 0,
-                            montant_ttc: ligne.montantTtc || ligne.montant,
-                            ordre: ligne.ordre || 1
-                        });
-
-                    if (ligneError) {
-                        console.error(`❌ Erreur migration ligne facture:`, ligneError);
-                    }
-                }
-            }
-
-            console.log(`✅ Facture migrée: ${facture.numeroFacture}`);
         }
     } catch (error) {
         console.error('❌ Erreur migration factures:', error);
@@ -299,40 +231,30 @@ async function migrerHistoriquePrix() {
     console.log('🔄 Migration de l\'historique des prix...');
     
     try {
-        const historiqueData = localStorage.getItem('prixHistorique');
+        const historiqueData = localStorage.getItem('historiquePrix');
         if (!historiqueData) {
             console.log('❌ Aucun historique de prix trouvé dans localStorage');
             return;
         }
 
         const historique = JSON.parse(historiqueData);
-        console.log(`📊 ${Object.keys(historique).length} entrées d'historique à migrer`);
+        console.log(`📊 ${historique.length} entrées d'historique à migrer`);
 
-        for (const [cle, prixData] of Object.entries(historique)) {
-            const [fournisseur, designation] = cle.split('|');
-            
-            // Récupérer l'ID du fournisseur
-            const { data: fournisseurData } = await supabase
-                .from('fournisseurs')
-                .select('id')
-                .eq('code_fournisseur', fournisseur)
-                .single();
+        for (const entry of historique) {
+            const { data, error } = await supabase
+                .from('historique_prix')
+                .insert({
+                    produit_id: entry.produitId,
+                    ancien_prix: entry.ancienPrix,
+                    nouveau_prix: entry.nouveauPrix,
+                    date_changement: entry.dateChangement,
+                    utilisateur: entry.utilisateur || 'système'
+                });
 
-            if (fournisseurData) {
-                const { error } = await supabase
-                    .from('historique_prix')
-                    .insert({
-                        fournisseur_id: fournisseurData.id,
-                        produit_designation: designation,
-                        prix_unitaire: prixData.prix,
-                        date_prix: prixData.date || new Date().toISOString().split('T')[0]
-                    });
-
-                if (error) {
-                    console.error(`❌ Erreur migration historique prix ${cle}:`, error);
-                } else {
-                    console.log(`✅ Historique prix migré: ${cle}`);
-                }
+            if (error) {
+                console.error(`❌ Erreur migration historique prix:`, error);
+            } else {
+                console.log(`✅ Historique prix migré pour produit ${entry.produitId}`);
             }
         }
     } catch (error) {
@@ -341,50 +263,30 @@ async function migrerHistoriquePrix() {
 }
 
 // =====================================================
-// FONCTION PRINCIPALE DE MIGRATION
+// FONCTION PRINCIPALE
 // =====================================================
 
 async function migrerTout() {
-    console.log('🚀 DÉBUT DE LA MIGRATION COMPLÈTE GESTALIS');
-    console.log('===========================================');
-
+    console.log('🚀 DÉBUT DE LA MIGRATION COMPLÈTE...');
+    console.log('=====================================');
+    
     try {
-        // Vérifier la connexion Supabase
-        const { data, error } = await supabase.from('fournisseurs').select('count').limit(1);
-        if (error) {
-            throw new Error(`Erreur connexion Supabase: ${error.message}`);
-        }
-
-        console.log('✅ Connexion Supabase établie');
-
-        // Exécuter les migrations dans l'ordre
+        // Migration dans l'ordre des dépendances
         await migrerFournisseurs();
         await migrerChantiers();
+        await migrerCessions();
         await migrerProduits();
         await migrerFactures();
-        await migrerCessions();
         await migrerHistoriquePrix();
-
-        console.log('===========================================');
-        console.log('🎉 MIGRATION TERMINÉE AVEC SUCCÈS !');
-        console.log('✅ Toutes vos données sont maintenant dans Supabase');
-        console.log('🌐 Votre application est prête pour le cloud !');
-
+        
+        console.log('=====================================');
+        console.log('✅ MIGRATION TERMINÉE AVEC SUCCÈS !');
+        console.log('🎯 Votre application est maintenant connectée à Supabase !');
+        
     } catch (error) {
-        console.error('❌ ERREUR CRITIQUE DE MIGRATION:', error);
-        console.error('🔧 Vérifiez votre configuration Supabase');
+        console.error('❌ ERREUR LORS DE LA MIGRATION:', error);
     }
 }
 
-// =====================================================
-// EXPORT ET UTILISATION
-// =====================================================
-
-export { migrerTout };
-
-// Pour utilisation directe dans le navigateur
-if (typeof window !== 'undefined') {
-    window.migrerTout = migrerTout;
-    console.log('🚀 Script de migration chargé !');
-    console.log('💡 Utilisez migrerTout() pour lancer la migration');
-}
+// Lancer la migration
+migrerTout();
