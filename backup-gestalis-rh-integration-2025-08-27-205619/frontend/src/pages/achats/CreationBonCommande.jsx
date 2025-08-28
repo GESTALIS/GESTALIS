@@ -64,7 +64,6 @@ const CreationBonCommande = () => {
   const [chantiers, setChantiers] = useState([]);
   const [users, setUsers] = useState([]);
   const [employes, setEmployes] = useState([]); // Employés RH
-  const [produits, setProduits] = useState([]); // Produits de la bibliothèque
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   
@@ -90,7 +89,6 @@ const CreationBonCommande = () => {
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
   const [showCreateArticleModal, setShowCreateArticleModal] = useState(false);
   const [showCreateEmployeModal, setShowCreateEmployeModal] = useState(false); // Modal employé
-  const [showCreateProduitModal, setShowCreateProduitModal] = useState(false); // Modal produit bibliothèque
 
   // États pour les nouveaux éléments
   const [newFournisseur, setNewFournisseur] = useState({
@@ -99,77 +97,6 @@ const CreationBonCommande = () => {
     siret: '',
     adresseSiege: ''
   });
-
-  const [newProduit, setNewProduit] = useState({
-    code: '',
-    nom: '',
-    description: '',
-    categorie: '',
-    unite: 'U',
-    commentaires: ''
-  });
-
-  const [produitFournisseurs, setProduitFournisseurs] = useState([
-    {
-      fournisseurId: '',
-      codeFournisseur: '',
-      prixUnitaire: '',
-      devise: 'EUR',
-      datePrix: new Date().toISOString().split('T')[0]
-    }
-  ]);
-
-  // Catégories de produits TP
-  const categoriesProduits = [
-    'Matériaux TP',
-    'Équipements TP',
-    'Outillage TP',
-    'Hydraulique',
-    'Signalisation',
-    'Sécurité chantier',
-    'Services TP',
-    'Divers TP'
-  ];
-
-  // Préfixes de codes par catégorie TP
-  const prefixesCodes = {
-    'Matériaux TP': 'MAT',
-    'Équipements TP': 'EQU',
-    'Outillage TP': 'OUT',
-    'Hydraulique': 'HYD',
-    'Signalisation': 'SIG',
-    'Sécurité chantier': 'SEC',
-    'Services TP': 'SER',
-    'Divers TP': 'DIV'
-  };
-
-  // Unités de mesure TP
-  const unitesMesure = [
-    { value: 'U', label: 'Unité (U)' },
-    { value: 'M', label: 'Mètre linéaire (M)' },
-    { value: 'M2', label: 'Mètre carré (M²)' },
-    { value: 'M3', label: 'Mètre cube (M³)' },
-    { value: 'KG', label: 'Kilogramme (KG)' },
-    { value: 'T', label: 'Tonne (T)' },
-    { value: 'L', label: 'Litre (L)' },
-    { value: 'PAQ', label: 'Paquet' },
-    { value: 'LOT', label: 'Lot' },
-    { value: 'M2/J', label: 'M² par jour' },
-    { value: 'M3/J', label: 'M³ par jour' },
-    { value: 'H', label: 'Heure (H)' },
-    { value: 'J', label: 'Jour (J)' }
-  ];
-
-  // Générer automatiquement le code produit basé sur la catégorie
-  const generateProduitCode = (categorie) => {
-    if (!categorie) return '';
-    
-    const prefix = prefixesCodes[categorie] || 'PROD';
-    const produitsCategorie = produits.filter(p => p.categorie === categorie);
-    const nextNumber = produitsCategorie.length + 1;
-    
-    return `${prefix}-${String(nextNumber).padStart(3, '0')}`;
-  };
 
   const [newChantier, setNewChantier] = useState({
     nom: '',
@@ -251,18 +178,6 @@ const CreationBonCommande = () => {
           console.log('✅ Employés RH chargés:', employesParsed.length);
         } catch (error) {
           console.error('Erreur lors du parsing des employés RH:', error);
-        }
-      }
-
-      // Charger les produits depuis localStorage
-      const produitsLocal = localStorage.getItem('gestalis-produits');
-      if (produitsLocal) {
-        try {
-          const produitsParsed = JSON.parse(produitsLocal);
-          setProduits(produitsParsed);
-          console.log('✅ Produits chargés depuis localStorage:', produitsParsed.length);
-        } catch (error) {
-          console.error('Erreur lors du parsing des produits:', error);
         }
       }
       
@@ -649,94 +564,6 @@ const CreationBonCommande = () => {
       console.error('Erreur lors de la création de l\'article:', error);
       alert('❌ Erreur lors de la création de l\'article');
     }
-  };
-
-
-
-  // Fonctions de gestion des produits de la bibliothèque
-  const handleCreateProduit = () => {
-    try {
-      // Validation des champs obligatoires
-      if (!newProduit.code || !newProduit.nom || !newProduit.categorie) {
-        alert('❌ Erreur de validation :\n- Le code produit est obligatoire\n- Le nom est obligatoire\n- La catégorie est obligatoire');
-        return;
-      }
-
-      // Créer le produit localement
-      const nouveauProduit = {
-        id: Date.now(),
-        code: newProduit.code,
-        nom: newProduit.nom,
-        description: newProduit.description,
-        categorie: newProduit.categorie,
-        unite: newProduit.unite,
-        commentaires: newProduit.commentaires,
-        fournisseurs: produitFournisseurs.filter(f => f.fournisseurId),
-        dateCreation: new Date().toISOString(),
-        statut: 'ACTIF'
-      };
-
-      console.log('✅ Produit créé avec succès:', nouveauProduit);
-      
-      // Mettre à jour la liste locale
-      setProduits(prev => {
-        const newProduits = [nouveauProduit, ...prev];
-        
-        // Sauvegarder dans localStorage
-        localStorage.setItem('gestalis-produits', JSON.stringify(newProduits));
-        console.log('💾 Produits sauvegardés dans localStorage:', newProduits);
-        
-        return newProduits;
-      });
-        
-      // Réinitialiser le formulaire
-      setNewProduit({
-        code: '',
-        nom: '',
-        description: '',
-        categorie: '',
-        unite: 'U',
-        commentaires: ''
-      });
-      setProduitFournisseurs([{
-        fournisseurId: '',
-        codeFournisseur: '',
-        prixUnitaire: '',
-        devise: 'EUR',
-        datePrix: new Date().toISOString().split('T')[0]
-      }]);
-        
-      // Fermer le modal
-      setShowCreateProduitModal(false);
-        
-      // Notification de succès
-      alert(`✅ Produit créé avec succès !\n\nCode: ${nouveauProduit.code}\nNom: ${nouveauProduit.nom}\nCatégorie: ${nouveauProduit.categorie}`);
-      
-    } catch (error) {
-      console.error('❌ Erreur lors de la création du produit:', error);
-      alert('❌ Erreur lors de la création du produit');
-    }
-  };
-
-  const addProduitFournisseur = () => {
-    const newFournisseur = {
-      fournisseurId: '',
-      codeFournisseur: '',
-      prixUnitaire: '',
-      devise: 'EUR',
-      datePrix: new Date().toISOString().split('T')[0]
-    };
-    setProduitFournisseurs([...produitFournisseurs, newFournisseur]);
-  };
-
-  const updateProduitFournisseur = (index, field, value) => {
-    setProduitFournisseurs(produitFournisseurs.map((fournisseur, i) => 
-      i === index ? { ...fournisseur, [field]: value } : fournisseur
-    ));
-  };
-
-  const removeProduitFournisseur = (index) => {
-    setProduitFournisseurs(produitFournisseurs.filter((_, i) => i !== index));
   };
 
   const handleSave = async () => {
@@ -1400,46 +1227,26 @@ const CreationBonCommande = () => {
                                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                        <div>
                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                           Produit *
+                           Désignation *
                          </label>
                          <div className="relative">
                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                            <Input
                              value={article.designation}
-                             onChange={(e) => {
-                               const searchTerm = e.target.value;
-                               handleArticleChange(index, 'designation', searchTerm);
-                               
-                               // Rechercher dans les produits
-                               if (searchTerm.length > 0) {
-                                 const produitTrouve = produits.find(p => 
-                                   p.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                   p.code.toLowerCase().includes(searchTerm.toLowerCase())
-                                 );
-                                 
-                                 if (produitTrouve) {
-                                   // Auto-remplir les informations du produit
-                                   handleArticleChange(index, 'unite', produitTrouve.unite);
-                                   handleArticleChange(index, 'description', produitTrouve.description);
-                                 }
-                               }
-                             }}
-                             placeholder="Rechercher un produit dans la bibliothèque..."
+                             onChange={(e) => handleArticleChange(index, 'designation', e.target.value)}
+                             placeholder="Rechercher ou saisir une désignation..."
                              className="w-full pl-10"
                            />
                          </div>
                          
-                         {/* Bouton Créer nouveau produit */}
+                         {/* Bouton Créer nouveau article */}
                          <div className="mt-2">
                            <button
-                             onClick={() => {
-                               setNewProduit(prev => ({ ...prev, nom: article.designation }));
-                               setShowCreateProduitModal(true);
-                             }}
+                             onClick={() => handleCreateArticleFromSearch(article.designation)}
                              className="w-full py-2 px-3 border border-blue-300 text-blue-600 rounded-md hover:bg-blue-50 transition-colors flex items-center justify-center gap-2 text-sm"
                            >
                              <Plus className="h-4 w-4" />
-                             {article.designation ? `Créer "${article.designation}" dans la bibliothèque` : 'Créer un nouveau produit'}
+                             {article.designation ? `Créer "${article.designation}"` : 'Créer un nouvel article'}
                            </button>
                          </div>
                        </div>
@@ -2168,267 +1975,6 @@ const CreationBonCommande = () => {
                  >
                    <UserPlus className="h-4 w-4 inline mr-2" />
                    Créer l'employé
-                 </button>
-               </div>
-             </div>
-           </div>
-         </div>
-       )}
-
-       {/* Modal Créer Produit Bibliothèque */}
-       {showCreateProduitModal && (
-         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-y-auto">
-             {/* Header du modal */}
-             <div className="bg-gradient-to-r from-blue-500 to-teal-600 p-6 text-white rounded-t-2xl">
-               <div className="flex items-center justify-between">
-                 <h3 className="text-xl font-semibold">Nouveau Produit - Bibliothèque</h3>
-                 <button
-                   onClick={() => setShowCreateProduitModal(false)}
-                   className="text-white/80 hover:text-white"
-                 >
-                   <X className="h-6 w-6" />
-                 </button>
-               </div>
-             </div>
-             
-             {/* Contenu du modal */}
-             <div className="p-6">
-               <div className="grid grid-cols-2 gap-6">
-                 {/* Informations de base */}
-                 <div className="space-y-4">
-                   <h4 className="font-medium text-gray-900 flex items-center gap-2">
-                     <Package className="h-4 w-4" />
-                     Informations de base
-                   </h4>
-                   
-                   <div>
-                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                       Code produit <span className="text-red-500">*</span>
-                     </label>
-                     <div className="flex gap-2">
-                       <input
-                         type="text"
-                         placeholder="ex: MAT-001 (Matériaux TP)"
-                         value={newProduit.code}
-                         onChange={(e) => setNewProduit({...newProduit, code: e.target.value.toUpperCase()})}
-                         className="flex-1 rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
-                       />
-                       <button
-                         type="button"
-                         onClick={() => setNewProduit({...newProduit, code: generateProduitCode(newProduit.categorie)})}
-                         className="px-3 py-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors text-sm whitespace-nowrap"
-                         disabled={!newProduit.categorie}
-                         title="Générer automatiquement le code"
-                       >
-                         <Package className="h-4 w-4 inline mr-1" />
-                         Auto
-                       </button>
-                     </div>
-                     <p className="text-xs text-gray-500 mt-1">
-                       Code généré automatiquement selon la catégorie sélectionnée
-                     </p>
-                   </div>
-                   
-                   <div>
-                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                       Nom du produit <span className="text-red-500">*</span>
-                     </label>
-                     <input
-                       type="text"
-                       placeholder="ex: Câble électrique 2.5mm²"
-                       value={newProduit.nom}
-                       onChange={(e) => setNewProduit({...newProduit, nom: e.target.value})}
-                       className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
-                     />
-                   </div>
-                   
-                   <div>
-                     <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                     <textarea
-                       placeholder="Description détaillée du produit..."
-                       value={newProduit.description}
-                       onChange={(e) => setNewProduit({...newProduit, description: e.target.value})}
-                       className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
-                       rows={3}
-                     />
-                   </div>
-                 </div>
-
-                 {/* Catégorisation */}
-                 <div className="space-y-4">
-                   <h4 className="font-medium text-gray-900 flex items-center gap-2">
-                     <Info className="h-4 w-4" />
-                     Catégorisation
-                   </h4>
-                   
-                   <div>
-                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                       Catégorie <span className="text-red-500">*</span>
-                     </label>
-                     <select
-                       value={newProduit.categorie}
-                       onChange={(e) => {
-                         const newCategorie = e.target.value;
-                         setNewProduit({
-                           ...newProduit, 
-                           categorie: newCategorie, 
-                           code: generateProduitCode(newCategorie)
-                         });
-                       }}
-                       className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
-                     >
-                       <option value="">Sélectionner une catégorie</option>
-                       {categoriesProduits.map(cat => (
-                         <option key={cat} value={cat}>{cat}</option>
-                       ))}
-                     </select>
-                   </div>
-                   
-                   <div>
-                     <label className="block text-sm font-medium text-gray-700 mb-2">Unité de mesure</label>
-                     <select
-                       value={newProduit.unite}
-                       onChange={(e) => setNewProduit({...newProduit, unite: e.target.value})}
-                       className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
-                     >
-                       {unitesMesure.map(unite => (
-                         <option key={unite.value} value={unite.value}>{unite.value}</option>
-                       ))}
-                     </select>
-                   </div>
-                 </div>
-               </div>
-
-               {/* Fournisseurs et prix */}
-               <div className="mt-6 space-y-4">
-                 <div className="flex items-center justify-between">
-                   <h4 className="font-medium text-gray-900 flex items-center gap-2">
-                     <Building2 className="h-4 w-4" />
-                     Fournisseurs et prix
-                   </h4>
-                   <button
-                     onClick={addProduitFournisseur}
-                     className="px-3 py-1 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors text-sm"
-                   >
-                     <Plus className="h-4 w-4 inline mr-1" />
-                     Ajouter un fournisseur
-                   </button>
-                 </div>
-                 
-                 <div className="space-y-4">
-                   {produitFournisseurs.map((fournisseur, index) => (
-                     <div key={index} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                       <div className="flex items-center justify-between mb-3">
-                         <h5 className="font-medium text-gray-700">Fournisseur {index + 1}</h5>
-                         {produitFournisseurs.length > 1 && (
-                           <button
-                             onClick={() => removeProduitFournisseur(index)}
-                             className="text-red-500 hover:text-red-700"
-                           >
-                             <X className="h-4 w-4" />
-                           </button>
-                         )}
-                       </div>
-                       
-                       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                         <div>
-                           <label className="block text-sm font-medium text-gray-700 mb-1">Fournisseur</label>
-                           <select
-                             value={fournisseur.fournisseurId}
-                             onChange={(e) => updateProduitFournisseur(index, 'fournisseurId', e.target.value)}
-                             className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
-                           >
-                             <option value="">Sélectionner un fournisseur</option>
-                             {fournisseurs.map(f => (
-                               <option key={f.id} value={f.id}>{f.raisonSociale}</option>
-                             ))}
-                           </select>
-                         </div>
-                         
-                         <div>
-                           <label className="block text-sm font-medium text-gray-700 mb-1">Code produit fournisseur</label>
-                           <input
-                             type="text"
-                             placeholder="Code du produit chez le fournisseur"
-                             value={fournisseur.codeFournisseur}
-                             onChange={(e) => updateProduitFournisseur(index, 'codeFournisseur', e.target.value)}
-                             className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
-                           />
-                         </div>
-                         
-                         <div>
-                           <label className="block text-sm font-medium text-gray-700 mb-1">Prix unitaire</label>
-                           <input
-                             type="number"
-                             placeholder="0.00"
-                             value={fournisseur.prixUnitaire}
-                             onChange={(e) => updateProduitFournisseur(index, 'prixUnitaire', e.target.value)}
-                             className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
-                           />
-                         </div>
-                         
-                         <div>
-                           <label className="block text-sm font-medium text-gray-700 mb-1">Date du prix</label>
-                           <input
-                             type="date"
-                             value={fournisseur.datePrix}
-                             onChange={(e) => updateProduitFournisseur(index, 'datePrix', e.target.value)}
-                             className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
-                           />
-                         </div>
-                         
-                         <div>
-                           <label className="block text-sm font-medium text-gray-700 mb-1">Devise</label>
-                           <select
-                             value={fournisseur.devise}
-                             onChange={(e) => updateProduitFournisseur(index, 'devise', e.target.value)}
-                             className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
-                           >
-                             <option value="EUR">EUR (€)</option>
-                             <option value="USD">USD ($)</option>
-                             <option value="GBP">GBP (£)</option>
-                           </select>
-                         </div>
-                       </div>
-                     </div>
-                   ))}
-                 </div>
-               </div>
-
-               {/* Commentaires */}
-               <div className="mt-6 space-y-4">
-                 <h4 className="font-medium text-gray-900 flex items-center gap-2">
-                   <Info className="h-4 w-4" />
-                   Commentaires
-                 </h4>
-                 
-                 <div>
-                   <label className="block text-sm font-medium text-gray-700 mb-2">Commentaires additionnels</label>
-                   <textarea
-                     placeholder="Informations supplémentaires, notes internes..."
-                     value={newProduit.commentaires}
-                     onChange={(e) => setNewProduit({...newProduit, commentaires: e.target.value})}
-                     className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
-                     rows={3}
-                   />
-                 </div>
-               </div>
-
-               {/* Boutons d'action */}
-               <div className="flex gap-3 mt-8 pt-6 border-t border-gray-200">
-                 <button
-                   onClick={() => setShowCreateProduitModal(false)}
-                   className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                 >
-                   Annuler
-                 </button>
-                 <button
-                   onClick={handleCreateProduit}
-                   className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-500 to-teal-600 hover:from-blue-600 hover:to-teal-700 text-white rounded-lg transition-all duration-200 font-medium"
-                 >
-                   <Plus className="h-4 w-4 inline mr-2" />
-                   Créer le produit
                  </button>
                </div>
              </div>

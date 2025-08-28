@@ -1,0 +1,88 @@
+/* Charte graphique GESTALIS */
+
+:root {
+  /* Couleurs principales */
+  --gestalis-primary: #004b5d;
+  --gestalis-secondary: #f89032;
+  --gestalis-accent: #eca08e;
+  --gestalis-tertiary: #ba8a36;
+  --gestalis-neutral: #ededed;
+  
+  /* Variations */
+  --gestalis-primary-light: #006d8a;
+  --gestalis-primary-dark: #003a4a;
+  --gestalis-secondary-light: #ffa64d;
+  --gestalis-secondary-dark: #e67a1a;
+  --gestalis-accent-light: #f0b8a8;
+  --gestalis-accent-dark: #d88c7a;
+  
+  /* Couleurs sémantiques */
+  --gestalis-success: #10b981;
+  --gestalis-warning: #f59e0b;
+  --gestalis-error: #ef4444;
+  --gestalis-info: #3b82f6;
+  
+  /* Neutres */
+  --gestalis-gray-50: #f9fafb;
+  --gestalis-gray-100: #f3f4f6;
+  --gestalis-gray-200: #e5e7eb;
+  --gestalis-gray-300: #d1d5db;
+  --gestalis-gray-400: #9ca3af;
+  --gestalis-gray-500: #6b7280;
+  --gestalis-gray-600: #4b5563;
+  --gestalis-gray-700: #374151;
+  --gestalis-gray-800: #1f2937;
+  --gestalis-gray-900: #111827;
+  
+  /* Couleurs de fond */
+  --gestalis-bg-primary: #ffffff;
+  --gestalis-bg-secondary: #f8fafc;
+  --gestalis-bg-tertiary: #f1f5f9;
+  
+  /* Couleurs de texte */
+  --gestalis-text-primary: #1e293b;
+  --gestalis-text-secondary: #475569;
+  --gestalis-text-tertiary: #64748b;
+  --gestalis-text-inverse: #ffffff;
+}
+
+/* Classes utilitaires */
+.bg-gestalis-primary { background-color: var(--gestalis-primary); }
+.bg-gestalis-secondary { background-color: var(--gestalis-secondary); }
+.bg-gestalis-accent { background-color: var(--gestalis-accent); }
+.bg-gestalis-tertiary { background-color: var(--gestalis-tertiary); }
+.bg-gestalis-neutral { background-color: var(--gestalis-neutral); }
+
+.text-gestalis-primary { color: var(--gestalis-primary); }
+.text-gestalis-secondary { color: var(--gestalis-secondary); }
+.text-gestalis-accent { color: var(--gestalis-accent); }
+.text-gestalis-tertiary { color: var(--gestalis-tertiary); }
+
+.border-gestalis-primary { border-color: var(--gestalis-primary); }
+.border-gestalis-secondary { border-color: var(--gestalis-secondary); }
+.border-gestalis-accent { border-color: var(--gestalis-accent); }
+.border-gestalis-tertiary { border-color: var(--gestalis-tertiary); }
+
+/* États hover */
+.hover\:bg-gestalis-primary:hover { background-color: var(--gestalis-primary-light); }
+.hover\:bg-gestalis-secondary:hover { background-color: var(--gestalis-secondary-light); }
+.hover\:text-gestalis-primary:hover { color: var(--gestalis-primary-light); }
+.hover\:text-gestalis-secondary:hover { color: var(--gestalis-secondary-light); }
+
+/* Gradients */
+.gradient-gestalis-primary {
+  background: linear-gradient(135deg, var(--gestalis-primary) 0%, var(--gestalis-primary-light) 100%);
+}
+
+.gradient-gestalis-secondary {
+  background: linear-gradient(135deg, var(--gestalis-secondary) 0%, var(--gestalis-secondary-light) 100%);
+}
+
+/* Ombres avec couleurs de la charte */
+.shadow-gestalis-primary {
+  box-shadow: 0 4px 6px -1px rgba(0, 75, 93, 0.1), 0 2px 4px -1px rgba(0, 75, 93, 0.06);
+}
+
+.shadow-gestalis-secondary {
+  box-shadow: 0 4px 6px -1px rgba(248, 144, 50, 0.1), 0 2px 4px -1px rgba(248, 144, 50, 0.06);
+} 
