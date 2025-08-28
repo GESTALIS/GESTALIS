@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "name": "gestalis-btp-frontend",
+  "name": "gestalis-btp-2024-frontend",
   "builds": [
     {
       "src": "package.json",
