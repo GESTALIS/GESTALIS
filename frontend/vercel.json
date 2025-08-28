@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "name": "gestalis-frontend",
+  "name": "gestalis-btp-frontend",
   "builds": [
     {
       "src": "package.json",
@@ -64,10 +64,5 @@
     "VITE_APP_NAME": "Gestalis",
     "VITE_APP_VERSION": "1.0.0",
     "VITE_APP_ENVIRONMENT": "production"
-  },
-  "functions": {
-    "app/api/**/*.js": {
-      "runtime": "nodejs18.x"
-    }
   }
 }
