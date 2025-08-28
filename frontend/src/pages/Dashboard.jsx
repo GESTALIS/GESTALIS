@@ -131,6 +131,14 @@ const migrerVersSupabase = async () => {
   }
 };
 
+const nettoyerDonneesTest = () => {
+  if (confirm('Êtes-vous sûr de vouloir nettoyer toutes les données de test ? Cela supprimera toutes les données locales et les remplacera par des données par défaut.')) {
+    localStorage.clear();
+    alert('🧹 Données de test nettoyées avec succès !');
+    window.location.reload(); // Recharger la page pour appliquer les changements
+  }
+};
+
 const Dashboard = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [lastUpdate, setLastUpdate] = useState(new Date());
@@ -518,13 +526,23 @@ const Dashboard = () => {
             Veuillez cliquer sur le bouton ci-dessous pour déclencher la migration de vos données locales vers Supabase.
             Cela permettra de synchroniser vos données entre votre application et la base de données.
           </p>
-          <GestalisButton
-            onClick={migrerVersSupabase}
-            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-300 hover:scale-105"
-          >
-            <Database className="h-5 w-5" />
-            Déclencher la migration
-          </GestalisButton>
+          <div className="flex gap-4 justify-center">
+            <GestalisButton
+              onClick={migrerVersSupabase}
+              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-300 hover:scale-105"
+            >
+              <Database className="h-5 w-5" />
+              Déclencher la migration
+            </GestalisButton>
+            
+            <GestalisButton
+              onClick={nettoyerDonneesTest}
+              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-red-600 to-orange-600 text-white rounded-lg hover:from-red-700 hover:to-orange-700 transition-all duration-300 hover:scale-105"
+            >
+              <AlertCircle className="h-5 w-5" />
+              Nettoyer données de test
+            </GestalisButton>
+          </div>
         </section>
       </div>
     </div>
