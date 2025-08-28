@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { GestalisCard, GestalisCardContent, GestalisCardHeader, GestalisCardTitle } from '../components/ui/GestalisCard';
 import { GestalisButton } from '../components/ui/gestalis-button';
+import { createClient } from '@supabase/supabase-js';
 import { 
   Building2, 
   ShoppingCart, 
@@ -33,15 +34,10 @@ import {
 import { DashboardBanner } from '../components/layout/ModuleBanner';
 
 // Configuration Supabase
-const supabase = window.supabase || (() => {
-  if (typeof window !== 'undefined' && window.createClient) {
-    return window.createClient(
-      'https://esczdkgknrozwovlfbki.supabase.co',
-      '9uGziNgoG46oYBg0plVBKEYxEp8uO-zCA'
-    );
-  }
-  return null;
-})();
+const supabase = createClient(
+  'https://esczdkgknrozwovlfbki.supabase.co',
+  '9uGziNgoG46oYBg0plVBKEYxEp8uO-zCA'
+);
 
 // Fonction de migration automatique
 const migrerVersSupabase = async () => {
