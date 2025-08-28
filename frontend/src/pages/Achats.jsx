@@ -80,6 +80,12 @@ const Achats = () => {
             }
           }
         }
+        
+        // Si on est dans l'onglet produits, ouvrir directement le modal
+        if (tabParam === 'produits') {
+          console.log('🚀 Ouverture automatique du modal de création de produit');
+          setShowCreateProduitModal(true);
+        }
       }
     }
   }, [location.search]);

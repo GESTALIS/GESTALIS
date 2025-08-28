@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bon de Commande - GESTALIS</title>
+    <link rel="stylesheet" href="po.css">
+</head>
+<body>
+    <div class="po-container">
+        <!-- Header avec logo et titre -->
+        <header class="po-header">
+            <div class="logo-section">
+                <div class="logo-placeholder">
+                    <img src="{{company.logoUrl}}" alt="Logo GESTALIS" class="company-logo" onerror="this.style.display='none'">
+                    <div class="logo-fallback">GESTALIS</div>
+                </div>
+            </div>
+            <div class="title-section">
+                <h1 class="main-title">BON DE COMMANDE</h1>
+                <div class="title-underline"></div>
+            </div>
+        </header>
+
+        <!-- Adresses expéditeur/destinataire -->
+        <section class="addresses-section">
+            <div class="address-column sender-address">
+                <h3 class="address-title">Expéditeur</h3>
+                <div class="company-info">
+                    <div class="company-name">{{company.name}}</div>
+                    <div class="company-address">{{company.address}}</div>
+                    <div class="company-contact">
+                        <span class="contact-item">{{company.email}}</span>
+                        <span class="contact-item">{{company.phone}}</span>
+                    </div>
+                    <div class="company-details">
+                        <span class="detail-item">SIRET: {{company.siret}}</span>
+                        <span class="detail-item">NAF: {{company.naf}}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="address-column recipient-address">
+                <h3 class="address-title">Destinataire</h3>
+                <div class="supplier-info">
+                    <div class="supplier-name">{{supplier.name}}</div>
+                    <div class="supplier-address">{{supplier.address}}</div>
+                    <div class="supplier-contact">
+                        <span class="contact-item">{{supplier.email}}</span>
+                        <span class="contact-item">{{supplier.phone}}</span>
+                    </div>
+                    <div class="supplier-details">
+                        <span class="detail-item">N° Compte: {{supplier.accountRef}}</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Métadonnées -->
+        <section class="meta-section">
+            <div class="meta-grid">
+                <div class="meta-item">
+                    <label class="meta-label">N° BDC</label>
+                    <div class="meta-value bdc-number">{{meta.number}}</div>
+                </div>
+                <div class="meta-item">
+                    <label class="meta-label">Date</label>
+                    <div class="meta-value">{{meta.date}}</div>
+                </div>
+                <div class="meta-item">
+                    <label class="meta-label">Créateur</label>
+                    <div class="meta-value">{{meta.creator}}</div>
+                </div>
+                <div class="meta-item">
+                    <label class="meta-label">Demandeur</label>
+                    <div class="meta-value">{{meta.requester}}</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Nom du chantier -->
+        <section class="project-section">
+            <div class="project-banner">
+                <label class="project-label">NOM DU CHANTIER</label>
+                <div class="project-name">{{project.name}}</div>
+            </div>
+        </section>
+
+        <!-- Livraison et Contact -->
+        <section class="delivery-section">
+            <div class="delivery-grid">
+                <div class="delivery-item">
+                    <label class="delivery-label">Adresse de livraison</label>
+                    <div class="delivery-value">{{delivery.site}}, {{delivery.cityZip}}</div>
+                </div>
+                <div class="delivery-item">
+                    <label class="delivery-label">Contact chantier</label>
+                    <div class="delivery-value">{{delivery.contactName}}</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Table des articles -->
+        <section class="articles-section">
+            <table class="articles-table">
+                <thead class="table-header">
+                    <tr>
+                        <th class="col-ref">Réf.</th>
+                        <th class="col-designation">Désignation</th>
+                        <th class="col-unit">Unité</th>
+                        <th class="col-qty">Qté</th>
+                    </tr>
+                </thead>
+                <tbody class="table-body">
+                    {{#each lines}}
+                    <tr class="table-row">
+                        <td class="col-ref">{{ref}}</td>
+                        <td class="col-designation">{{label}}</td>
+                        <td class="col-unit">{{unit}}</td>
+                        <td class="col-qty">{{qty}}</td>
+                    </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Observations -->
+        <section class="notes-section">
+            <h3 class="notes-title">Observations / Conditions particulières</h3>
+            <div class="notes-content">{{notes}}</div>
+        </section>
+
+        <!-- Signature -->
+        <section class="signature-section">
+            <div class="signature-block">
+                <label class="signature-label">Signature du créateur</label>
+                <div class="signature-line"></div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="po-footer">
+            <div class="footer-content">
+                <div class="company-coordinates">
+                    <span>{{company.address}}</span>
+                    <span>{{company.phone}}</span>
+                    <span>{{company.email}}</span>
+                    <span>SIRET: {{company.siret}} | NAF: {{company.naf}}</span>
+                    <span>IBAN: {{company.iban}} | BIC: {{company.bic}}</span>
+                </div>
+                <div class="pagination">
+                    Page <span class="current-page">1</span> / <span class="total-pages">1</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+</body>
+</html>

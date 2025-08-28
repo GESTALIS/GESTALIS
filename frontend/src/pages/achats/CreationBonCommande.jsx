@@ -22,6 +22,7 @@ import {
 import { GestalisCard, GestalisCardContent, GestalisCardHeader, GestalisCardTitle } from '../../components/ui/GestalisCard';
 import { GestalisButton } from '../../components/ui/gestalis-button';
 import { Input } from '../../components/ui/input';
+import BonCommandePDF from '../../components/pdf/BonCommandePDF';
 import { api } from '../../utils/api';
 import { useAuthStore } from '../../stores/authStore';
 import { useNavigate } from 'react-router-dom';
@@ -91,6 +92,7 @@ const CreationBonCommande = () => {
   const [showCreateArticleModal, setShowCreateArticleModal] = useState(false);
   const [showCreateEmployeModal, setShowCreateEmployeModal] = useState(false); // Modal employé
   const [showCreateProduitModal, setShowCreateProduitModal] = useState(false); // Modal produit bibliothèque
+  const [showPDFModal, setShowPDFModal] = useState(false); // Modal aperçu PDF
 
   // États pour les nouveaux éléments
   const [newFournisseur, setNewFournisseur] = useState({
@@ -798,26 +800,7 @@ const CreationBonCommande = () => {
   };
 
   const handleDownloadPDF = async () => {
-    try {
-      // Créer le contenu HTML du PDF
-      const pdfContent = generatePDFContent();
-      
-      // Créer un blob et télécharger
-      const blob = new Blob([pdfContent], { type: 'text/html' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${bonCommande.numeroCommande}.html`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      
-      alert('📄 PDF généré et téléchargé !');
-    } catch (error) {
-      console.error('Erreur lors de la génération du PDF:', error);
-      alert('❌ Erreur lors de la génération du PDF');
-    }
+    setShowPDFModal(true);
   };
 
   const generatePDFContent = () => {
@@ -2434,6 +2417,38 @@ const CreationBonCommande = () => {
              </div>
            </div>
          </div>
+       )}
+
+       {/* Modal Aperçu PDF */}
+       {showPDFModal && (
+         <BonCommandePDF
+           bonCommande={{
+             numero: bonCommande.numeroCommande,
+             date: bonCommande.dateCommande,
+             client: {
+               nom: fournisseurs.find(f => f.id === bonCommande.fournisseurId)?.raisonSociale || 'Nom du fournisseur',
+               numero: fournisseurs.find(f => f.id === bonCommande.fournisseurId)?.codeFournisseur || 'Code fournisseur',
+               adresse: fournisseurs.find(f => f.id === bonCommande.fournisseurId)?.adresseSiege || 'Adresse du fournisseur',
+               ville: 'Ville, Code postal',
+               telephone: fournisseurs.find(f => f.id === bonCommande.fournisseurId)?.telephone || 'Téléphone'
+             },
+             representant: employes.find(e => e.id === bonCommande.demandeurId) ? 
+               `${employes.find(e => e.id === bonCommande.demandeurId)?.prenom} ${employes.find(e => e.id === bonCommande.demandeurId)?.nom}` : 'Nom du représentant',
+             modeExpedition: 'Mode d\'expédition',
+             dateLivraison: bonCommande.dateLivraisonSouhaitee,
+             lieuLivraison: chantiers.find(c => c.id === bonCommande.chantierId)?.adresse || 'Lieu de livraison',
+             observations: bonCommande.notes,
+             articles: articles.map(article => ({
+               code: article.designation,
+               designation: article.designation,
+               quantite: article.quantite,
+               quantiteLivree: '0',
+               prixUnitaire: parseFloat(article.prixUnitaire) || 0,
+               montantTotal: (parseFloat(article.quantite) || 0) * (parseFloat(article.prixUnitaire) || 0)
+             }))
+           }}
+           onClose={() => setShowPDFModal(false)}
+         />
        )}
      </div>
    );

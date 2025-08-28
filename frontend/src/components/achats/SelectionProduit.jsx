@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, Plus, X, FileSpreadsheet, Download, Upload } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Input } from '../../components/ui/input';
 import produitsService from '../../services/produitsService';
 import prixAlertService from '../../services/prixAlertService';
@@ -12,20 +13,11 @@ const SelectionProduit = ({
   categorieFiltree = null,
   fournisseurFiltre = null
 }) => {
+  const navigate = useNavigate();
   const [recherche, setRecherche] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [showNouveauProduit, setShowNouveauProduit] = useState(false);
-  const [nouveauProduit, setNouveauProduit] = useState({
-    code: '',
-    designation: '',
-    categorie: categorieFiltree || 'Divers',
-    unite: '',
-    prixUnitaire: 0,
-    description: '',
-    fournisseur: fournisseurFiltre || ''
-  });
-  const [erreurs, setErreurs] = useState({});
+
   const [showImportExport, setShowImportExport] = useState(false);
   const [alertePrix, setAlertePrix] = useState(null);
   const [produitEnSelection, setProduitEnSelection] = useState(null);
@@ -151,58 +143,11 @@ const SelectionProduit = ({
 
   // Ouvrir le formulaire de nouveau produit
   const ouvrirNouveauProduit = () => {
-    setNouveauProduit({
-      code: '',
-      designation: '',
-      categorie: categorieFiltree || 'Divers',
-      unite: '',
-      prixUnitaire: 0,
-      description: '',
-      fournisseur: fournisseurFiltre || ''
-    });
-    setErreurs({});
-    setShowNouveauProduit(true);
-    setShowSuggestions(false);
+    // Rediriger vers l'onglet Produits de la page Achats
+    navigate('/achats?tab=produits&create=true');
   };
 
-  // Sauvegarder le nouveau produit
-  const sauvegarderProduit = () => {
-    // Validation manuelle
-    const erreurs = {};
-    
-    if (!nouveauProduit.code.trim()) erreurs['Le code est obligatoire'] = true;
-    if (!nouveauProduit.designation.trim()) erreurs['La désignation est obligatoire'] = true;
-    if (!nouveauProduit.categorie.trim()) erreurs['La catégorie est obligatoire'] = true;
-    if (!nouveauProduit.unite.trim()) erreurs['L\'unité est obligatoire'] = true;
-    if (nouveauProduit.prixUnitaire <= 0) erreurs['Le prix unitaire doit être positif'] = true;
-    if (!nouveauProduit.fournisseur.trim()) erreurs['Le fournisseur est obligatoire'] = true;
-    
-    if (Object.keys(erreurs).length > 0) {
-      setErreurs(erreurs);
-      return;
-    }
-    
-    // Si validation OK, utiliser le service
-    const validation = produitsService.validerProduit(nouveauProduit);
-    
-    if (validation.valide) {
-      const produitSauvegarde = produitsService.sauvegarderProduit(nouveauProduit);
-      if (produitSauvegarde) {
-        onNouveauProduit(nouveauProduit);
-        setShowNouveauProduit(false);
-        setRecherche(nouveauProduit.designation);
-        // Recharger les suggestions
-        const resultats = produitsService.rechercherProduits(recherche, categorieFiltree);
-        const resultatsTries = trierParPrioriteFournisseur(resultats, fournisseurFiltre);
-        setSuggestions(resultatsTries);
-      }
-    } else {
-      setErreurs(validation.erreurs.reduce((acc, err) => {
-        acc[err] = err;
-        return acc;
-      }, {}));
-    }
-  };
+
 
   // Gérer l'import CSV
   const handleImportCSV = async (event) => {
@@ -232,7 +177,7 @@ const SelectionProduit = ({
   };
 
   // Obtenir les catégories disponibles
-  const categories = produitsService.obtenirCategories();
+
 
   return (
     <div className="relative w-full" ref={wrapperRef}>
@@ -319,165 +264,7 @@ const SelectionProduit = ({
         </div>
       )}
 
-      {/* Modal nouveau produit */}
-      {showNouveauProduit && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden">
-            {/* Header */}
-            <div className="bg-gradient-to-r from-blue-500 to-teal-600 px-6 py-4 border-b flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-white">
-                Nouveau produit/service
-              </h3>
-              <button
-                onClick={() => setShowNouveauProduit(false)}
-                className="text-white hover:text-blue-100 transition-colors"
-              >
-                <X className="h-6 w-6" />
-              </button>
-            </div>
 
-            {/* Contenu */}
-            <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Code */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Code *
-                  </label>
-                  <Input
-                    value={nouveauProduit.code}
-                    onChange={(e) => setNouveauProduit({...nouveauProduit, code: e.target.value})}
-                    placeholder="Ex: CARB-001"
-                    className="w-full"
-                  />
-                  {erreurs['Le code est obligatoire'] && (
-                    <p className="text-xs text-red-600 mt-1">Le code est obligatoire</p>
-                  )}
-                  {erreurs['Ce code existe déjà'] && (
-                    <p className="text-xs text-red-600 mt-1">Ce code existe déjà</p>
-                  )}
-                </div>
-
-                {/* Désignation */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Désignation *
-                  </label>
-                  <Input
-                    value={nouveauProduit.designation}
-                    onChange={(e) => setNouveauProduit({...nouveauProduit, designation: e.target.value})}
-                    placeholder="Nom du produit/service"
-                    className="w-full"
-                  />
-                  {erreurs['La désignation est obligatoire'] && (
-                    <p className="text-xs text-red-600 mt-1">La désignation est obligatoire</p>
-                  )}
-                </div>
-
-                {/* Catégorie */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Catégorie *
-                  </label>
-                  <select
-                    value={nouveauProduit.categorie}
-                    onChange={(e) => setNouveauProduit({...nouveauProduit, categorie: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    {categories.map(cat => (
-                      <option key={cat} value={cat}>{cat}</option>
-                    ))}
-                  </select>
-                  {erreurs['La catégorie est obligatoire'] && (
-                    <p className="text-xs text-red-600 mt-1">La catégorie est obligatoire</p>
-                  )}
-                </div>
-
-                {/* Unité */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Unité *
-                  </label>
-                  <Input
-                    value={nouveauProduit.unite}
-                    onChange={(e) => setNouveauProduit({...nouveauProduit, unite: e.target.value})}
-                    placeholder="Ex: L, Kg, H, etc."
-                    className="w-full"
-                  />
-                  {erreurs['L\'unité est obligatoire'] && (
-                    <p className="text-xs text-red-600 mt-1">L'unité est obligatoire</p>
-                  )}
-                </div>
-
-                {/* Prix unitaire */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Prix unitaire HT *
-                  </label>
-                  <Input
-                    type="number"
-                    value={nouveauProduit.prixUnitaire}
-                    onChange={(e) => setNouveauProduit({...nouveauProduit, prixUnitaire: parseFloat(e.target.value) || 0})}
-                    placeholder="0.00"
-                    step="0.01"
-                    className="w-full"
-                  />
-                  {erreurs['Le prix unitaire doit être positif'] && (
-                    <p className="text-xs text-red-600 mt-1">Le prix unitaire doit être positif</p>
-                  )}
-                </div>
-
-                {/* Fournisseur */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Fournisseur *
-                  </label>
-                  <Input
-                    value={nouveauProduit.fournisseur}
-                    onChange={(e) => setNouveauProduit({...nouveauProduit, fournisseur: e.target.value})}
-                    placeholder="Nom du fournisseur"
-                    className="w-full"
-                  />
-                  {erreurs['Le fournisseur est obligatoire'] && (
-                    <p className="text-xs text-red-600 mt-1">Le fournisseur est obligatoire</p>
-                  )}
-                </div>
-
-                {/* Description */}
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Description
-                  </label>
-                  <textarea
-                    value={nouveauProduit.description}
-                    onChange={(e) => setNouveauProduit({...nouveauProduit, description: e.target.value})}
-                    placeholder="Description optionnelle du produit/service"
-                    rows="3"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="bg-gray-50 px-6 py-4 border-t flex justify-end gap-3">
-              <button
-                onClick={() => setShowNouveauProduit(false)}
-                className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-              >
-                Annuler
-              </button>
-              <button
-                onClick={sauvegarderProduit}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-2"
-              >
-                <Plus className="h-4 w-4" />
-                Créer le produit
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Modal Import/Export */}
       {showImportExport && (

@@ -11,6 +11,7 @@ import SelectionProduit from '../../components/achats/SelectionProduit';
 import ParametresDecimales from '../../components/ui/ParametresDecimales';
 import ExportEcrituresComptables from '../../components/comptabilite/ExportEcrituresComptables';
 
+
 const NouvelleFacture = ({ parametresEtape1, onRetourEtape1 }) => {
   // État principal de la facture
   const [facture, setFacture] = useState({
@@ -78,6 +79,8 @@ const NouvelleFacture = ({ parametresEtape1, onRetourEtape1 }) => {
   const [showCessionSuggestions, setShowCessionSuggestions] = useState(false);
   const [showSousTraitantSuggestions, setShowSousTraitantSuggestions] = useState(false);
   
+
+  
   // États pour la ventilation multi-chantiers
   const [showVentilation, setShowVentilation] = useState(false);
   const [ligneVentilation, setLigneVentilation] = useState(null);
@@ -88,6 +91,11 @@ const NouvelleFacture = ({ parametresEtape1, onRetourEtape1 }) => {
   
   // État pour la comptabilisation
   const [showComptabilisation, setShowComptabilisation] = useState(false);
+
+  // États pour le système d'alerte de changement de prix
+  const [alertesPrix, setAlertesPrix] = useState({});
+  const [showAlerteVariation, setShowAlerteVariation] = useState(null);
+  const [prixHistorique, setPrixHistorique] = useState({});
 
   // Calculs automatiques
   useEffect(() => {
@@ -150,41 +158,139 @@ const NouvelleFacture = ({ parametresEtape1, onRetourEtape1 }) => {
     return true; // Si pas de période, pas de validation
   };
 
+  // ===== SYSTÈME D'ALERTE DE CHANGEMENT DE PRIX =====
+  
+  // Charger l'historique des prix au démarrage
+  useEffect(() => {
+    const historique = JSON.parse(localStorage.getItem('gestalis-prix-historiques') || '{}');
+    setPrixHistorique(historique);
+  }, []);
+
+  // Fonction pour générer la clé d'un produit
+  const genererCleProduit = (fournisseur, designation) => {
+    if (!fournisseur || !designation) return null;
+    return `${fournisseur.toLowerCase().trim()}-${designation.toLowerCase().trim()}`;
+  };
+
+  // Fonction pour détecter les variations de prix
+  const detecterVariationPrix = (ligne, nouveauPrix, index) => {
+    if (!facture.fournisseur || !ligne.designation || !nouveauPrix || nouveauPrix <= 0) {
+      return { alert: false };
+    }
+
+    const cle = genererCleProduit(facture.fournisseur, ligne.designation);
+    if (!cle) return { alert: false };
+
+    const ancienPrix = prixHistorique[cle]?.prix || null;
+    
+    if (ancienPrix && ancienPrix > 0 && Math.abs(nouveauPrix - ancienPrix) > 0.01) {
+      const variation = ((nouveauPrix - ancienPrix) / ancienPrix) * 100;
+      const seuilAlerte = 5; // 5% de variation pour déclencher l'alerte
+      
+      if (Math.abs(variation) >= seuilAlerte) {
+        return {
+          alert: true,
+          variation: variation,
+          ancienPrix: ancienPrix,
+          nouveauPrix: nouveauPrix,
+          pourcentage: Math.abs(variation).toFixed(1),
+          type: variation > 0 ? 'augmentation' : 'diminution',
+          message: `Prix ${variation > 0 ? 'augmenté' : 'diminué'} de ${Math.abs(variation).toFixed(1)}%`,
+          dateAncien: prixHistorique[cle]?.date || 'Inconnue',
+          ligneIndex: index
+        };
+      }
+    }
+    
+    return { alert: false };
+  };
+
+  // Fonction pour sauvegarder un prix dans l'historique
+  const sauvegarderPrixHistorique = (fournisseur, designation, prix) => {
+    if (!fournisseur || !designation || !prix || prix <= 0) return;
+    
+    const cle = genererCleProduit(fournisseur, designation);
+    if (!cle) return;
+
+    const nouvelHistorique = {
+      ...prixHistorique,
+      [cle]: {
+        prix: parseFloat(prix),
+        date: new Date().toISOString(),
+        fournisseur: fournisseur,
+        designation: designation
+      }
+    };
+
+    setPrixHistorique(nouvelHistorique);
+    localStorage.setItem('gestalis-prix-historiques', JSON.stringify(nouvelHistorique));
+  };
+
+  // Fonction pour afficher l'alerte de variation de prix
+  const afficherAlerteVariationPrix = (variation) => {
+    setShowAlerteVariation(variation);
+    
+    // Marquer cette ligne comme ayant une alerte
+    setAlertesPrix(prev => ({
+      ...prev,
+      [variation.ligneIndex]: variation
+    }));
+  };
+
+  // Fonction pour fermer l'alerte de variation
+  const fermerAlerteVariation = () => {
+    setShowAlerteVariation(null);
+  };
+
+  // Fonction pour accepter le nouveau prix et mettre à jour l'historique
+  const accepterNouveauPrix = () => {
+    if (showAlerteVariation) {
+      const ligne = facture.lignes[showAlerteVariation.ligneIndex];
+      sauvegarderPrixHistorique(facture.fournisseur, ligne.designation, showAlerteVariation.nouveauPrix);
+      
+      // Retirer l'alerte pour cette ligne
+      setAlertesPrix(prev => {
+        const newAlertes = { ...prev };
+        delete newAlertes[showAlerteVariation.ligneIndex];
+        return newAlertes;
+      });
+    }
+    fermerAlerteVariation();
+  };
+
   // Fonctions pour les suggestions
   const getFournisseurSuggestions = () => {
-    // TODO: Récupérer depuis l'API
-    // Pour l'instant, données de test avec conditions de paiement
-    const fournisseurs = [
-      { nom: 'BTP Martin', ville: 'Paris', conditions: '30 jours' },
-      { nom: 'Construction Dubois', ville: 'Lyon', conditions: '45 jours' },
-      { nom: 'Entreprise Legrand', ville: 'Marseille', conditions: '60 jours' },
-      { nom: 'Société Moreau', ville: 'Toulouse', conditions: '30 jours' },
-      { nom: 'Groupe Bernard', ville: 'Nantes', conditions: '90 jours' }
-    ];
+    // Récupérer depuis localStorage
+    const fournisseurs = JSON.parse(localStorage.getItem('gestalis-fournisseurs') || '[]');
     
     if (!facture.fournisseur) return [];
     
     return fournisseurs.filter(f => 
-      f.nom.toLowerCase().includes(facture.fournisseur.toLowerCase())
-    );
+      f.raisonSociale?.toLowerCase().includes(facture.fournisseur.toLowerCase()) ||
+      f.codeFournisseur?.toLowerCase().includes(facture.fournisseur.toLowerCase()) ||
+      f.siret?.includes(facture.fournisseur)
+    ).map(f => ({
+      nom: f.raisonSociale,
+      ville: f.ville || 'N/A',
+      conditions: f.estSousTraitant ? 'Sous-traitant' : 'Standard'
+    }));
   };
 
   const getChantierSuggestions = () => {
-    // TODO: Récupérer depuis l'API
-    // Pour l'instant, données de test
-    const chantiers = [
-      { id: 1, nom: 'Résidence Les Jardins', adresse: '123 Rue de la Paix, Paris' },
-      { id: 2, nom: 'Centre Commercial Central', adresse: '456 Avenue des Champs, Lyon' },
-      { id: 3, nom: 'Immeuble de Bureaux', adresse: '789 Boulevard Maritime, Marseille' },
-      { id: 4, nom: 'Logements Sociaux', adresse: '321 Rue du Commerce, Toulouse' },
-      { id: 5, nom: 'Hôtel de Ville', adresse: '654 Place de la République, Nantes' }
-    ];
+    // Récupérer depuis localStorage
+    const chantiers = JSON.parse(localStorage.getItem('gestalis-chantiers') || '[]');
     
     if (!facture.chantier) return [];
     
     return chantiers.filter(c => 
-      c.nom.toLowerCase().includes(facture.chantier.toLowerCase())
-    );
+      c.nom?.toLowerCase().includes(facture.chantier.toLowerCase()) ||
+      c.codeChantier?.toLowerCase().includes(facture.chantier.toLowerCase()) ||
+      c.clientNom?.toLowerCase().includes(facture.chantier.toLowerCase())
+    ).map(c => ({
+      id: c.id,
+      nom: c.nom,
+      adresse: `${c.adresse || ''} ${c.codePostal || ''} ${c.ville || ''}`.trim() || 'Adresse non renseignée'
+    }));
   };
 
   const getCessionSuggestions = () => {
@@ -334,6 +440,24 @@ const NouvelleFacture = ({ parametresEtape1, onRetourEtape1 }) => {
     if (field === 'quantite' || field === 'prixUnitaire') {
       const ligne = lignesMiseAJour[index];
       ligne.montantHT = (ligne.quantite || 0) * (ligne.prixUnitaire || 0);
+      
+      // ===== SYSTÈME D'ALERTE DE CHANGEMENT DE PRIX =====
+      if (field === 'prixUnitaire' && value > 0) {
+        // Détecter les variations de prix
+        const variation = detecterVariationPrix(lignesMiseAJour[index], value, index);
+        
+        if (variation.alert) {
+          // Afficher l'alerte de variation
+          afficherAlerteVariationPrix(variation);
+        } else {
+          // Retirer l'alerte si elle existait pour cette ligne
+          setAlertesPrix(prev => {
+            const newAlertes = { ...prev };
+            delete newAlertes[index];
+            return newAlertes;
+          });
+        }
+      }
     }
     
     setFacture(prev => ({
@@ -631,10 +755,7 @@ const NouvelleFacture = ({ parametresEtape1, onRetourEtape1 }) => {
                     />
                     <button
                       type="button"
-                      onClick={() => {
-                        // Rediriger vers le formulaire existant de nouveau fournisseur
-                        window.location.href = '/achats/fournisseurs/nouveau';
-                      }}
+                      onClick={() => window.open('/achats/fournisseurs/nouveau', '_blank')}
                       className="absolute right-2 top-1/2 transform -translate-y-1/2 px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
                     >
                       <Plus className="h-3 w-3 inline mr-1" />
@@ -678,13 +799,8 @@ const NouvelleFacture = ({ parametresEtape1, onRetourEtape1 }) => {
                     />
                     <button
                       type="button"
-                      onClick={() => {
-                        // Rediriger vers le futur formulaire de nouveau chantier
-                        alert('🚧 Formulaire de nouveau chantier à implémenter !\n\nRedirection vers /chantiers/nouveau-chantier');
-                        // TODO: Implémenter le formulaire de nouveau chantier
-                        // window.location.href = '/chantiers/nouveau-chantier';
-                      }}
-                      className="absolute right-2 top-1/2 transform -translate-y-1/2 px-2 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors"
+                      onClick={() => window.open('/chantiers/nouveau', '_blank')}
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2 px-2 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-blue-200 transition-colors"
                     >
                       <Plus className="h-3 w-3 inline mr-1" />
                       Nouveau
@@ -983,20 +1099,43 @@ const NouvelleFacture = ({ parametresEtape1, onRetourEtape1 }) => {
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                               Prix unitaire HT
                             </label>
-                            <Input
-                              type="number"
-                              value={ligne.prixUnitaire}
-                              onChange={(e) => {
-                                const prix = parseFloat(e.target.value) || 0;
-                                handleLigneChange(index, 'prixUnitaire', prix);
-                                // Recalculer le montant HT
-                                const nouveauMontant = (ligne.quantite || 0) * prix;
-                                handleLigneChange(index, 'montantHT', nouveauMontant);
-                              }}
-                              placeholder="0.00"
-                              step={`0.${'0'.repeat(produitsService.getDecimales() - 1)}1`}
-                              className="w-full"
-                            />
+                            <div className="relative">
+                              <Input
+                                type="number"
+                                value={ligne.prixUnitaire}
+                                onChange={(e) => {
+                                  const prix = parseFloat(e.target.value) || 0;
+                                  handleLigneChange(index, 'prixUnitaire', prix);
+                                  // Recalculer le montant HT
+                                  const nouveauMontant = (ligne.quantite || 0) * prix;
+                                  handleLigneChange(index, 'montantHT', nouveauMontant);
+                                }}
+                                placeholder="0.00"
+                                step={`0.${'0'.repeat(produitsService.getDecimales() - 1)}1`}
+                                className={`w-full ${alertesPrix[index] ? 'border-orange-500 bg-orange-50' : ''}`}
+                              />
+                              {/* Indicateur d'alerte de prix */}
+                              {alertesPrix[index] && (
+                                <div className="absolute -top-2 -right-2">
+                                  <div className="bg-orange-500 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                                    <span className="w-2 h-2 bg-white rounded-full"></span>
+                                    {alertesPrix[index].pourcentage}%
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                            {/* Message d'alerte sous le champ */}
+                            {alertesPrix[index] && (
+                              <div className="mt-1 text-xs text-orange-600 flex items-center gap-1">
+                                <span>⚠️</span>
+                                <span>
+                                  Prix {alertesPrix[index].type === 'augmentation' ? 'augmenté' : 'diminué'} de {alertesPrix[index].pourcentage}%
+                                  {alertesPrix[index].ancienPrix && (
+                                    <span> (était {alertesPrix[index].ancienPrix.toFixed(2)}€)</span>
+                                  )}
+                                </span>
+                              </div>
+                            )}
                           </div>
 
                           {/* Montant HT */}
@@ -1261,6 +1400,73 @@ const NouvelleFacture = ({ parametresEtape1, onRetourEtape1 }) => {
           }}
         />
       )}
+
+      {/* Modal d'alerte de variation de prix */}
+      {showAlerteVariation && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                <span className="text-orange-600 text-xl">⚠️</span>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Variation de prix détectée
+                </h3>
+                <p className="text-sm text-gray-600">
+                  {showAlerteVariation.message}
+                </p>
+              </div>
+            </div>
+            
+            <div className="bg-gray-50 rounded-lg p-4 mb-4">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-gray-600">Article :</span>
+                  <div className="font-medium">{facture.lignes[showAlerteVariation.ligneIndex]?.designation}</div>
+                </div>
+                <div>
+                  <span className="text-gray-600">Fournisseur :</span>
+                  <div className="font-medium">{facture.fournisseur}</div>
+                </div>
+                <div>
+                  <span className="text-gray-600">Ancien prix :</span>
+                  <div className="font-medium text-gray-700">{showAlerteVariation.ancienPrix?.toFixed(2)}€</div>
+                </div>
+                <div>
+                  <span className="text-gray-600">Nouveau prix :</span>
+                  <div className={`font-medium ${showAlerteVariation.type === 'augmentation' ? 'text-red-600' : 'text-green-600'}`}>
+                    {showAlerteVariation.nouveauPrix?.toFixed(2)}€
+                  </div>
+                </div>
+                <div>
+                  <span className="text-gray-600">Variation :</span>
+                  <div className={`font-bold ${showAlerteVariation.type === 'augmentation' ? 'text-red-600' : 'text-green-600'}`}>
+                    {showAlerteVariation.type === 'augmentation' ? '+' : '-'}{showAlerteVariation.pourcentage}%
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={fermerAlerteVariation}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+              >
+                Ignorer
+              </button>
+              <button
+                onClick={accepterNouveauPrix}
+                className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+              >
+                Accepter et sauvegarder le prix
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+
     </div>
   );
 };

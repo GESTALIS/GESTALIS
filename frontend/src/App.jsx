@@ -17,6 +17,12 @@ import TestNavigation from './pages/achats/TestNavigation';
 import ParametresSociete from './pages/ParametresSociete';
 import NouveauFournisseur from './pages/achats/fournisseurs/NouveauFournisseur';
 import NouveauChantier from './pages/achats/chantiers/NouveauChantier';
+import DetailChantier from './pages/achats/chantiers/DetailChantier';
+import Cessions from './pages/achats/cession-creance/Cessions';
+import NouvelleCession from './pages/achats/cession-creance/NouvelleCession';
+import DetailCession from './pages/achats/cession-creance/DetailCession';
+import ChantiersAchats from './pages/achats/Chantiers';
+
 import NouvelUtilisateur from './pages/admin/users/NouvelUtilisateur';
 import GestionEntreprises from './pages/GestionEntreprises';
 import Layout from './components/layout/Layout';
@@ -51,6 +57,8 @@ const App = () => {
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/dashboard/actions" element={<DashboardActions />} />
                   <Route path="/chantiers" element={<Chantiers />} />
+                  <Route path="/chantiers/nouveau" element={<NouveauChantier />} />
+                  <Route path="/chantiers/:id" element={<DetailChantier />} />
                   <Route path="/achats" element={<Achats />} />
                   <Route path="/achats/demandes-prix" element={<DemandesPrix />} />
                   <Route path="/achats/commandes" element={<Commandes />} />
@@ -58,13 +66,26 @@ const App = () => {
                   <Route path="/achats/nouvelle-facture" element={<NouvelleFactureWorkflow />} />
                   <Route path="/achats/test-navigation" element={<TestNavigation />} />
                   <Route path="/achats/fournisseurs/nouveau" element={<NouveauFournisseur />} />
+                  <Route path="/achats/chantiers" element={<ChantiersAchats />} />
                   <Route path="/achats/chantiers/nouveau" element={<NouveauChantier />} />
+                  
+                  {/* Routes Cession de créance */}
+                  <Route path="/achats/cession-creance" element={<Cessions />} />
+                  <Route path="/achats/cession-creance/nouvelle" element={<NouvelleCession />} />
+                  <Route path="/achats/cession-creance/:id" element={<DetailCession />} />
+                  
+                  {/* Routes Cession de créance (pour la sidebar) */}
+                  <Route path="/cession-creance" element={<Cessions />} />
+                  <Route path="/cession-creance/nouvelle" element={<NouvelleCession />} />
+                  <Route path="/cession-creance/:id" element={<DetailCession />} />
+                  
                   <Route path="/vente" element={<Vente />} />
                   <Route path="/commercial" element={<GestionCommerciale />} />
                   <Route path="/tresorerie" element={<div>Règlements & Trésorerie</div>} />
                   <Route path="/tiers" element={<Tiers />} />
                   <Route path="/rh" element={<RessourcesHumaines />} />
                   <Route path="/rh-test" element={<div style={{backgroundColor: 'blue', color: 'white', padding: '50px', fontSize: '24px'}}>🔵 ROUTE TEST RH-TEST 🔵</div>} />
+
                   <Route path="/analyse" element={<div>Analyse & Reporting</div>} />
                   <Route path="/logistique" element={<div>Logistique & Stocks</div>} />
                   <Route path="/ia" element={<div>Automatisation & IA</div>} />

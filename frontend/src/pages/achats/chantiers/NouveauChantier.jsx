@@ -1,120 +1,219 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
-  MapPin, 
-  Plus, 
   Save, 
-  ArrowLeft,
-  X
+  X, 
+  Building2, 
+  MapPin, 
+  Calendar, 
+  DollarSign, 
+  Users, 
+  FileText,
+  Upload,
+  Plus,
+  Trash2
 } from 'lucide-react';
-import { GestalisCard, GestalisCardContent, GestalisCardHeader, GestalisCardTitle } from '../../../components/ui/GestalisCard';
-import { GestalisButton } from '../../../components/ui/gestalis-button';
-import { Input } from '../../../components/ui/input';
-import { api } from '../../../utils/api';
+import { GestalisCard, GestalisCardContent, GestalisCardHeader, GestalisCardTitle } from '@/components/ui/gestalis-card';
+import { GestalisButton } from '@/components/ui/gestalis-button';
+import { Input } from '@/components/ui/input';
 
 const NouveauChantier = () => {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
   const [chantier, setChantier] = useState({
     nom: '',
-    codeChantier: '',
-    adresse: '',
-    codePostal: '',
-    ville: '',
-    pays: 'France',
+    code: '',
+    numeroExterne: '',
+    description: '',
+    type: 'Construction',
     clientNom: '',
-    clientContact: '',
-    clientTelephone: '',
-    clientEmail: '',
+    adresse: '',
+    ville: '',
+    codePostal: '',
     dateDebut: '',
     dateFin: '',
+    dureeEstimee: '',
+    statut: 'en_preparation',
     montant: '',
     devise: 'EUR',
-    statut: 'EN_COURS',
-    description: '',
-    notes: ''
+    acompte: '',
+    chefChantier: '',
+    equipe: '',
+    sousTraitants: [],
+    documents: []
   });
 
-  const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
-
+  // Générer automatiquement le code chantier
   useEffect(() => {
-    // Récupérer le terme de recherche depuis localStorage
-    const createFromSearch = localStorage.getItem('createFromSearch');
-    if (createFromSearch) {
-      try {
-        const { type, searchTerm } = JSON.parse(createFromSearch);
-        if (type === 'chantier' && searchTerm) {
-          setChantier(prev => ({ ...prev, nom: searchTerm }));
-          // Nettoyer le localStorage
-          localStorage.removeItem('createFromSearch');
-        }
-      } catch (error) {
-        console.error('Erreur lors de la récupération du terme de recherche:', error);
-      }
+    const generateCode = () => {
+      const now = new Date();
+      const month = (now.getMonth() + 1).toString().padStart(2, '0');
+      const year = now.getFullYear().toString().slice(-2);
+      const existingChantiers = JSON.parse(localStorage.getItem('gestalis-chantiers') || '[]');
+      const count = existingChantiers.length + 1;
+      return `CH${month}${year}-${count.toString().padStart(4, '0')}`;
+    };
+    
+    if (!chantier.code) {
+      setChantier(prev => ({ ...prev, code: generateCode() }));
     }
-  }, []);
+  }, [chantier.code]);
 
   const handleInputChange = (field, value) => {
     setChantier(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleSave = async () => {
+  const handleSousTraitantAdd = () => {
+    const nouveauSousTraitant = prompt('Nom du sous-traitant :');
+    if (nouveauSousTraitant) {
+      setChantier(prev => ({
+        ...prev,
+        sousTraitants: [...prev.sousTraitants, nouveauSousTraitant]
+      }));
+    }
+  };
+
+  const handleSousTraitantRemove = (index) => {
+    setChantier(prev => ({
+      ...prev,
+      sousTraitants: prev.sousTraitants.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleDocumentAdd = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.pdf,.doc,.docx,.jpg,.png';
+    input.onchange = (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        setChantier(prev => ({
+          ...prev,
+          documents: [...prev.documents, { nom: file.name, fichier: file }]
+        }));
+      }
+    };
+    input.click();
+  };
+
+  const handleDocumentRemove = (index) => {
+    setChantier(prev => ({
+      ...prev,
+      documents: prev.documents.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
     try {
-      setSaving(true);
-      
-      // Validation
-      if (!chantier.nom || !chantier.codeChantier) {
-        alert('Veuillez remplir le nom et le code du chantier');
+      // Validation basique
+      if (!chantier.nom || !chantier.clientNom || !chantier.ville) {
+        alert('Veuillez remplir tous les champs obligatoires');
+        setLoading(false);
         return;
       }
+
+      // Récupérer les chantiers existants
+      const existingChantiers = JSON.parse(localStorage.getItem('gestalis-chantiers') || '[]');
       
-      const response = await api.post('/api/chantiers', chantier);
-      
-      alert('✅ Chantier créé avec succès !');
-      console.log('Chantier créé:', response.data);
-      
-      // Retourner à la page précédente
-      window.history.back();
-      
+      // Créer le nouveau chantier
+      const nouveauChantier = {
+        ...chantier,
+        id: Date.now(), // ID unique simple
+        montant: parseFloat(chantier.montant) || 0,
+        acompte: parseFloat(chantier.acompte) || 0,
+        equipe: parseInt(chantier.equipe) || 0,
+        dateCreation: new Date().toISOString()
+      };
+
+      // Ajouter à la liste
+      const updatedChantiers = [...existingChantiers, nouveauChantier];
+      localStorage.setItem('gestalis-chantiers', JSON.stringify(updatedChantiers));
+
+      // Redirection vers la liste des chantiers
+      navigate('/chantiers');
     } catch (error) {
-      console.error('Erreur lors de la sauvegarde:', error);
-      alert('❌ Erreur lors de la sauvegarde');
+      console.error('Erreur lors de la création du chantier:', error);
+      alert('Erreur lors de la création du chantier');
     } finally {
-      setSaving(false);
+      setLoading(false);
     }
   };
 
   const handleCancel = () => {
-    window.history.back();
+    navigate('/chantiers');
   };
 
+  const typesChantier = [
+    'Construction',
+    'Rénovation',
+    'Maintenance',
+    'Réhabilitation',
+    'Extension',
+    'Démolition',
+    'Terrassement',
+    'VRD',
+    'Électricité',
+    'Plomberie',
+    'Chauffage',
+    'Climatisation',
+    'Autre'
+  ];
+
+  const statuts = [
+    { value: 'en_preparation', label: 'En préparation' },
+    { value: 'en_cours', label: 'En cours' },
+    { value: 'suspendu', label: 'Suspendu' },
+    { value: 'termine', label: 'Terminé' },
+    { value: 'annule', label: 'Annulé' }
+  ];
+
+  const devises = ['EUR', 'USD', 'GBP', 'CHF'];
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
-      {/* En-tête */}
-      <div className="bg-gradient-to-r from-blue-500 to-teal-600 px-6 py-8 text-white">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={handleCancel}
-              className="text-white hover:text-blue-100 transition-colors"
-            >
-              <ArrowLeft className="h-6 w-6" />
-            </button>
-            <MapPin className="h-8 w-8" />
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* En-tête */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-white mb-2">Nouveau Chantier</h1>
-              <p className="text-blue-100 text-lg">Créer un nouveau chantier</p>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Nouveau Chantier</h1>
+              <p className="text-gray-600">Créez un nouveau chantier avec toutes les informations nécessaires</p>
+            </div>
+            <div className="flex gap-3">
+              <GestalisButton 
+                variant="outline" 
+                onClick={handleCancel}
+                className="border-gray-300"
+              >
+                <X className="h-4 w-4 mr-2" />
+                Annuler
+              </GestalisButton>
+              <GestalisButton 
+                onClick={handleSubmit}
+                disabled={loading}
+                className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white"
+              >
+                {loading ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                ) : (
+                  <Save className="h-4 w-4 mr-2" />
+                )}
+                {loading ? 'Création...' : 'Créer le chantier'}
+              </GestalisButton>
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="max-w-4xl mx-auto px-6 py-8">
-        <div className="space-y-6">
-          {/* Informations générales */}
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Informations de base */}
           <GestalisCard>
             <GestalisCardHeader>
               <GestalisCardTitle className="flex items-center gap-2">
-                <MapPin className="h-5 w-5" />
-                Informations générales
+                <Building2 className="h-5 w-5 text-green-600" />
+                Informations de base
               </GestalisCardTitle>
             </GestalisCardHeader>
             <GestalisCardContent className="space-y-4">
@@ -124,21 +223,25 @@ const NouveauChantier = () => {
                     Nom du chantier *
                   </label>
                   <Input
+                    type="text"
                     value={chantier.nom}
                     onChange={(e) => handleInputChange('nom', e.target.value)}
-                    placeholder="Nom du chantier"
+                    placeholder="Ex: Rénovation Immeuble Centre-Ville"
+                    required
                     className="w-full"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Code chantier *
+                    Code chantier automatique *
                   </label>
                   <Input
-                    value={chantier.codeChantier}
-                    onChange={(e) => handleInputChange('codeChantier', e.target.value)}
-                    placeholder="Code unique"
-                    className="w-full"
+                    type="text"
+                    value={chantier.code}
+                    onChange={(e) => handleInputChange('code', e.target.value)}
+                    placeholder="Code unique du chantier"
+                    required
+                    className="w-full bg-gray-50"
                   />
                 </div>
               </div>
@@ -146,7 +249,141 @@ const NouveauChantier = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Date de début
+                    Numéro chantier externe
+                  </label>
+                  <Input
+                    type="text"
+                    value={chantier.numeroExterne}
+                    onChange={(e) => handleInputChange('numeroExterne', e.target.value)}
+                    placeholder="Numéro externe (optionnel)"
+                    className="w-full"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Type de chantier
+                  </label>
+                  <select
+                    value={chantier.type}
+                    onChange={(e) => handleInputChange('type', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  >
+                    {typesChantier.map(type => (
+                      <option key={type} value={type}>{type}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Description
+                </label>
+                <textarea
+                  value={chantier.description}
+                  onChange={(e) => handleInputChange('description', e.target.value)}
+                  placeholder="Description détaillée du chantier..."
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Statut
+                </label>
+                <select
+                  value={chantier.statut}
+                  onChange={(e) => handleInputChange('statut', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                >
+                  {statuts.map(statut => (
+                    <option key={statut.value} value={statut.value}>{statut.label}</option>
+                  ))}
+                </select>
+              </div>
+            </GestalisCardContent>
+          </GestalisCard>
+
+          {/* Client et Localisation */}
+          <GestalisCard>
+            <GestalisCardHeader>
+              <GestalisCardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-blue-600" />
+                Client et Localisation
+              </GestalisCardTitle>
+            </GestalisCardHeader>
+            <GestalisCardContent className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Nom du client *
+                </label>
+                <Input
+                  type="text"
+                  value={chantier.clientNom}
+                  onChange={(e) => handleInputChange('clientNom', e.target.value)}
+                  placeholder="Nom de l'entreprise ou du client"
+                  required
+                  className="w-full"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Adresse complète
+                </label>
+                <Input
+                  type="text"
+                  value={chantier.adresse}
+                  onChange={(e) => handleInputChange('adresse', e.target.value)}
+                  placeholder="Numéro et nom de rue"
+                  className="w-full"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Ville *
+                  </label>
+                  <Input
+                    type="text"
+                    value={chantier.ville}
+                    onChange={(e) => handleInputChange('ville', e.target.value)}
+                    placeholder="Ville"
+                    required
+                    className="w-full"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Code postal
+                  </label>
+                  <Input
+                    type="text"
+                    value={chantier.codePostal}
+                    onChange={(e) => handleInputChange('codePostal', e.target.value)}
+                    placeholder="Code postal"
+                    className="w-full"
+                  />
+                </div>
+              </div>
+            </GestalisCardContent>
+          </GestalisCard>
+
+          {/* Planning et Durée */}
+          <GestalisCard>
+            <GestalisCardHeader>
+              <GestalisCardTitle className="flex items-center gap-2">
+                <Calendar className="h-5 w-5 text-purple-600" />
+                Planning et Durée
+              </GestalisCardTitle>
+            </GestalisCardHeader>
+            <GestalisCardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Date de début prévue
                   </label>
                   <Input
                     type="date"
@@ -157,7 +394,7 @@ const NouveauChantier = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Date de fin
+                    Date de fin prévue
                   </label>
                   <Input
                     type="date"
@@ -166,20 +403,43 @@ const NouveauChantier = () => {
                     className="w-full"
                   />
                 </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Montant
+                    Durée estimée
+                  </label>
+                  <Input
+                    type="text"
+                    value={chantier.dureeEstimee}
+                    onChange={(e) => handleInputChange('dureeEstimee', e.target.value)}
+                    placeholder="Ex: 6 mois"
+                    className="w-full"
+                  />
+                </div>
+              </div>
+            </GestalisCardContent>
+          </GestalisCard>
+
+          {/* Informations financières */}
+          <GestalisCard>
+            <GestalisCardHeader>
+              <GestalisCardTitle className="flex items-center gap-2">
+                <DollarSign className="h-5 w-5 text-green-600" />
+                Informations financières
+              </GestalisCardTitle>
+            </GestalisCardHeader>
+            <GestalisCardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Montant HT
                   </label>
                   <Input
                     type="number"
                     value={chantier.montant}
                     onChange={(e) => handleInputChange('montant', e.target.value)}
                     placeholder="0.00"
-                    min="0"
                     step="0.01"
+                    min="0"
                     className="w-full"
                   />
                 </div>
@@ -190,221 +450,174 @@ const NouveauChantier = () => {
                   <select
                     value={chantier.devise}
                     onChange={(e) => handleInputChange('devise', e.target.value)}
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                   >
-                    <option value="EUR">EUR (€)</option>
-                    <option value="USD">USD ($)</option>
-                    <option value="GBP">GBP (£)</option>
-                    <option value="CHF">CHF (CHF)</option>
+                    {devises.map(devise => (
+                      <option key={devise} value={devise}>{devise}</option>
+                    ))}
                   </select>
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Acompte reçu
+                  </label>
+                  <Input
+                    type="number"
+                    value={chantier.acompte}
+                    onChange={(e) => handleInputChange('acompte', e.target.value)}
+                    placeholder="0.00"
+                    step="0.01"
+                    min="0"
+                    className="w-full"
+                  />
+                </div>
+              </div>
+            </GestalisCardContent>
+          </GestalisCard>
+
+          {/* Équipe et Ressources */}
+          <GestalisCard>
+            <GestalisCardHeader>
+              <GestalisCardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-indigo-600" />
+                Équipe et Ressources
+              </GestalisCardTitle>
+            </GestalisCardHeader>
+            <GestalisCardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Chef de chantier
+                  </label>
+                  <Input
+                    type="text"
+                    value={chantier.chefChantier}
+                    onChange={(e) => handleInputChange('chefChantier', e.target.value)}
+                    placeholder="Nom du chef de chantier"
+                    className="w-full"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Taille de l'équipe
+                  </label>
+                  <Input
+                    type="number"
+                    value={chantier.equipe}
+                    onChange={(e) => handleInputChange('equipe', e.target.value)}
+                    placeholder="Nombre de personnes"
+                    min="0"
+                    className="w-full"
+                  />
+                </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Statut
+                  Sous-traitants impliqués
                 </label>
-                <select
-                  value={chantier.statut}
-                  onChange={(e) => handleInputChange('statut', e.target.value)}
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
+                <div className="space-y-2">
+                  {chantier.sousTraitants.map((st, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <Input
+                        type="text"
+                        value={st}
+                        onChange={(e) => {
+                          const newSousTraitants = [...chantier.sousTraitants];
+                          newSousTraitants[index] = e.target.value;
+                          setChantier(prev => ({ ...prev, sousTraitants: newSousTraitants }));
+                        }}
+                        placeholder="Nom du sous-traitant"
+                        className="flex-1"
+                      />
+                      <GestalisButton
+                        type="button"
+                        variant="danger"
+                        size="sm"
+                        onClick={() => handleSousTraitantRemove(index)}
+                        className="px-2 py-1"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </GestalisButton>
+                    </div>
+                  ))}
+                  <GestalisButton
+                    type="button"
+                    variant="outline"
+                    onClick={handleSousTraitantAdd}
+                    className="border-green-300 text-green-600 hover:bg-green-50"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Ajouter un sous-traitant
+                  </GestalisButton>
+                </div>
+              </div>
+            </GestalisCardContent>
+          </GestalisCard>
+
+          {/* Documents */}
+          <GestalisCard>
+            <GestalisCardHeader>
+              <GestalisCardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5 text-orange-600" />
+                Documents
+              </GestalisCardTitle>
+            </GestalisCardHeader>
+            <GestalisCardContent className="space-y-4">
+              <div className="space-y-2">
+                {chantier.documents.map((doc, index) => (
+                  <div key={index} className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+                    <FileText className="h-4 w-4 text-gray-500" />
+                    <span className="flex-1 text-sm text-gray-700">{doc.nom}</span>
+                    <GestalisButton
+                      type="button"
+                      variant="danger"
+                      size="sm"
+                      onClick={() => handleDocumentRemove(index)}
+                      className="px-2 py-1"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </GestalisButton>
+                  </div>
+                ))}
+                <GestalisButton
+                  type="button"
+                  variant="outline"
+                  onClick={handleDocumentAdd}
+                  className="border-orange-300 text-orange-600 hover:bg-orange-50"
                 >
-                  <option value="EN_COURS">En cours</option>
-                  <option value="PLANIFIE">Planifié</option>
-                  <option value="TERMINE">Terminé</option>
-                  <option value="EN_PAUSE">En pause</option>
-                  <option value="ANNULE">Annulé</option>
-                </select>
+                  <Upload className="h-4 w-4 mr-2" />
+                  Ajouter un document
+                </GestalisButton>
               </div>
             </GestalisCardContent>
           </GestalisCard>
 
-          {/* Adresse */}
-          <GestalisCard>
-            <GestalisCardHeader>
-              <GestalisCardTitle className="flex items-center gap-2">
-                <MapPin className="h-5 w-5" />
-                Adresse du chantier
-              </GestalisCardTitle>
-            </GestalisCardHeader>
-            <GestalisCardContent className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Adresse complète
-                </label>
-                <Input
-                  value={chantier.adresse}
-                  onChange={(e) => handleInputChange('adresse', e.target.value)}
-                  placeholder="Adresse complète du chantier"
-                  className="w-full"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Code postal
-                  </label>
-                  <Input
-                    value={chantier.codePostal}
-                    onChange={(e) => handleInputChange('codePostal', e.target.value)}
-                    placeholder="Code postal"
-                    className="w-full"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Ville
-                  </label>
-                  <Input
-                    value={chantier.ville}
-                    onChange={(e) => handleInputChange('ville', e.target.value)}
-                    placeholder="Ville"
-                    className="w-full"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Pays
-                  </label>
-                  <Input
-                    value={chantier.pays}
-                    onChange={(e) => handleInputChange('pays', e.target.value)}
-                    placeholder="Pays"
-                    className="w-full"
-                  />
-                </div>
-              </div>
-            </GestalisCardContent>
-          </GestalisCard>
-
-          {/* Client */}
-          <GestalisCard>
-            <GestalisCardHeader>
-              <GestalisCardTitle className="flex items-center gap-2">
-                <MapPin className="h-5 w-5" />
-                Informations client
-              </GestalisCardTitle>
-            </GestalisCardHeader>
-            <GestalisCardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Nom du client
-                  </label>
-                  <Input
-                    value={chantier.clientNom}
-                    onChange={(e) => handleInputChange('clientNom', e.target.value)}
-                    placeholder="Nom du client"
-                    className="w-full"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Contact client
-                  </label>
-                  <Input
-                    value={chantier.clientContact}
-                    onChange={(e) => handleInputChange('clientContact', e.target.value)}
-                    placeholder="Nom du contact principal"
-                    className="w-full"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Téléphone client
-                  </label>
-                  <Input
-                    value={chantier.clientTelephone}
-                    onChange={(e) => handleInputChange('clientTelephone', e.target.value)}
-                    placeholder="Numéro de téléphone"
-                    className="w-full"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email client
-                  </label>
-                  <Input
-                    type="email"
-                    value={chantier.clientEmail}
-                    onChange={(e) => handleInputChange('clientEmail', e.target.value)}
-                    placeholder="email@exemple.com"
-                    className="w-full"
-                  />
-                </div>
-              </div>
-            </GestalisCardContent>
-          </GestalisCard>
-
-          {/* Description */}
-          <GestalisCard>
-            <GestalisCardHeader>
-              <GestalisCardTitle className="flex items-center gap-2">
-                <MapPin className="h-5 w-5" />
-                Description et notes
-              </GestalisCardTitle>
-            </GestalisCardHeader>
-            <GestalisCardContent className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Description du chantier
-                </label>
-                <textarea
-                  value={chantier.description}
-                  onChange={(e) => handleInputChange('description', e.target.value)}
-                  placeholder="Description détaillée du chantier..."
-                  rows="3"
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Notes et informations complémentaires
-                </label>
-                <textarea
-                  value={chantier.notes}
-                  onChange={(e) => handleInputChange('notes', e.target.value)}
-                  placeholder="Notes, conditions spéciales, informations importantes..."
-                  rows="4"
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
-                />
-              </div>
-            </GestalisCardContent>
-          </GestalisCard>
-
-          {/* Actions */}
-          <div className="flex justify-end gap-4">
-            <button
+          {/* Boutons d'action */}
+          <div className="flex justify-end gap-4 pt-6 border-t border-gray-200">
+            <GestalisButton 
+              type="button"
+              variant="outline" 
               onClick={handleCancel}
-              className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2"
+              className="border-gray-300"
             >
-              <X className="h-5 w-5" />
+              <X className="h-4 w-4 mr-2" />
               Annuler
-            </button>
-            <GestalisButton
-              onClick={handleSave}
-              disabled={saving}
-              className="px-6 py-3"
+            </GestalisButton>
+            <GestalisButton 
+              type="submit"
+              disabled={loading}
+              className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-8 py-3"
             >
-              {saving ? (
-                <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                  Sauvegarde...
-                </>
+              {loading ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
               ) : (
-                <>
-                  <Save className="h-5 w-5 mr-2" />
-                  Sauvegarder
-                </>
+                <Save className="h-4 w-4 mr-2" />
               )}
+              {loading ? 'Création...' : 'Créer le chantier'}
             </GestalisButton>
           </div>
-        </div>
+        </form>
       </div>
     </div>
   );
