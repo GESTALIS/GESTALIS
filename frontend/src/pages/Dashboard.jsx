@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { GestalisCard, GestalisCardContent, GestalisCardHeader, GestalisCardTitle } from '../components/ui/GestalisCard';
+import { GestalisButton } from '../components/ui/gestalis-button';
 import { 
   Building2, 
   ShoppingCart, 
@@ -20,9 +22,179 @@ import {
   Bell,
   Settings,
   Sparkles,
-  Home
+  Home,
+  FileText,
+  Calculator,
+  Database,
+  ArrowRight,
+  CheckCircle as CheckCircleIcon,
+  AlertCircle
 } from 'lucide-react';
 import { DashboardBanner } from '../components/layout/ModuleBanner';
+
+// Configuration Supabase
+const supabase = window.supabase || (() => {
+  if (typeof window !== 'undefined' && window.createClient) {
+    return window.createClient(
+      'https://esczdkgknrozwovlfbki.supabase.co',
+      '9uGziNgoG46oYBg0plVBKEYxEp8uO-zCA'
+    );
+  }
+  return null;
+})();
+
+// Fonction de migration automatique
+const migrerVersSupabase = async () => {
+  if (!supabase) {
+    alert('❌ Erreur : Supabase non disponible');
+    return;
+  }
+
+  try {
+    console.log('🚀 DÉBUT DE LA MIGRATION AUTOMATIQUE...');
+    
+    // Migration des fournisseurs
+    const fournisseursData = localStorage.getItem('fournisseurs');
+    if (fournisseursData) {
+      const fournisseurs = JSON.parse(fournisseursData);
+      console.log(`📊 Migration de ${fournisseurs.length} fournisseurs...`);
+      
+      for (const fournisseur of fournisseurs) {
+        const { error } = await supabase.from('fournisseurs').insert({
+          code_fournisseur: fournisseur.codeFournisseur || fournisseur.code,
+          raison_sociale: fournisseur.raisonSociale || fournisseur.nom,
+          siret: fournisseur.siret,
+          adresse: fournisseur.adresse,
+          code_postal: fournisseur.codePostal,
+          ville: fournisseur.ville,
+          pays: fournisseur.pays || 'France',
+          telephone: fournisseur.telephone,
+          email: fournisseur.email,
+          contact_principal: fournisseur.contactPrincipal,
+          conditions_paiement: fournisseur.conditionsPaiement,
+          notes: fournisseur.notes,
+          statut: fournisseur.statut || 'actif'
+        });
+        
+        if (error) console.error(`❌ Erreur fournisseur ${fournisseur.codeFournisseur}:`, error);
+        else console.log(`✅ Fournisseur migré: ${fournisseur.codeFournisseur}`);
+      }
+    }
+    
+    // Migration des chantiers
+    const chantiersData = localStorage.getItem('chantiers');
+    if (chantiersData) {
+      const chantiers = JSON.parse(chantiersData);
+      console.log(`📊 Migration de ${chantiers.length} chantiers...`);
+      
+      for (const chantier of chantiers) {
+        const { error } = await supabase.from('chantiers').insert({
+          code: chantier.code,
+          numero_externe: chantier.numeroExterne,
+          nom: chantier.nom,
+          description: chantier.description,
+          adresse: chantier.adresse,
+          code_postal: chantier.codePostal,
+          ville: chantier.ville,
+          client: chantier.client,
+          date_debut: chantier.dateDebut,
+          date_fin_prevue: chantier.dateFinPrevue,
+          date_fin_reelle: chantier.dateFinReelle,
+          montant_ht: chantier.montant,
+          montant_ttc: chantier.montant,
+          statut: chantier.statut || 'en_cours',
+          chef_chantier: chantier.chefChantier,
+          notes: chantier.notes
+        });
+        
+        if (error) console.error(`❌ Erreur chantier ${chantier.code}:`, error);
+        else console.log(`✅ Chantier migré: ${chantier.code}`);
+      }
+    }
+    
+    // Migration des cessions
+    const cessionsData = localStorage.getItem('cessions');
+    if (cessionsData) {
+      const cessions = JSON.parse(cessionsData);
+      console.log(`📊 Migration de ${cessions.length} cessions...`);
+      
+      for (const cession of cessions) {
+        const { error } = await supabase.from('cessions_creance').insert({
+          reference: cession.reference,
+          date_cession: cession.dateCession,
+          montant: cession.montant,
+          client: cession.client,
+          chantier: cession.chantier,
+          fournisseur: cession.fournisseur,
+          statut: cession.statut || 'en_cours',
+          notes: cession.notes
+        });
+        
+        if (error) console.error(`❌ Erreur cession ${cession.reference}:`, error);
+        else console.log(`✅ Cession migrée: ${cession.reference}`);
+      }
+    }
+    
+    // Migration des produits
+    const produitsData = localStorage.getItem('produits');
+    if (produitsData) {
+      const produits = JSON.parse(produitsData);
+      console.log(`📊 Migration de ${produits.length} produits...`);
+      
+      for (const produit of produits) {
+        const { error } = await supabase.from('produits').insert({
+          code: produit.code,
+          nom: produit.nom,
+          description: produit.description,
+          prix_ht: produit.prixHT,
+          prix_ttc: produit.prixTTC,
+          unite: produit.unite,
+          categorie_id: produit.categorieId || 1,
+          fournisseur_id: produit.fournisseurId,
+          statut: produit.statut || 'actif'
+        });
+        
+        if (error) console.error(`❌ Erreur produit ${produit.code}:`, error);
+        else console.log(`✅ Produit migré: ${produit.code}`);
+      }
+    }
+    
+    // Migration des factures
+    const facturesData = localStorage.getItem('factures');
+    if (facturesData) {
+      const factures = JSON.parse(facturesData);
+      console.log(`📊 Migration de ${factures.length} factures...`);
+      
+      for (const facture of factures) {
+        const { error } = await supabase.from('factures').insert({
+          numero: facture.numero,
+          date_facture: facture.dateFacture,
+          date_echeance: facture.dateEcheance,
+          fournisseur_id: facture.fournisseurId,
+          chantier_id: facture.chantierId,
+          montant_ht: facture.montantHT,
+          montant_ttc: facture.montantTTC,
+          statut: facture.statut || 'en_attente',
+          notes: facture.notes
+        });
+        
+        if (error) console.error(`❌ Erreur facture ${facture.numero}:`, error);
+        else console.log(`✅ Facture migrée: ${facture.numero}`);
+      }
+    }
+    
+    console.log('=====================================');
+    console.log('✅ MIGRATION AUTOMATIQUE TERMINÉE !');
+    console.log('🎯 Votre application est maintenant connectée à Supabase !');
+    
+    // Notification de succès
+    alert('🎉 Migration vers Supabase terminée avec succès !');
+    
+  } catch (error) {
+    console.error('❌ ERREUR LORS DE LA MIGRATION:', error);
+    alert('❌ Erreur lors de la migration. Vérifiez la console.');
+  }
+};
 
 const Dashboard = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -402,6 +574,22 @@ const Dashboard = () => {
               Voir rapports
             </button>
           </div>
+        </section>
+
+        {/* Migration vers Supabase */}
+        <section className="text-center space-y-6">
+          <h2 className="text-2xl font-bold text-gray-900">Migration vers Supabase</h2>
+          <p className="text-lg text-gray-700">
+            Veuillez cliquer sur le bouton ci-dessous pour déclencher la migration de vos données locales vers Supabase.
+            Cela permettra de synchroniser vos données entre votre application et la base de données.
+          </p>
+          <GestalisButton
+            onClick={migrerVersSupabase}
+            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-300 hover:scale-105"
+          >
+            <Database className="h-5 w-5" />
+            Déclencher la migration
+          </GestalisButton>
         </section>
       </div>
     </div>
