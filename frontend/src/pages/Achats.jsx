@@ -703,12 +703,12 @@ const Achats = () => {
 
   const handleDeleteFournisseur = async (id) => {
     try {
-      // Utiliser le service local au lieu de l'API
+      // Utiliser le service Supabase
       const fournisseursService = await import('../services/fournisseursService');
-      fournisseursService.default.supprimerFournisseur(id);
+      await fournisseursService.default.supprimer(id);
       
       // Mettre à jour la liste locale
-        setFournisseurs(prev => prev.filter(f => f.id !== id));
+      setFournisseurs(prev => prev.filter(f => f.id !== id));
       alert('Fournisseur supprimé avec succès !');
     } catch (error) {
       console.error('Erreur lors de la suppression:', error);
