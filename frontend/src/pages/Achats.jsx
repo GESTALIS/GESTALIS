@@ -44,6 +44,7 @@ import { Input } from '../components/ui/input';
 import Commandes from './achats/Commandes';
 import Factures from './achats/Factures';
 import { AchatsBanner } from '../components/layout/ModuleBanner';
+import { fournisseursService } from '../services/supabase';
 
 const Achats = () => {
   const location = useLocation();
