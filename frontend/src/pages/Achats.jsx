@@ -248,37 +248,16 @@ const Achats = () => {
     try {
       setLoading(true);
       
-      // Vérifier d'abord le localStorage pour les fournisseurs récents
-      const fournisseursLocal = localStorage.getItem('gestalis-fournisseurs');
-      if (fournisseursLocal) {
-        try {
-          const fournisseursParsed = JSON.parse(fournisseursLocal);
-          setFournisseurs(fournisseursParsed);
-          console.log('✅ Fournisseurs chargés depuis localStorage:', fournisseursParsed);
-          setLoading(false);
-          return;
-        } catch (parseError) {
-          console.error('Erreur lors du parsing localStorage:', parseError);
-          localStorage.removeItem('gestalis-fournisseurs'); // Nettoyer le localStorage corrompu
-        }
-      }
+      // Charger les fournisseurs depuis Supabase
+      const fournisseurs = await fournisseursService.recupererTous();
+      setFournisseurs(fournisseurs);
+      setFilteredFournisseurs(fournisseurs);
+      console.log('✅ Fournisseurs chargés depuis Supabase:', fournisseurs);
       
-      // Sinon, essayer le service local
-      try {
-        const fournisseursService = await import('../services/fournisseursService');
-        const data = fournisseursService.default.obtenirFournisseurs();
-        setFournisseurs(data);
-        // Sauvegarder dans localStorage pour la prochaine fois
-        localStorage.setItem('gestalis-fournisseurs', JSON.stringify(data));
-        console.log('💾 Fournisseurs sauvegardés depuis le service:', data);
-      } catch (serviceError) {
-        console.error('Erreur avec le service fournisseurs:', serviceError);
-        // Utiliser des données par défaut en cas d'erreur
-        setFournisseurs([]);
-      }
     } catch (error) {
-      console.error('Erreur lors du chargement des fournisseurs:', error);
+      console.error('❌ Erreur lors du chargement des fournisseurs:', error);
       setFournisseurs([]);
+      setFilteredFournisseurs([]);
     } finally {
       setLoading(false);
     }
