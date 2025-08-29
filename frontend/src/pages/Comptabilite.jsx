@@ -194,17 +194,10 @@ const Comptabilite = () => {
     const classeAuto = detectCompteClasse(newCompte.numero);
     const typeAuto = detectCompteType(newCompte.numero);
     
-    // Numéro de compte final (avec suggestion automatique pour F/C)
-    let numeroFinal = newCompte.numero;
-    if (newCompte.numero.startsWith('F')) {
-      numeroFinal = '401';
-    } else if (newCompte.numero.startsWith('C')) {
-      numeroFinal = '411';
-    }
-    
+    // Numéro de compte final (utiliser le numéro saisi par l'utilisateur)
     const compte = {
       ...newCompte,
-      numero: numeroFinal,
+      numero: newCompte.numero, // Utiliser le numéro saisi
       classe: classeAuto,
       type: typeAuto,
       id: Date.now(),
@@ -630,7 +623,6 @@ const Comptabilite = () => {
                     <tr className="bg-gray-50 border-b border-gray-200">
                       <th className="text-left py-3 px-4 font-medium text-gray-700">Numéro</th>
                       <th className="text-left py-3 px-4 font-medium text-gray-700">Nom</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-700">Classe</th>
                       <th className="text-left py-3 px-4 font-medium text-gray-700">Type</th>
                       <th className="text-left py-3 px-4 font-medium text-gray-700">Journal</th>
                       <th className="text-left py-3 px-4 font-medium text-gray-700">Statut</th>
@@ -646,8 +638,7 @@ const Comptabilite = () => {
                           </span>
                         </td>
                         <td className="py-3 px-4 font-medium text-gray-900">{compte.nom}</td>
-                        <td className="py-3 px-4 text-sm text-gray-600">{compte.classe}</td>
-                                                 <td className="py-3 px-4">
+                        <td className="py-3 px-4">
                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                              compte.type === 'actif' ? 'bg-gradient-to-r from-orange-100 to-amber-100 text-orange-800 border border-orange-200' :
                              compte.type === 'passif' ? 'bg-gradient-to-r from-red-100 to-orange-100 text-red-800 border border-red-200' :
