@@ -889,6 +889,57 @@ const Achats = () => {
     alert(`✅ Échéance créée avec succès !\nLibellé: ${newEcheanceData.libelle}\nDélai: ${newEcheanceData.delai} jours`);
   };
 
+  // États pour la création de compte comptable
+  const [newCompteComptable, setNewCompteComptable] = useState({
+    numero: '',
+    nom: '',
+    type: 'actif',
+    journalCentralisation: 'VT',
+    description: ''
+  });
+  const [compteErrors, setCompteErrors] = useState({
+    numero: '',
+    nom: '',
+    journalCentralisation: ''
+  });
+
+  // États pour la sélection de comptes
+  const [showCompteSelectionModal, setShowCompteSelectionModal] = useState(false);
+  const [showCompteCreation, setShowCompteCreation] = useState(false);
+
+  const handleCreateCompteComptable = () => {
+    // Validation des données du formulaire
+    const errors = {};
+    if (!newCompteComptable.numero) errors.numero = 'Le numéro de compte est obligatoire';
+    if (!newCompteComptable.nom) errors.nom = 'Le nom du compte est obligatoire';
+    if (!newCompteComptable.journalCentralisation) errors.journalCentralisation = 'Le journal de centralisation est obligatoire';
+
+    if (Object.keys(errors).length > 0) {
+      setCompteErrors(errors);
+      return;
+    }
+
+    // Ajout du nouveau compte au plan comptable
+    const newCompte = {
+      numero: newCompteComptable.numero,
+      nom: newCompteComptable.nom,
+      type: newCompteComptable.type,
+      journalCentralisation: newCompteComptable.journalCentralisation,
+      description: newCompteComptable.description
+    };
+    setPlanComptable([...planComptable, newCompte]);
+    setFilteredPlanComptable([...filteredPlanComptable, newCompte]);
+    setShowCompteSelectionModal(false);
+    setNewCompteComptable({
+      numero: '',
+      nom: '',
+      type: 'actif',
+      journalCentralisation: 'VT',
+      description: ''
+    });
+    setCompteErrors({});
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
       {/* AchatsBanner STICKY - reste fixé en haut */}
@@ -2722,6 +2773,242 @@ const Achats = () => {
         </div>
       )}
 
+      {/* Modal Hybride - Sélection/Création de Comptes */}
+      {showCompteSelectionModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl h-[90vh] flex">
+            {/* Sidebar gauche - Navigation */}
+            <div className="w-80 bg-gradient-to-b from-orange-500 to-red-600 p-6 text-white">
+              <div className="mb-8">
+                <h3 className="text-2xl font-bold mb-2">Comptes Comptables</h3>
+                <p className="text-orange-100">Sélectionnez un compte existant ou créez-en un nouveau</p>
+              </div>
+              
+              <nav className="space-y-2">
+                <button
+                  onClick={() => setShowCompteCreation(false)}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-200 ${
+                    !showCompteCreation
+                      ? 'bg-white/20 backdrop-blur-sm shadow-lg'
+                      : 'hover:bg-white/10'
+                  }`}
+                >
+                  <Search className="h-5 w-5" />
+                  Sélectionner un compte
+                </button>
+                <button
+                  onClick={() => setShowCompteCreation(true)}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-200 ${
+                    showCompteCreation
+                      ? 'bg-white/20 backdrop-blur-sm shadow-lg'
+                      : 'hover:bg-white/10'
+                  }`}
+                >
+                  <Plus className="h-5 w-5" />
+                  Créer un nouveau compte
+                </button>
+              </nav>
+            </div>
+
+            {/* Contenu principal */}
+            <div className="flex-1 p-6 overflow-y-auto">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-semibold text-gray-900">
+                  {showCompteCreation ? 'Créer un nouveau compte' : 'Sélectionner un compte existant'}
+                </h3>
+                <button
+                  onClick={() => setShowCompteSelectionModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+
+              {/* Vue Sélection */}
+              {!showCompteCreation && (
+                <div className="space-y-6">
+                  {/* Barre de recherche */}
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                      placeholder="Rechercher un compte (numéro ou intitulé)..."
+                      value={searchCompteTerm}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setSearchCompteTerm(value);
+                        
+                        if (value.length > 0) {
+                          const filtered = comptes.filter(compte => 
+                            compte.numero.toLowerCase().includes(value.toLowerCase()) ||
+                            compte.nom.toLowerCase().includes(value.toLowerCase())
+                          );
+                          setFilteredPlanComptable(filtered);
+                        } else {
+                          setFilteredPlanComptable(comptes);
+                        }
+                      }}
+                      className="pl-10 pr-4 py-3 w-full border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+
+                  {/* Liste des comptes */}
+                  <div className="grid gap-3 max-h-96 overflow-y-auto">
+                    {(searchCompteTerm.length > 0 ? filteredPlanComptable : comptes).map((compte) => (
+                      <div
+                        key={compte.id}
+                        onClick={() => {
+                          setNewFournisseur({...newFournisseur, compteComptable: compte.numero});
+                          setSearchCompteTerm(`${compte.numero} - ${compte.nom}`);
+                          setShowCompteSelectionModal(false);
+                        }}
+                        className="p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 cursor-pointer transition-all duration-200"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3">
+                              <span className="font-mono text-lg font-bold text-blue-600 bg-blue-100 px-3 py-1 rounded-lg">
+                                {compte.numero}
+                              </span>
+                              <div>
+                                <h4 className="font-medium text-gray-900">{compte.nom}</h4>
+                                <p className="text-sm text-gray-600">{compte.classe}</p>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex flex-col items-end gap-2">
+                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                              compte.type === 'actif' ? 'bg-green-100 text-green-800' :
+                              compte.type === 'passif' ? 'bg-red-100 text-red-800' :
+                              compte.type === 'charge' ? 'bg-orange-100 text-orange-800' :
+                              'bg-gray-100 text-gray-800'
+                            }`}>
+                              {compte.type}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Message si aucun compte */}
+                  {comptes.length === 0 && (
+                    <div className="text-center py-12">
+                      <Database className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">Aucun compte créé</h3>
+                      <p className="text-gray-500 mb-4">Créez votre premier compte comptable</p>
+                      <button
+                        onClick={() => setShowCompteCreation(true)}
+                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                      >
+                        Créer un compte
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Vue Création */}
+              {showCompteCreation && (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Numéro de compte <span className="text-red-500">*</span>
+                      </label>
+                      <Input
+                        placeholder="ex: 401, 411, 604..."
+                        value={newCompteComptable.numero}
+                        onChange={(e) => {
+                          const numero = e.target.value;
+                          setNewCompteComptable({...newCompteComptable, numero});
+                        }}
+                        className={`w-full ${compteErrors.numero ? 'border-red-500' : ''}`}
+                      />
+                      {compteErrors.numero && (
+                        <p className="text-red-500 text-sm mt-1">{compteErrors.numero}</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Nom du compte <span className="text-red-500">*</span>
+                      </label>
+                      <Input
+                        placeholder="ex: Fournisseurs, Clients..."
+                        value={newCompteComptable.nom}
+                        onChange={(e) => setNewCompteComptable({...newCompteComptable, nom: e.target.value})}
+                        className={`w-full ${compteErrors.nom ? 'border-red-500' : ''}`}
+                      />
+                      {compteErrors.nom && (
+                        <p className="text-red-500 text-sm mt-1">{compteErrors.nom}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Type de compte</label>
+                      <select
+                        value={newCompteComptable.type}
+                        onChange={(e) => setNewCompteComptable({...newCompteComptable, type: e.target.value})}
+                        className="w-full border border-gray-300 rounded-md px-3 py-2"
+                      >
+                        <option value="actif">Actif</option>
+                        <option value="passif">Passif</option>
+                        <option value="charge">Charge</option>
+                        <option value="produit">Produit</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Journal de centralisation <span className="text-red-500">*</span>
+                      </label>
+                      <Input
+                        placeholder="ex: VT, AC, BQ..."
+                        value={newCompteComptable.journalCentralisation}
+                        onChange={(e) => setNewCompteComptable({...newCompteComptable, journalCentralisation: e.target.value})}
+                        className={`w-full ${compteErrors.journalCentralisation ? 'border-red-500' : ''}`}
+                      />
+                      {compteErrors.journalCentralisation && (
+                        <p className="text-red-500 text-sm mt-1">{compteErrors.journalCentralisation}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                    <textarea
+                      placeholder="Description du compte..."
+                      value={newCompteComptable.description}
+                      onChange={(e) => setNewCompteComptable({...newCompteComptable, description: e.target.value})}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2"
+                      rows={3}
+                    />
+                  </div>
+
+                  {/* Boutons d'action */}
+                  <div className="flex gap-3 pt-6 border-t border-gray-200">
+                    <button
+                      onClick={() => setShowCompteCreation(false)}
+                      className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      Retour à la sélection
+                    </button>
+                    <button
+                      onClick={handleCreateCompteComptable}
+                      className="flex-1 px-4 py-3 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white rounded-lg transition-all duration-200 font-medium"
+                    >
+                      <Plus className="h-4 w-4 inline mr-2" />
+                      Créer et sélectionner
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
