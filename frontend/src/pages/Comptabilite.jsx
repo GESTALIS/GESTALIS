@@ -422,18 +422,8 @@ const Comptabilite = () => {
       setActiveTab(tabParam);
     }
     
-    // Charger les comptes par défaut si aucun n'existe dans Zustand
-    if (comptes.length === 0) {
-      const comptesParDefaut = [
-        { id: 1, numero: '401', nom: 'Fournisseurs', classe: '4 - Tiers (Fournisseurs)', type: 'passif', journalCentralisation: 'ACH', actif: true, dateCreation: '2025-01-01' },
-        { id: 2, numero: '411', nom: 'Clients', classe: '4 - Tiers (Clients)', type: 'actif', journalCentralisation: 'VEN', actif: true, dateCreation: '2025-01-01' },
-        { id: 3, numero: '512', nom: 'Banque', classe: '5 - Financiers', type: 'actif', journalCentralisation: 'BAN', actif: true, dateCreation: '2025-01-01' },
-        { id: 4, numero: '606', nom: 'Achats', classe: '6 - Charges', type: 'charge', journalCentralisation: 'ACH', actif: true, dateCreation: '2025-01-01' },
-        { id: 5, numero: '701', nom: 'Ventes', classe: '7 - Produits', type: 'produit', journalCentralisation: 'VEN', actif: true, dateCreation: '2025-01-01' }
-      ];
-      setComptes(comptesParDefaut);
-      console.log('📊 Comptes par défaut chargés:', comptesParDefaut);
-    }
+    // Pas de comptes par défaut - l'utilisateur crée ses propres comptes
+    // avec ses propres numéros
   }, []);
 
   // Vérifier s'il faut ouvrir automatiquement le modal de création de compte
