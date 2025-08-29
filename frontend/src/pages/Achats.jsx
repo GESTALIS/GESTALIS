@@ -120,6 +120,7 @@ const Achats = () => {
   // États pour la gestion des produits
 
   const [showCreateProduitModal, setShowCreateProduitModal] = useState(false);
+  const [showCompteSelectionModal, setShowCompteSelectionModal] = useState(false);
   const [selectedProduit, setSelectedProduit] = useState(null);
   const [newFournisseur, setNewFournisseur] = useState({
     raisonSociale: '',
@@ -1962,17 +1963,12 @@ const Achats = () => {
                            </div>
                            
                            <button
-                             onClick={() => {
-                               // Stocker une instruction pour ouvrir le modal de création de compte
-                               localStorage.setItem('gestalis-open-compte-modal', 'true');
-                               // Rediriger vers le module Comptabilité
-                               window.location.href = '/comptabilite?tab=plan-comptable';
-                             }}
+                             onClick={() => setShowCompteSelectionModal(true)}
                              className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center gap-1"
-                             title="Créer un nouveau compte dans Comptabilité"
+                             title="Sélectionner un compte existant"
                            >
                              <Plus className="h-3 w-3" />
-                             <span className="text-xs font-medium">Nouveau</span>
+                             <span className="text-xs font-medium">Sélectionner</span>
                            </button>
                          </div>
                          
@@ -2721,6 +2717,120 @@ const Achats = () => {
         </div>
       )}
 
+      {/* Modal de sélection de comptes */}
+      {showCompteSelectionModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl h-[80vh] flex flex-col">
+            {/* Header du modal */}
+            <div className="bg-gradient-to-r from-blue-500 to-teal-600 p-6 text-white rounded-t-2xl">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-2xl font-bold">Sélectionner un compte comptable</h3>
+                  <p className="text-blue-100 mt-1">Choisissez un compte existant pour votre fournisseur</p>
+                </div>
+                <button
+                  onClick={() => setShowCompteSelectionModal(false)}
+                  className="text-white/80 hover:text-white p-2 rounded-lg hover:bg-white/20 transition-colors"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+            </div>
+
+            {/* Contenu du modal */}
+            <div className="flex-1 p-6 overflow-hidden">
+              {/* Barre de recherche */}
+              <div className="mb-6">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Rechercher un compte (numéro ou intitulé)..."
+                    value={searchCompteTerm}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setSearchCompteTerm(value);
+                      
+                      if (value.length > 0) {
+                        const filtered = comptes.filter(compte => 
+                          compte.numero.toLowerCase().includes(value.toLowerCase()) ||
+                          compte.nom.toLowerCase().includes(value.toLowerCase())
+                        );
+                        setFilteredPlanComptable(filtered);
+                      } else {
+                        setFilteredPlanComptable(comptes);
+                      }
+                    }}
+                    className="pl-10 pr-4 py-3 w-full border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              </div>
+
+              {/* Liste des comptes */}
+              <div className="flex-1 overflow-y-auto">
+                <div className="grid gap-3">
+                  {(searchCompteTerm.length > 0 ? filteredPlanComptable : comptes).map((compte) => (
+                    <div
+                      key={compte.id}
+                      onClick={() => {
+                        setNewFournisseur({...newFournisseur, compteComptable: compte.numero});
+                        setSearchCompteTerm(`${compte.numero} - ${compte.nom}`);
+                        setShowCompteSelectionModal(false);
+                      }}
+                      className="p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 cursor-pointer transition-all duration-200"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3">
+                            <span className="font-mono text-lg font-bold text-blue-600 bg-blue-100 px-3 py-1 rounded-lg">
+                              {compte.numero}
+                            </span>
+                            <div>
+                              <h4 className="font-medium text-gray-900">{compte.nom}</h4>
+                              <p className="text-sm text-gray-600">{compte.classe}</p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-end gap-2">
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                            compte.type === 'actif' ? 'bg-green-100 text-green-800' :
+                            compte.type === 'passif' ? 'bg-red-100 text-red-800' :
+                            compte.type === 'charge' ? 'bg-orange-100 text-orange-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {compte.type}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            {compte.journalCentralisation}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Message si aucun compte */}
+                {comptes.length === 0 && (
+                  <div className="text-center py-12">
+                    <Database className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">Aucun compte créé</h3>
+                    <p className="text-gray-500 mb-4">Créez d'abord des comptes dans le module Comptabilité</p>
+                    <button
+                      onClick={() => {
+                        setShowCompteSelectionModal(false);
+                        // Rediriger vers la comptabilité
+                        window.location.href = '/comptabilite?tab=plan-comptable';
+                      }}
+                      className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      Aller à la Comptabilité
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
