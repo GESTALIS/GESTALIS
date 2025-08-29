@@ -45,6 +45,10 @@ import Commandes from './achats/Commandes';
 import Factures from './achats/Factures';
 import { AchatsBanner } from '../components/layout/ModuleBanner';
 import { fournisseursService } from '../services/supabase';
+import { useFournisseursStore } from '../stores/useFournisseursStore';
+import { useComptesStore } from '../stores/useComptesStore';
+import { useProduitsStore } from '../stores/useProduitsStore';
+
 
 const Achats = () => {
   const location = useLocation();
@@ -92,17 +96,29 @@ const Achats = () => {
   }, [location.search]);
 
   // États pour la gestion des fournisseurs
-  const [fournisseurs, setFournisseurs] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const { 
+    fournisseurs, 
+    loading: fournisseursLoading,
+    addFournisseur, 
+    updateFournisseur, 
+    deleteFournisseur,
+    setFournisseurs,
+    nextFournisseurCode
+  } = useFournisseursStore();
+  
+  const { comptes } = useComptesStore();
+  const { produits, addProduit, setProduits } = useProduitsStore();
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
   const [showDocumentModal, setShowDocumentModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [selectedFournisseur, setSelectedFournisseur] = useState(null);
 
   // États pour la gestion des produits
-  const [produits, setProduits] = useState([]);
+
   const [showCreateProduitModal, setShowCreateProduitModal] = useState(false);
   const [selectedProduit, setSelectedProduit] = useState(null);
   const [newFournisseur, setNewFournisseur] = useState({
@@ -187,36 +203,80 @@ const Achats = () => {
     'Divers TP': 'DIV'
   };
 
-  // Charger les fournisseurs depuis Supabase au montage
+  // Charger les fournisseurs depuis Supabase ET localStorage au montage
   useEffect(() => {
     const chargerFournisseurs = async () => {
       try {
-        const fournisseurs = await fournisseursService.recupererTous();
-        setFournisseurs(fournisseurs);
-        setFilteredFournisseurs(fournisseurs);
-        console.log('✅ Fournisseurs chargés depuis Supabase:', fournisseurs);
+        // 1. Charger depuis Supabase
+        const fournisseursSupabase = await fournisseursService.recupererTous();
+        console.log('✅ Fournisseurs chargés depuis Supabase:', fournisseursSupabase);
+        
+        // 2. Charger depuis localStorage
+        const fournisseursLocal = localStorage.getItem('gestalis-fournisseurs');
+        let fournisseursLocalStorage = [];
+        
+        if (fournisseursLocal) {
+          try {
+            fournisseursLocalStorage = JSON.parse(fournisseursLocal);
+            console.log('💾 Fournisseurs chargés depuis localStorage:', fournisseursLocalStorage);
+          } catch (error) {
+            console.error('❌ Erreur parsing localStorage fournisseurs:', error);
+          }
+        }
+        
+        // 3. Combiner les deux sources (Supabase + localStorage)
+        const fournisseursCombines = [...fournisseursSupabase, ...fournisseursLocalStorage];
+        
+        // 4. Éliminer les doublons basés sur l'ID
+        const fournisseursUniques = fournisseursCombines.filter((fournisseur, index, self) => 
+          index === self.findIndex(f => f.id === fournisseur.id)
+        );
+        
+        console.log('🔄 Fournisseurs combinés (Supabase + localStorage):', fournisseursUniques);
+        
+        setFournisseurs(fournisseursUniques);
+        setFilteredFournisseurs(fournisseursUniques);
+        
       } catch (error) {
         console.error('❌ Erreur chargement fournisseurs:', error);
-        setFournisseurs([]);
-        setFilteredFournisseurs([]);
+        
+        // En cas d'erreur Supabase, utiliser uniquement localStorage
+        const fournisseursLocal = localStorage.getItem('gestalis-fournisseurs');
+        if (fournisseursLocal) {
+          try {
+            const fournisseursLocalStorage = JSON.parse(fournisseursLocal);
+            console.log('🔄 Utilisation des fournisseurs du localStorage en fallback:', fournisseursLocalStorage);
+            setFournisseurs(fournisseursLocalStorage);
+            setFilteredFournisseurs(fournisseursLocalStorage);
+          } catch (parseError) {
+            console.error('❌ Erreur parsing localStorage en fallback:', parseError);
+            setFournisseurs([]);
+            setFilteredFournisseurs([]);
+          }
+        } else {
+          setFournisseurs([]);
+          setFilteredFournisseurs([]);
+        }
       }
     };
 
     chargerFournisseurs();
     fetchPlanComptable();
+    
+    // Charger les produits depuis localStorage
+    const produitsLocal = localStorage.getItem('gestalis-produits');
+    if (produitsLocal) {
+      try {
+        const produitsParsed = JSON.parse(produitsLocal);
+        setProduits(produitsParsed);
+        console.log('📦 Produits chargés au montage du composant:', produitsParsed);
+      } catch (error) {
+        console.error('❌ Erreur lors du parsing des produits:', error);
+      }
+    }
   }, []); // Se déclenche une seule fois au montage
 
-  // Charger les produits depuis localStorage
-  const produitsLocal = localStorage.getItem('gestalis-produits');
-  if (produitsLocal) {
-    try {
-      const produitsParsed = JSON.parse(produitsLocal);
-      setProduits(produitsParsed);
-      console.log('📦 Produits chargés au montage du composant:', produitsParsed);
-    } catch (error) {
-      console.error('❌ Erreur lors du parsing des produits:', error);
-    }
-  }
+
 
   const fetchPlanComptable = async () => {
     try {
@@ -317,7 +377,7 @@ const Achats = () => {
   });
 
   // État pour le code fournisseur automatique
-  const [nextFournisseurCode, setNextFournisseurCode] = useState('FPRO97-0001');
+
 
   // État pour la case TVA Guyane
   const [pasDeTvaGuyane, setPasDeTvaGuyane] = useState(false);
@@ -375,13 +435,11 @@ const Achats = () => {
 
   useEffect(() => {
     // Simulation de chargement des données réelles
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      // Ici on chargerait les vraies données depuis l'API
-      setFournisseurs([]);
-      setFilteredFournisseurs([]);
-    }, 1000);
+          // Loading géré par Zustand
+    // Loading géré par Zustand
+    // Ici on chargerait les vraies données depuis l'API
+    setFournisseurs([]);
+    setFilteredFournisseurs([]);
   }, []);
 
   // Mise à jour des statistiques quand les fournisseurs changent
@@ -420,7 +478,14 @@ const Achats = () => {
   }, []);
 
   const handleCreateFournisseur = async () => {
-    console.log('🚀 Tentative de création du fournisseur...', newFournisseur);
+    // Vérifier si nous sommes en mode édition ou création
+    const isEditing = selectedFournisseur !== null;
+    
+    if (isEditing) {
+      console.log('🔄 Tentative de modification du fournisseur...', newFournisseur);
+    } else {
+      console.log('🚀 Tentative de création du fournisseur...', newFournisseur);
+    }
     
     // Validation des champs obligatoires
     if (!newFournisseur.raisonSociale || !newFournisseur.siret) {
@@ -429,12 +494,10 @@ const Achats = () => {
     }
 
     try {
-      setLoading(true);
-      
-      // Créer le fournisseur localement (sans service externe)
-      const nouveauFournisseur = {
-        id: Date.now(), // ID unique temporaire
-          codeFournisseur: nextFournisseurCode,
+      if (isEditing) {
+        // MODE ÉDITION : Mettre à jour le fournisseur existant
+        const fournisseurModifie = {
+          ...selectedFournisseur,
           raisonSociale: newFournisseur.raisonSociale,
           siret: newFournisseur.siret,
           tvaIntracommunautaire: newFournisseur.tvaIntracommunautaire || null,
@@ -447,28 +510,44 @@ const Achats = () => {
           devise: newFournisseur.devise,
           estSousTraitant: newFournisseur.estSousTraitant,
           pasDeTvaGuyane: pasDeTvaGuyane,
-        compteComptable: newFournisseur.compteComptable || null,
-        dateCreation: new Date().toISOString(),
-        statut: 'ACTIF'
-      };
+          compteComptable: newFournisseur.compteComptable || null,
+          updatedAt: new Date().toISOString()
+        };
 
-      console.log('✅ Fournisseur créé avec succès:', nouveauFournisseur);
-      
-      // Mettre à jour la liste locale IMMÉDIATEMENT
-      setFournisseurs(prev => {
-        const newFournisseurs = [nouveauFournisseur, ...prev];
+        console.log('✅ Fournisseur modifié avec succès:', fournisseurModifie);
         
-        // Sauvegarder dans localStorage pour partager avec le module Sous-traitants
-        localStorage.setItem('gestalis-fournisseurs', JSON.stringify(newFournisseurs));
-        console.log('💾 Fournisseurs sauvegardés dans localStorage:', newFournisseurs);
+        // Utiliser Zustand pour mettre à jour
+        updateFournisseur(selectedFournisseur.id, fournisseurModifie);
         
-        return newFournisseurs;
-      });
+        // Fermer le modal et réinitialiser
+        setShowCreateModal(false);
+        setSelectedFournisseur(null);
         
-        // Générer le prochain code fournisseur
-        const currentNumber = parseInt(nextFournisseurCode.split('-')[1]);
-        const nextNumber = currentNumber + 1;
-        setNextFournisseurCode(`FPRO97-${String(nextNumber).padStart(4, '0')}`);
+        // Notification de succès
+        alert(`✅ Fournisseur modifié avec succès !\n\nRaison sociale: ${fournisseurModifie.raisonSociale}\nCode: ${fournisseurModifie.codeFournisseur}\nSIRET: ${fournisseurModifie.siret}`);
+        
+      } else {
+        // MODE CRÉATION : Créer un nouveau fournisseur
+        const nouveauFournisseur = {
+          raisonSociale: newFournisseur.raisonSociale,
+          siret: newFournisseur.siret,
+          tvaIntracommunautaire: newFournisseur.tvaIntracommunautaire || null,
+          codeApeNaf: newFournisseur.codeApeNaf || null,
+          formeJuridique: newFournisseur.formeJuridique || null,
+          capitalSocial: newFournisseur.capitalSocial || null,
+          adresseSiege: newFournisseur.adresseSiege || null,
+          adresseLivraison: newFournisseur.adresseLivraison || null,
+          plafondCredit: newFournisseur.plafondCredit || null,
+          devise: newFournisseur.devise,
+          estSousTraitant: newFournisseur.estSousTraitant,
+          pasDeTvaGuyane: pasDeTvaGuyane,
+          compteComptable: newFournisseur.compteComptable || null
+        };
+
+        console.log('✅ Fournisseur créé avec succès:', nouveauFournisseur);
+        
+        // Utiliser Zustand pour ajouter
+        addFournisseur(nouveauFournisseur);
         
         // Réinitialiser le formulaire
         setNewFournisseur({
@@ -495,18 +574,23 @@ const Achats = () => {
         setPasDeTvaGuyane(false);
         setActiveCreateTab('coordonnees');
         
-      // Fermer le modal et réinitialiser
+        // Fermer le modal et réinitialiser
         setShowCreateModal(false);
       
-      // S'assurer qu'on est dans l'onglet Fournisseurs
-      setActiveTab('fournisseurs');
-        
+        // S'assurer qu'on est dans l'onglet Fournisseurs
+        setActiveTab('fournisseurs');
+          
         // Notification de succès
-      alert(`✅ Fournisseur créé avec succès !\n\nRaison sociale: ${nouveauFournisseur.raisonSociale}\nCode: ${nouveauFournisseur.codeFournisseur}\nSIRET: ${nouveauFournisseur.siret}`);
+        alert(`✅ Fournisseur créé avec succès !\n\nRaison sociale: ${nouveauFournisseur.raisonSociale}\nCode: ${nouveauFournisseur.codeFournisseur}\nSIRET: ${nouveauFournisseur.siret}`);
+      }
       
     } catch (error) {
-      console.error('❌ Erreur lors de la création:', error);
-      alert('❌ Erreur lors de la création du fournisseur');
+      console.error('❌ Erreur lors de la création/modification:', error);
+      if (isEditing) {
+        alert('❌ Erreur lors de la modification du fournisseur');
+      } else {
+        alert('❌ Erreur lors de la création du fournisseur');
+      }
     } finally {
       setLoading(false);
     }
@@ -550,16 +634,8 @@ const Achats = () => {
 
       console.log('✅ Produit créé avec succès:', nouveauProduit);
       
-      // Mettre à jour la liste locale
-      setProduits(prev => {
-        const newProduits = [nouveauProduit, ...prev];
-        
-        // Sauvegarder dans localStorage
-        localStorage.setItem('gestalis-produits', JSON.stringify(newProduits));
-        console.log('💾 Produits sauvegardés dans localStorage:', newProduits);
-        
-        return newProduits;
-      });
+      // Utiliser Zustand pour ajouter
+      addProduit(nouveauProduit);
         
       // Réinitialiser le formulaire
       setNewProduit({
@@ -657,9 +733,44 @@ const Achats = () => {
   };
 
   const handleEditFournisseur = (fournisseur) => {
+    // Pré-remplir le formulaire avec les données du fournisseur
+    setNewFournisseur({
+      raisonSociale: fournisseur.raisonSociale || '',
+      siret: fournisseur.siret || '',
+      tvaIntracommunautaire: fournisseur.tvaIntracommunautaire || '',
+      codeApeNaf: fournisseur.codeApeNaf || '',
+      formeJuridique: fournisseur.formeJuridique || '',
+      capitalSocial: fournisseur.capitalSocial || '',
+      adresseSiege: fournisseur.adresseSiege || '',
+      adresseLivraison: fournisseur.adresseLivraison || '',
+      plafondCredit: fournisseur.plafondCredit || '',
+      devise: fournisseur.devise || 'EUR',
+      estSousTraitant: fournisseur.estSousTraitant || false,
+      modeReglement: fournisseur.modeReglement || 'VIR',
+      echeanceType: fournisseur.echeanceType || '30J',
+      respectEcheance: fournisseur.respectEcheance !== undefined ? fournisseur.respectEcheance : true,
+      joursDecalage: fournisseur.joursDecalage || 30,
+      finDeMois: fournisseur.finDeMois || false,
+      jourPaiement: fournisseur.jourPaiement || 0,
+      compteComptable: fournisseur.compteComptable || ''
+    });
+    
+    // Marquer que nous sommes en mode édition
     setSelectedFournisseur(fournisseur);
-    // Ici on pourrait ouvrir un modal d'édition
-    alert(`Modification de ${fournisseur.raisonSociale}\nFonctionnalité en cours de développement`);
+    
+    // Ouvrir le modal de création (qui servira aussi pour la modification)
+    setShowCreateModal(true);
+    
+    // Aller directement à l'onglet coordonnées
+    setActiveCreateTab('coordonnees');
+  };
+
+  const handleUpdateFournisseur = (updatedFournisseur) => {
+    setFournisseurs(prev => prev.map(f => 
+      f.id === updatedFournisseur.id ? updatedFournisseur : f
+    ));
+    setShowEditModal(false);
+    setSelectedFournisseur(null);
   };
 
   const handleSelectFournisseur = (id) => {
@@ -859,7 +970,7 @@ const Achats = () => {
         </button>
               </div>
               
-              {loading ? (
+              {fournisseursLoading ? (
                 <div className="flex items-center justify-center h-32">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
                 </div>
@@ -868,13 +979,32 @@ const Achats = () => {
                    <Building2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                    <h3 className="text-lg font-medium text-gray-900 mb-2">Aucun fournisseur</h3>
                    <p className="text-gray-500 mb-4">Commencez par ajouter votre premier fournisseur</p>
-                   <GestalisButton 
-                     onClick={() => setShowCreateModal(true)}
-                     className="bg-gradient-to-r from-blue-500 to-teal-600 hover:from-blue-600 hover:to-teal-700 text-white"
-                   >
-                     <Plus className="h-4 w-4 mr-2" />
-                     Ajouter un fournisseur
-                   </GestalisButton>
+                   <div className="flex gap-3">
+                     <GestalisButton 
+                       onClick={() => setShowCreateModal(true)}
+                       className="bg-gradient-to-r from-blue-500 to-teal-600 hover:from-blue-600 hover:to-teal-700 text-white"
+                     >
+                       <Plus className="h-4 w-4 mr-2" />
+                       Ajouter un fournisseur
+                     </GestalisButton>
+                     
+                     {/* Bouton de test temporaire */}
+                     <button
+                       onClick={() => {
+                         const testFournisseur = {
+                           id: 'test-123',
+                           raisonSociale: 'Fournisseur Test',
+                           codeFournisseur: 'FTEST-001',
+                           siret: '12345678901234'
+                         };
+                         setSelectedFournisseur(testFournisseur);
+                         setShowEditModal(true);
+                       }}
+                       className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 text-white rounded-lg font-medium transition-all duration-200"
+                     >
+                       🧪 Test Modal Modifier
+                     </button>
+                   </div>
                  </div>
                ) : (
                  <div className="space-y-4">
@@ -1227,7 +1357,7 @@ const Achats = () => {
             </div>
 
             {/* Liste des fournisseurs */}
-            {loading ? (
+            {fournisseursLoading ? (
               <div className="flex items-center justify-center h-64">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
               </div>
@@ -1363,7 +1493,9 @@ const Achats = () => {
             {/* Sidebar colorée avec navigation */}
             <div className="w-80 bg-gradient-to-b from-blue-500 to-teal-600 p-6 text-white">
               <div className="mb-8">
-                <h3 className="text-2xl font-bold mb-2">Nouveau Fournisseur</h3>
+                <h3 className="text-2xl font-bold mb-2">
+                  {selectedFournisseur ? 'Modifier le Fournisseur' : 'Nouveau Fournisseur'}
+                </h3>
                 <p className="text-blue-100">Remplissez les informations du fournisseur</p>
               </div>
               
@@ -1748,7 +1880,7 @@ const Achats = () => {
                  <div className="space-y-6">
                    <div className="grid grid-cols-2 gap-6">
                      <div>
-                       <label className="block text-sm font-medium text-gray-700 mb-2">Compte fournisseur</label>
+                       <label className="block text-sm font-medium text-gray-700 mb-2">Numéro de compte</label>
                        
                        {/* Combobox : Recherche + Sélection en un seul endroit */}
                        <div className="relative mb-2 compte-search-container">
@@ -2051,7 +2183,7 @@ const Achats = () => {
                     onClick={handleCreateFournisseur}
                     className="px-6 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-md hover:from-green-600 hover:to-emerald-700 transition-all duration-200 font-medium"
                   >
-                    Créer le fournisseur
+                    {selectedFournisseur ? 'Modifier le fournisseur' : 'Créer le fournisseur'}
                   </button>
                 </div>
               </div>
@@ -2585,6 +2717,8 @@ const Achats = () => {
           </div>
         </div>
       )}
+
+
     </div>
   );
 };
