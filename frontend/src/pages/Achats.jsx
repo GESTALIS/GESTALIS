@@ -712,17 +712,17 @@ const Achats = () => {
   };
 
   const handleDeleteFournisseur = async (id) => {
-    try {
-      // Utiliser le service Supabase
-      const fournisseursService = await import('../services/fournisseursService');
-      await fournisseursService.default.supprimer(id);
-      
-      // Mettre à jour la liste locale
-      setFournisseurs(prev => prev.filter(f => f.id !== id));
-      alert('Fournisseur supprimé avec succès !');
-    } catch (error) {
-      console.error('Erreur lors de la suppression:', error);
-      alert('Erreur lors de la suppression du fournisseur');
+    if (confirm('Êtes-vous sûr de vouloir supprimer ce fournisseur ?')) {
+      try {
+        // Supprimer du store Zustand
+        deleteFournisseur(id);
+        
+        // Notification de succès
+        alert('✅ Fournisseur supprimé avec succès !');
+      } catch (error) {
+        console.error('❌ Erreur lors de la suppression:', error);
+        alert('❌ Erreur lors de la suppression du fournisseur');
+      }
     }
   };
 
@@ -796,10 +796,13 @@ const Achats = () => {
     }
     
     if (confirm(`Êtes-vous sûr de vouloir supprimer ${selectedFournisseurs.length} fournisseur(s) ?`)) {
-      setFournisseurs(prev => prev.filter(f => !selectedFournisseurs.includes(f.id)));
+      // Supprimer chaque fournisseur via Zustand
+      selectedFournisseurs.forEach(id => deleteFournisseur(id));
+      
+      // Réinitialiser la sélection
       setSelectedFournisseurs([]);
       setShowDeleteBulkModal(false);
-      alert(`${selectedFournisseurs.length} fournisseur(s) supprimé(s) avec succès !`);
+      alert(`✅ ${selectedFournisseurs.length} fournisseur(s) supprimé(s) avec succès !`);
     }
   };
 
