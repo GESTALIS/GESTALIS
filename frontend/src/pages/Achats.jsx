@@ -161,6 +161,20 @@ const Achats = () => {
     }
   ]);
 
+  // États pour la sidebar de création de compte comptable
+  const [showCompteSelectionModal, setShowCompteSelectionModal] = useState(false);
+  const [newCompteComptable, setNewCompteComptable] = useState({
+    numero: '',
+    nom: '',
+    type: 'charge',
+    classe: '',
+    description: '',
+    journalCentralisation: '',
+    saisieAutorisee: true,
+    actif: true
+  });
+  const [compteErrors, setCompteErrors] = useState({});
+
   // Catégories de produits TP (Travaux Publics)
   const categoriesProduits = [
     'Matériaux TP',
@@ -886,6 +900,81 @@ const Achats = () => {
     
     // Notification de succès
     alert(`✅ Échéance créée avec succès !\nLibellé: ${newEcheanceData.libelle}\nDélai: ${newEcheanceData.delai} jours`);
+  };
+
+  // Fonction pour créer un compte comptable depuis la sidebar
+  const handleCreateCompteComptable = () => {
+    console.log('🚀 Tentative de création du compte...', newCompteComptable);
+    const errors = {};
+    
+    // Validation des champs obligatoires
+    if (!newCompteComptable.numero) {
+      errors.numero = 'Le numéro de compte est obligatoire';
+    }
+    if (!newCompteComptable.nom) {
+      errors.nom = 'Le nom du compte est obligatoire';
+    }
+    if (!newCompteComptable.journalCentralisation) {
+      errors.journalCentralisation = 'Le journal de centralisation est obligatoire';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      console.log('❌ Erreurs de validation:', errors);
+      setCompteErrors(errors);
+      alert(`❌ Erreur de validation :\n${Object.values(errors).join('\n')}`);
+      return;
+    }
+
+    // Détection automatique de la classe et du type
+    const detectCompteClasse = (numero) => {
+      const num = parseInt(numero);
+      if (num >= 1 && num <= 5) return 'Actifs';
+      if (num >= 6 && num <= 7) return 'Passifs';
+      if (num >= 6 && num <= 7) return 'Tiers';
+      if (num >= 1 && num <= 5) return 'Charges';
+      if (num >= 7 && num <= 7) return 'Produits';
+      return 'Tiers';
+    };
+
+    const detectCompteType = (numero) => {
+      const num = parseInt(numero);
+      if (num >= 1 && num <= 5) return 'actif';
+      if (num >= 6 && num <= 7) return 'passif';
+      if (num >= 6 && num <= 7) return 'charge';
+      if (num >= 1 && num <= 5) return 'produit';
+      return 'charge';
+    };
+
+    const classeAuto = detectCompteClasse(newCompteComptable.numero);
+    const typeAuto = detectCompteType(newCompteComptable.numero);
+
+    const compte = {
+      ...newCompteComptable,
+      numero: newCompteComptable.numero,
+      classe: classeAuto,
+      type: typeAuto,
+      id: Date.now(),
+      dateCreation: new Date().toISOString()
+    };
+
+    console.log('✅ Compte créé avec succès:', compte);
+
+    // Utiliser Zustand pour ajouter le compte
+    const { addCompte } = useComptesStore.getState();
+    addCompte(compte);
+
+    // Sélectionner automatiquement le nouveau compte
+    setNewFournisseur({...newFournisseur, compteComptable: compte.numero});
+    
+    // Fermer la sidebar et réinitialiser
+    setShowCompteSelectionModal(false);
+    setNewCompteComptable({
+      numero: '', nom: '', type: 'charge', classe: '', description: '',
+      journalCentralisation: '', saisieAutorisee: true, actif: true
+    });
+    setCompteErrors({});
+
+    alert(`✅ Compte créé et sélectionné avec succès !\n\nNuméro: ${compte.numero}\nNom: ${compte.nom}\nClasse: ${compte.classe}\nType: ${compte.type}`);
   };
 
   return (
