@@ -2051,17 +2051,12 @@ const Achats = () => {
                            </div>
                            
                            <button
-                             onClick={() => {
-                               // Stocker une instruction pour ouvrir le modal de création de compte
-                               localStorage.setItem('gestalis-open-compte-modal', 'true');
-                               // Rediriger vers le module Comptabilité
-                               window.location.href = '/comptabilite?tab=plan-comptable';
-                             }}
+                             onClick={() => setShowCompteSelectionModal(true)}
                              className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center gap-1"
-                             title="Créer un nouveau compte dans Comptabilité"
+                             title="Créer un nouveau compte comptable"
                            >
                              <Plus className="h-3 w-3" />
-                             <span className="text-xs font-medium">Nouveau</span>
+                             <span className="text-xs font-medium">Sélectionner</span>
                            </button>
                          </div>
                          
