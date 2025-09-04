@@ -46,16 +46,19 @@ const NouveauFournisseur = () => {
   
   // Ajouter des comptes de test si aucun compte n'est chargé
   useEffect(() => {
+    console.log('🔍 Comptes actuels:', comptes);
     if (comptes.length === 0) {
       console.log('🔄 Ajout de comptes de test...');
-      setComptes([
+      const comptesTest = [
         { id: 1, numero: 'F4010005', nom: 'RESO', type: 'passif', classe: '4 - Tiers' },
         { id: 2, numero: 'FEXE', nom: 'EXEMPLE', type: 'passif', classe: '4 - Tiers' },
         { id: 3, numero: 'FTESTDPL', nom: 'TESTDPL', type: 'passif', classe: '4 - Tiers' },
         { id: 4, numero: 'FFDXSQ', nom: 'FDS', type: 'passif', classe: '4 - Tiers' },
         { id: 5, numero: 'FTETETE', nom: 'TETETE', type: 'passif', classe: '4 - Tiers' },
         { id: 6, numero: '512000', nom: 'BRED', type: 'actif', classe: '5 - Financier' }
-      ]);
+      ];
+      setComptes(comptesTest);
+      console.log('✅ Comptes de test ajoutés:', comptesTest);
     }
   }, [comptes.length, setComptes]);
   
@@ -94,7 +97,12 @@ const NouveauFournisseur = () => {
     compte.intitule?.toLowerCase().includes(searchCompteTerm.toLowerCase())
   );
   
+  console.log('🔍 Recherche:', searchCompteTerm);
+  console.log('🔍 Comptes disponibles:', comptes);
+  console.log('🔍 Comptes filtrés:', filteredComptes);
+  
   const filteredFournisseurs = transformComptesToFCodes(filteredComptes);
+  console.log('🔍 Fournisseurs transformés:', filteredFournisseurs);
 
   useEffect(() => {
     // Récupérer le terme de recherche depuis localStorage
