@@ -10,6 +10,8 @@ import { GestalisCard, GestalisCardContent, GestalisCardHeader, GestalisCardTitl
 import { GestalisButton } from '../../../components/ui/gestalis-button';
 import { Input } from '../../../components/ui/input';
 import { api } from '../../../utils/api';
+import { useFournisseursStore } from '../../../stores/useFournisseursStore';
+import { useComptesStore } from '../../../stores/useComptesStore';
 
 const NouveauFournisseur = () => {
   const [fournisseur, setFournisseur] = useState({
@@ -28,11 +30,25 @@ const NouveauFournisseur = () => {
     tvaIntracommunautaire: '',
     contactPrincipal: '',
     notes: '',
-    compteFournisseur: '' // Compte comptable au format "F..." (ex: FTOTAL, F00045)
+    compteFournisseur: '', // Compte fournisseur au format "F..." (ex: FTOTAL, F00045)
+    compteComptable: '' // Compte comptable réel (ex: 401, 401001)
   });
 
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  
+  // États pour la recherche de comptes comptables
+  const [searchCompteTerm, setSearchCompteTerm] = useState('');
+  const [showCompteResults, setShowCompteResults] = useState(false);
+  
+  // Store des comptes comptables
+  const { comptes } = useComptesStore();
+  
+  // Filtrer les comptes comptables pour la recherche
+  const filteredComptes = comptes.filter(compte => 
+    compte.numero?.toString().includes(searchCompteTerm) ||
+    compte.nom?.toLowerCase().includes(searchCompteTerm.toLowerCase())
+  );
 
   useEffect(() => {
     // Récupérer le terme de recherche depuis localStorage
@@ -53,6 +69,23 @@ const NouveauFournisseur = () => {
 
   const handleInputChange = (field, value) => {
     setFournisseur(prev => ({ ...prev, [field]: value }));
+  };
+  
+  // Gérer la sélection d'un compte comptable
+  const handleCompteSelect = (compte) => {
+    setFournisseur(prev => ({ 
+      ...prev, 
+      compteComptable: compte.numero,
+      compteFournisseur: `F${compte.numero}` // Générer automatiquement le code fournisseur
+    }));
+    setSearchCompteTerm(`${compte.numero} — ${compte.nom}`);
+    setShowCompteResults(false);
+  };
+  
+  // Gérer la recherche de comptes
+  const handleCompteSearch = (value) => {
+    setSearchCompteTerm(value);
+    setShowCompteResults(value.length > 0);
   };
 
   const handleSave = async () => {
@@ -156,17 +189,61 @@ const NouveauFournisseur = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Compte fournisseur *
+                    Compte comptable *
                   </label>
-                  <Input
-                    value={fournisseur.compteFournisseur}
-                    onChange={(e) => handleInputChange('compteFournisseur', e.target.value)}
-                    placeholder="FTOTAL, F00045, F-BETONEXP"
-                    className="w-full"
-                  />
-                  <p className="mt-1 text-xs text-gray-500">
-                    Format "F..." obligatoire pour la comptabilisation
-                  </p>
+                  <div className="relative">
+                    <Input
+                      value={searchCompteTerm}
+                      onChange={(e) => handleCompteSearch(e.target.value)}
+                      placeholder="Rechercher un compte (ex: 401, fournisseurs)"
+                      className="w-full pr-10"
+                      onFocus={() => setShowCompteResults(searchCompteTerm.length > 0)}
+                    />
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                      <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                    </div>
+                    
+                    {/* Résultats de recherche */}
+                    {showCompteResults && filteredComptes.length > 0 && (
+                      <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                        {filteredComptes.slice(0, 10).map((compte) => (
+                          <div
+                            key={compte.id}
+                            onClick={() => handleCompteSelect(compte)}
+                            className="px-4 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
+                          >
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <div className="font-medium text-gray-900">
+                                  {compte.numero} — {compte.nom}
+                                </div>
+                                <div className="text-sm text-gray-500">
+                                  {compte.type} • {compte.classe}
+                                </div>
+                              </div>
+                              <div className="text-xs text-gray-400">
+                                {compte.journalCentralisation}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div className="mt-1 flex items-center justify-between">
+                    <p className="text-xs text-gray-500">
+                      Sélectionnez un compte comptable existant
+                    </p>
+                    <button
+                      type="button"
+                      onClick={goCreateCompte}
+                      className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                    >
+                      + Créer
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">

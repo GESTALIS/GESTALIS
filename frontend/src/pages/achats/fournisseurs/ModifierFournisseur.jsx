@@ -8,6 +8,7 @@ import {
 import { GestalisCard, GestalisCardContent, GestalisCardHeader, GestalisCardTitle } from '../../../components/ui/GestalisCard';
 import { GestalisButton } from '../../../components/ui/gestalis-button';
 import { Input } from '../../../components/ui/input';
+import { useComptesStore } from '../../../stores/useComptesStore';
 
 
 const ModifierFournisseur = ({ fournisseur, onClose, onUpdate }) => {
