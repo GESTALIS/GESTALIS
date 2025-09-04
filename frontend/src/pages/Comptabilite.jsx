@@ -83,7 +83,7 @@ const Comptabilite = () => {
   const [selectedStatus, setSelectedStatus] = useState('all');
   
   // Store des comptes
-  const { comptes, addCompte, loadFromSupabase: loadComptesFromSupabase } = useComptesStore();
+  const { comptes, addCompte, updateCompte, deleteCompte, setComptes, loadFromSupabase: loadComptesFromSupabase } = useComptesStore();
   
   // États pour les modals
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -128,8 +128,6 @@ const Comptabilite = () => {
     { id: 6, code: 'PAY', nom: 'Paiements', type: 'credit', description: 'Journal des opérations diverses', actif: true, dateCreation: '2025-01-01' }
   ]);
 
-  // Utiliser Zustand pour les comptes
-  const { comptes, addCompte, updateCompte, deleteCompte, setComptes } = useComptesStore();
   
   // Fonctions intelligentes pour la détection des comptes
   const detectCompteClasse = (numero) => {
