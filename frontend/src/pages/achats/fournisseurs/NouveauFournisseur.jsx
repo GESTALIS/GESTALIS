@@ -44,53 +44,42 @@ const NouveauFournisseur = () => {
   // Store des comptes comptables
   const { comptes } = useComptesStore();
   
-  // Générer des codes fournisseurs suggérés basés sur la recherche
-  const generateSuggestedCodes = (searchTerm) => {
-    if (!searchTerm || searchTerm.length < 2) return [];
-    
-    const suggestions = [];
-    const term = searchTerm.toUpperCase();
-    
-    // Codes basés sur la recherche
-    suggestions.push({
-      id: 'suggest-1',
-      codeFournisseur: `F${term}`,
-      raisonSociale: `Code suggéré pour ${term}`,
-      isSuggestion: true
+  // Transformer les comptes comptables en codes F...
+  const transformComptesToFCodes = (comptes) => {
+    return comptes.map(compte => {
+      // Transformer le numéro en code F...
+      let fCode = '';
+      if (compte.numero) {
+        // Si c'est un numéro numérique, le transformer en code F...
+        if (/^\d+$/.test(compte.numero.toString())) {
+          // Exemple: 4010005 -> F4010005 -> FRESO (logique de transformation)
+          const numero = compte.numero.toString();
+          // Créer un code F... basé sur le numéro
+          fCode = `F${numero}`;
+        } else {
+          // Si c'est déjà un code F..., l'utiliser tel quel
+          fCode = compte.numero.toString();
+        }
+      }
+      
+      return {
+        id: compte.id,
+        codeFournisseur: fCode,
+        raisonSociale: compte.nom || compte.intitule || 'Sans nom',
+        numeroOriginal: compte.numero,
+        isSuggestion: false
+      };
     });
-    
-    // Codes basés sur des patterns courants
-    if (term.includes('TEST')) {
-      suggestions.push({
-        id: 'suggest-2',
-        codeFournisseur: 'FTESTDPL',
-        raisonSociale: 'TESTDPL',
-        isSuggestion: true
-      });
-    }
-    
-    if (term.includes('FDS')) {
-      suggestions.push({
-        id: 'suggest-3',
-        codeFournisseur: 'FFDXSQ',
-        raisonSociale: 'FDS',
-        isSuggestion: true
-      });
-    }
-    
-    if (term.includes('TETE')) {
-      suggestions.push({
-        id: 'suggest-4',
-        codeFournisseur: 'FTETETE',
-        raisonSociale: 'TETETE',
-        isSuggestion: true
-      });
-    }
-    
-    return suggestions;
   };
   
-  const filteredFournisseurs = generateSuggestedCodes(searchCompteTerm);
+  // Filtrer les comptes comptables et les transformer en codes F...
+  const filteredComptes = comptes.filter(compte => 
+    compte.numero?.toString().includes(searchCompteTerm) ||
+    compte.nom?.toLowerCase().includes(searchCompteTerm.toLowerCase()) ||
+    compte.intitule?.toLowerCase().includes(searchCompteTerm.toLowerCase())
+  );
+  
+  const filteredFournisseurs = transformComptesToFCodes(filteredComptes);
 
   useEffect(() => {
     // Récupérer le terme de recherche depuis localStorage
@@ -236,7 +225,7 @@ const NouveauFournisseur = () => {
                     <Input
                       value={searchCompteTerm}
                       onChange={(e) => handleCompteSearch(e.target.value)}
-                      placeholder="Rechercher un code fournisseur (ex: FTESTDPL, FFDXSQ)"
+                      placeholder="Rechercher un compte comptable (ex: FRESO, FEXE)"
                       className="w-full pr-10"
                       onFocus={() => setShowCompteResults(searchCompteTerm.length > 0)}
                     />
@@ -275,7 +264,7 @@ const NouveauFournisseur = () => {
                   </div>
                   <div className="mt-1 flex items-center justify-between">
                     <p className="text-xs text-gray-500">
-                      Sélectionnez un code fournisseur existant
+                      Sélectionnez un compte comptable existant
                     </p>
                     <button
                       type="button"
