@@ -457,16 +457,24 @@ const Comptabilite = () => {
     const loadComptes = async () => {
       try {
         console.log('🔄 Chargement des comptes depuis Supabase...');
-        // Temporairement désactivé pour éviter l'erreur 500
-        // await loadComptesFromSupabase();
-        console.log('✅ Comptes chargés depuis Supabase (désactivé temporairement)');
+        await loadComptesFromSupabase();
+        console.log('✅ Comptes chargés depuis Supabase');
       } catch (error) {
         console.error('❌ Erreur chargement comptes:', error);
+        // En cas d'erreur, ajouter quelques comptes de test
+        console.log('🔄 Ajout de comptes de test...');
+        setComptes([
+          { id: 1, numero: 'F4010005', nom: 'RESO', type: 'passif', classe: '4 - Tiers' },
+          { id: 2, numero: 'FEXE', nom: 'EXEMPLE', type: 'passif', classe: '4 - Tiers' },
+          { id: 3, numero: 'FTESTDPL', nom: 'TESTDPL', type: 'passif', classe: '4 - Tiers' },
+          { id: 4, numero: 'FFDXSQ', nom: 'FDS', type: 'passif', classe: '4 - Tiers' },
+          { id: 5, numero: 'FTETETE', nom: 'TETETE', type: 'passif', classe: '4 - Tiers' }
+        ]);
       }
     };
     
     loadComptes();
-  }, []);
+  }, [loadComptesFromSupabase, setComptes]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">

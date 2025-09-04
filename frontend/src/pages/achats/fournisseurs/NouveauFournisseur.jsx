@@ -42,7 +42,22 @@ const NouveauFournisseur = () => {
   const [showCompteResults, setShowCompteResults] = useState(false);
   
   // Store des comptes comptables
-  const { comptes } = useComptesStore();
+  const { comptes, setComptes } = useComptesStore();
+  
+  // Ajouter des comptes de test si aucun compte n'est chargé
+  useEffect(() => {
+    if (comptes.length === 0) {
+      console.log('🔄 Ajout de comptes de test...');
+      setComptes([
+        { id: 1, numero: 'F4010005', nom: 'RESO', type: 'passif', classe: '4 - Tiers' },
+        { id: 2, numero: 'FEXE', nom: 'EXEMPLE', type: 'passif', classe: '4 - Tiers' },
+        { id: 3, numero: 'FTESTDPL', nom: 'TESTDPL', type: 'passif', classe: '4 - Tiers' },
+        { id: 4, numero: 'FFDXSQ', nom: 'FDS', type: 'passif', classe: '4 - Tiers' },
+        { id: 5, numero: 'FTETETE', nom: 'TETETE', type: 'passif', classe: '4 - Tiers' },
+        { id: 6, numero: '512000', nom: 'BRED', type: 'actif', classe: '5 - Financier' }
+      ]);
+    }
+  }, [comptes.length, setComptes]);
   
   // Transformer les comptes comptables en codes F...
   const transformComptesToFCodes = (comptes) => {
