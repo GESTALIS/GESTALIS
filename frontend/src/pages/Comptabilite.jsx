@@ -459,15 +459,16 @@ const Comptabilite = () => {
     const loadComptes = async () => {
       try {
         console.log('🔄 Chargement des comptes depuis Supabase...');
-        await loadComptesFromSupabase();
-        console.log('✅ Comptes chargés depuis Supabase');
+        // Temporairement désactivé pour éviter l'erreur 500
+        // await loadComptesFromSupabase();
+        console.log('✅ Comptes chargés depuis Supabase (désactivé temporairement)');
       } catch (error) {
         console.error('❌ Erreur chargement comptes:', error);
       }
     };
     
     loadComptes();
-  }, [loadComptesFromSupabase]);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
