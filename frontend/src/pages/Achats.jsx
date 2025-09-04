@@ -132,6 +132,20 @@ const Achats = () => {
     }
   }, [location.state]);
 
+  // États pour la gestion des fournisseurs
+  const { 
+    fournisseurs, 
+    loading: fournisseursLoading,
+    addFournisseur, 
+    updateFournisseur, 
+    deleteFournisseur,
+    setFournisseurs,
+    nextFournisseurCode,
+    loadFromSupabase: loadFournisseursFromSupabase
+  } = useFournisseursStore();
+  
+  const { comptes, loadFromSupabase: loadComptesFromSupabase } = useComptesStore();
+
   // Charger les données depuis Supabase au démarrage
   useEffect(() => {
     const loadData = async () => {
@@ -149,20 +163,6 @@ const Achats = () => {
     
     loadData();
   }, [loadFournisseursFromSupabase, loadComptesFromSupabase]);
-
-  // États pour la gestion des fournisseurs
-  const { 
-    fournisseurs, 
-    loading: fournisseursLoading,
-    addFournisseur, 
-    updateFournisseur, 
-    deleteFournisseur,
-    setFournisseurs,
-    nextFournisseurCode,
-    loadFromSupabase: loadFournisseursFromSupabase
-  } = useFournisseursStore();
-  
-  const { comptes, loadFromSupabase: loadComptesFromSupabase } = useComptesStore();
   const { produits, addProduit, setProduits } = useProduitsStore();
   
   const [searchTerm, setSearchTerm] = useState('');
