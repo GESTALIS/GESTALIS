@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { fournisseursService } from '../services/supabase';
 
 export const useFournisseursStore = create(
   persist(
@@ -17,28 +18,54 @@ export const useFournisseursStore = create(
         lastUpdate: new Date().toISOString() 
       }),
       
-      addFournisseur: (fournisseur) => {
+      addFournisseur: async (fournisseur) => {
         const { fournisseurs, nextFournisseurCode } = get();
-        const newFournisseur = {
-          ...fournisseur,
-          id: Date.now(),
-          codeFournisseur: nextFournisseurCode,
-          dateCreation: new Date().toISOString(),
-          statut: 'ACTIF'
-        };
         
-        // Générer le prochain code
-        const currentNumber = parseInt(nextFournisseurCode.split('-')[1]);
-        const nextNumber = currentNumber + 1;
-        const newCode = `FPRO97-${String(nextNumber).padStart(4, '0')}`;
-        
-        set({ 
-          fournisseurs: [newFournisseur, ...fournisseurs],
-          nextFournisseurCode: newCode,
-          lastUpdate: new Date().toISOString()
-        });
-        
-        return newFournisseur;
+        try {
+          // Créer le fournisseur dans Supabase
+          const fournisseurData = {
+            ...fournisseur,
+            codeFournisseur: nextFournisseurCode,
+            statut: 'ACTIF'
+          };
+          
+          const newFournisseur = await fournisseursService.creer(fournisseurData);
+          
+          // Générer le prochain code
+          const currentNumber = parseInt(nextFournisseurCode.split('-')[1]);
+          const nextNumber = currentNumber + 1;
+          const newCode = `FPRO97-${String(nextNumber).padStart(4, '0')}`;
+          
+          set({ 
+            fournisseurs: [newFournisseur, ...fournisseurs],
+            nextFournisseurCode: newCode,
+            lastUpdate: new Date().toISOString()
+          });
+          
+          return newFournisseur;
+        } catch (error) {
+          console.error('❌ Erreur création fournisseur:', error);
+          // Fallback sur localStorage en cas d'erreur
+          const newFournisseur = {
+            ...fournisseur,
+            id: Date.now(),
+            codeFournisseur: nextFournisseurCode,
+            dateCreation: new Date().toISOString(),
+            statut: 'ACTIF'
+          };
+          
+          const currentNumber = parseInt(nextFournisseurCode.split('-')[1]);
+          const nextNumber = currentNumber + 1;
+          const newCode = `FPRO97-${String(nextNumber).padStart(4, '0')}`;
+          
+          set({ 
+            fournisseurs: [newFournisseur, ...fournisseurs],
+            nextFournisseurCode: newCode,
+            lastUpdate: new Date().toISOString()
+          });
+          
+          return newFournisseur;
+        }
       },
       
       updateFournisseur: (id, updates) => {
@@ -73,6 +100,26 @@ export const useFournisseursStore = create(
       getFournisseursByStatus: (status) => {
         const { fournisseurs } = get();
         return fournisseurs.filter(f => f.statut === status);
+      },
+      
+      // Charger les fournisseurs depuis Supabase
+      loadFromSupabase: async () => {
+        const { setLoading, setError, setFournisseurs } = get();
+        
+        try {
+          setLoading(true);
+          setError(null);
+          
+          const data = await fournisseursService.recupererTous();
+          setFournisseurs(data);
+          
+          console.log('✅ Fournisseurs chargés depuis Supabase:', data.length);
+        } catch (error) {
+          console.error('❌ Erreur chargement Supabase:', error);
+          setError(error.message);
+        } finally {
+          setLoading(false);
+        }
       },
       
       // Synchronisation avec Supabase (optionnel)

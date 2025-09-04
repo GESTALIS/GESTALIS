@@ -82,6 +82,9 @@ const Comptabilite = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('all');
   
+  // Store des comptes
+  const { comptes, addCompte, loadFromSupabase: loadComptesFromSupabase } = useComptesStore();
+  
   // États pour les modals
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
@@ -450,6 +453,21 @@ const Comptabilite = () => {
       console.log('🚀 Modal de création de compte ouvert en mode picker depuis Fournisseur');
     }
   }, [isPicker]);
+
+  // Charger les comptes depuis Supabase au démarrage
+  useEffect(() => {
+    const loadComptes = async () => {
+      try {
+        console.log('🔄 Chargement des comptes depuis Supabase...');
+        await loadComptesFromSupabase();
+        console.log('✅ Comptes chargés depuis Supabase');
+      } catch (error) {
+        console.error('❌ Erreur chargement comptes:', error);
+      }
+    };
+    
+    loadComptes();
+  }, [loadComptesFromSupabase]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">

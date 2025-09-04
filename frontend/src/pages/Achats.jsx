@@ -132,6 +132,24 @@ const Achats = () => {
     }
   }, [location.state]);
 
+  // Charger les données depuis Supabase au démarrage
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        console.log('🔄 Chargement des données depuis Supabase...');
+        await Promise.all([
+          loadFournisseursFromSupabase(),
+          loadComptesFromSupabase()
+        ]);
+        console.log('✅ Données chargées depuis Supabase');
+      } catch (error) {
+        console.error('❌ Erreur chargement données:', error);
+      }
+    };
+    
+    loadData();
+  }, [loadFournisseursFromSupabase, loadComptesFromSupabase]);
+
   // États pour la gestion des fournisseurs
   const { 
     fournisseurs, 
@@ -140,10 +158,11 @@ const Achats = () => {
     updateFournisseur, 
     deleteFournisseur,
     setFournisseurs,
-    nextFournisseurCode
+    nextFournisseurCode,
+    loadFromSupabase: loadFournisseursFromSupabase
   } = useFournisseursStore();
   
-  const { comptes } = useComptesStore();
+  const { comptes, loadFromSupabase: loadComptesFromSupabase } = useComptesStore();
   const { produits, addProduit, setProduits } = useProduitsStore();
   
   const [searchTerm, setSearchTerm] = useState('');
