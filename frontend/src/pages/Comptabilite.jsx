@@ -18,6 +18,7 @@ import {
   Clock,
   X,
   CheckCircle2,
+  ArrowLeft,
   AlertCircle,
   TrendingUp,
   FileSpreadsheet,
@@ -33,6 +34,7 @@ import { GestalisCard, GestalisCardContent } from '../components/ui/GestalisCard
 import { GestalisButton } from '../components/ui/gestalis-button';
 import { Input } from '../components/ui/input';
 import { useComptesStore } from '../stores/useComptesStore';
+import { useReturnNav } from '../hooks/useReturnNav';
 
 // Composant banner pour Comptabilité (dégradé orange)
 const ComptabiliteBanner = ({ description, children }) => {
@@ -69,6 +71,9 @@ const ComptabiliteBanner = ({ description, children }) => {
 };
 
 const Comptabilite = () => {
+  // Hook pour la navigation de retour (mode picker)
+  const { isPicker, returnTo, returnField, draftId, goBackWith, cancelAndReturn } = useReturnNav();
+  
   // États pour la gestion des onglets
   const [activeTab, setActiveTab] = useState('overview');
   
@@ -208,6 +213,17 @@ const Comptabilite = () => {
     
     // Utiliser Zustand pour ajouter le compte
     addCompte(compte);
+    
+    // Si on est en mode picker, retourner au formulaire d'origine
+    if (isPicker && returnTo) {
+      console.log('🚀 Navigation de retour vers:', returnTo);
+      goBackWith({
+        id: compte.id,
+        numero: compte.numero,
+        intitule: compte.nom
+      });
+      return;
+    }
     
     // Message de succès pour l'utilisateur
     alert(`✅ Compte créé avec succès !\n\nNuméro: ${compte.numero}\nNom: ${compte.nom}\nClasse: ${compte.classe}\nType: ${compte.type}`);
@@ -426,17 +442,14 @@ const Comptabilite = () => {
     // avec ses propres numéros
   }, []);
 
-  // Vérifier s'il faut ouvrir automatiquement le modal de création de compte
+  // Vérifier s'il faut ouvrir automatiquement le modal de création de compte (mode picker)
   useEffect(() => {
-    const shouldOpenCompteModal = localStorage.getItem('gestalis-open-compte-modal');
-    if (shouldOpenCompteModal === 'true') {
-      // Ouvrir le modal de création de compte
+    if (isPicker) {
+      // Ouvrir le modal de création de compte en mode picker
       setShowCompteModal(true);
-      // Nettoyer l'instruction
-      localStorage.removeItem('gestalis-open-compte-modal');
-      console.log('🚀 Modal de création de compte ouvert automatiquement depuis Achats');
+      console.log('🚀 Modal de création de compte ouvert en mode picker depuis Fournisseur');
     }
-  }, []);
+  }, [isPicker]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
@@ -444,7 +457,16 @@ const Comptabilite = () => {
       <div className="sticky top-0 z-30 bg-white shadow-sm border-b border-gray-200">
         <div className="px-6 py-4">
           <div className="max-w-7xl mx-auto">
-            <ComptabiliteBanner />
+            <ComptabiliteBanner>
+              {isPicker && (
+                <div className="flex items-center gap-2 mt-2">
+                  <div className="flex items-center gap-2 px-3 py-1 bg-white/20 rounded-full text-sm">
+                    <ArrowLeft className="h-4 w-4" />
+                    Sélection pour Fournisseur en cours
+                  </div>
+                </div>
+              )}
+            </ComptabiliteBanner>
           </div>
         </div>
       </div>
@@ -628,7 +650,7 @@ const Comptabilite = () => {
                           </span>
                         </td>
                         <td className="py-3 px-4 font-medium text-gray-900">{compte.nom}</td>
-                        <td className="py-3 px-4">
+                                                 <td className="py-3 px-4">
                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                              compte.type === 'actif' ? 'bg-gradient-to-r from-orange-100 to-amber-100 text-orange-800 border border-orange-200' :
                              compte.type === 'passif' ? 'bg-gradient-to-r from-red-100 to-orange-100 text-red-800 border border-red-200' :
@@ -1063,12 +1085,21 @@ const Comptabilite = () => {
 
               {/* Boutons d'action */}
               <div className="flex gap-3 mt-8 pt-6 border-t border-gray-200">
-                <button
-                  onClick={() => setShowCompteModal(false)}
-                  className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  Annuler
-                </button>
+                {isPicker ? (
+                  <button
+                    onClick={cancelAndReturn}
+                    className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    Annuler et revenir
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setShowCompteModal(false)}
+                    className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    Annuler
+                  </button>
+                )}
                 <button
                   onClick={handleCreateCompte}
                   className="flex-1 px-4 py-3 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white rounded-lg transition-all duration-200 font-medium"
