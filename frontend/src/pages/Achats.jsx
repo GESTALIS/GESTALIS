@@ -662,7 +662,7 @@ const Achats = () => {
         alert('❌ Erreur lors de la création du fournisseur');
       }
     } finally {
-      setLoading(false);
+      // setLoading(false); // Commenté car setLoading n'est pas défini dans cette fonction
     }
   };
 

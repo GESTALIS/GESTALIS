@@ -46,9 +46,9 @@ const NouveauFournisseur = () => {
   
   // Charger les comptes depuis localStorage si aucun compte n'est chargé
   useEffect(() => {
-    console.log('🔍 Comptes actuels:', comptes);
+    console.log('🔍 [NouveauFournisseur] Comptes actuels:', comptes);
     if (comptes.length === 0) {
-      console.log('🔄 Chargement des comptes depuis localStorage...');
+      console.log('🔄 [NouveauFournisseur] Chargement des comptes depuis localStorage...');
       
       // Essayer de charger depuis localStorage
       const comptesLocal = localStorage.getItem('gestalis-comptes');
@@ -56,15 +56,15 @@ const NouveauFournisseur = () => {
         try {
           const comptesParsed = JSON.parse(comptesLocal);
           setComptes(comptesParsed);
-          console.log('✅ Comptes chargés depuis localStorage:', comptesParsed);
+          console.log('✅ [NouveauFournisseur] Comptes chargés depuis localStorage:', comptesParsed);
         } catch (error) {
-          console.error('❌ Erreur parsing comptes localStorage:', error);
+          console.error('❌ [NouveauFournisseur] Erreur parsing comptes localStorage:', error);
         }
       }
       
       // Si toujours aucun compte, ajouter des comptes de test
       if (comptes.length === 0) {
-        console.log('🔄 Ajout de comptes de test...');
+        console.log('🔄 [NouveauFournisseur] Ajout de comptes de test...');
         const comptesTest = [
           { id: 1, numero: 'F4010005', nom: 'RESO', type: 'passif', classe: '4 - Tiers' },
           { id: 2, numero: 'FEXE', nom: 'EXEMPLE', type: 'passif', classe: '4 - Tiers' },
@@ -74,7 +74,7 @@ const NouveauFournisseur = () => {
           { id: 6, numero: '512000', nom: 'BRED', type: 'actif', classe: '5 - Financier' }
         ];
         setComptes(comptesTest);
-        console.log('✅ Comptes de test ajoutés:', comptesTest);
+        console.log('✅ [NouveauFournisseur] Comptes de test ajoutés:', comptesTest);
       }
     }
   }, [comptes.length, setComptes]);
