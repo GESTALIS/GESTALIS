@@ -65,12 +65,54 @@ export const fournisseursService = {
           contact_principal: fournisseur.contactPrincipal,
           conditions_paiement: fournisseur.conditionsPaiement,
           notes: fournisseur.notes,
-          statut: fournisseur.statut || 'actif'
+          statut: fournisseur.statut || 'actif',
+          // Ajouter tous les nouveaux champs
+          tva_intracommunautaire: fournisseur.tvaIntracommunautaire,
+          code_ape_naf: fournisseur.codeApeNaf,
+          forme_juridique: fournisseur.formeJuridique,
+          capital_social: fournisseur.capitalSocial,
+          adresse_siege: fournisseur.adresseSiege,
+          adresse_livraison: fournisseur.adresseLivraison,
+          plafond_credit: fournisseur.plafondCredit,
+          devise: fournisseur.devise,
+          est_sous_traitant: fournisseur.estSousTraitant,
+          compte_comptable: fournisseur.compteComptable,
+          pas_de_tva_guyane: fournisseur.pasDeTvaGuyane
         }])
         .select();
       
       if (error) throw error;
-      return data[0];
+      
+      // Transformer la réponse pour correspondre au format local
+      const createdFournisseur = data[0];
+      return {
+        id: createdFournisseur.id,
+        codeFournisseur: createdFournisseur.code_fournisseur,
+        raisonSociale: createdFournisseur.raison_sociale,
+        siret: createdFournisseur.siret,
+        adresse: createdFournisseur.adresse,
+        codePostal: createdFournisseur.code_postal,
+        ville: createdFournisseur.ville,
+        pays: createdFournisseur.pays,
+        telephone: createdFournisseur.telephone,
+        email: createdFournisseur.email,
+        contactPrincipal: createdFournisseur.contact_principal,
+        conditionsPaiement: createdFournisseur.conditions_paiement,
+        notes: createdFournisseur.notes,
+        statut: createdFournisseur.statut,
+        dateCreation: createdFournisseur.created_at,
+        tvaIntracommunautaire: createdFournisseur.tva_intracommunautaire || '',
+        codeApeNaf: createdFournisseur.code_ape_naf || '',
+        formeJuridique: createdFournisseur.forme_juridique || '',
+        capitalSocial: createdFournisseur.capital_social || '',
+        adresseSiege: createdFournisseur.adresse_siege || '',
+        adresseLivraison: createdFournisseur.adresse_livraison || '',
+        plafondCredit: createdFournisseur.plafond_credit || '',
+        devise: createdFournisseur.devise || 'EUR',
+        estSousTraitant: createdFournisseur.est_sous_traitant || false,
+        compteComptable: createdFournisseur.compte_comptable || '',
+        pasDeTvaGuyane: createdFournisseur.pas_de_tva_guyane || false
+      };
     } catch (error) {
       gererErreurSupabase(error, 'création fournisseur');
     }
@@ -94,13 +136,55 @@ export const fournisseursService = {
           contact_principal: fournisseur.contactPrincipal,
           conditions_paiement: fournisseur.conditionsPaiement,
           notes: fournisseur.notes,
-          statut: fournisseur.statut
+          statut: fournisseur.statut,
+          // Ajouter tous les nouveaux champs
+          tva_intracommunautaire: fournisseur.tvaIntracommunautaire,
+          code_ape_naf: fournisseur.codeApeNaf,
+          forme_juridique: fournisseur.formeJuridique,
+          capital_social: fournisseur.capitalSocial,
+          adresse_siege: fournisseur.adresseSiege,
+          adresse_livraison: fournisseur.adresseLivraison,
+          plafond_credit: fournisseur.plafondCredit,
+          devise: fournisseur.devise,
+          est_sous_traitant: fournisseur.estSousTraitant,
+          compte_comptable: fournisseur.compteComptable,
+          pas_de_tva_guyane: fournisseur.pasDeTvaGuyane
         })
         .eq('id', id)
         .select();
       
       if (error) throw error;
-      return data[0];
+      
+      // Transformer la réponse pour correspondre au format local
+      const updatedFournisseur = data[0];
+      return {
+        id: updatedFournisseur.id,
+        codeFournisseur: updatedFournisseur.code_fournisseur,
+        raisonSociale: updatedFournisseur.raison_sociale,
+        siret: updatedFournisseur.siret,
+        adresse: updatedFournisseur.adresse,
+        codePostal: updatedFournisseur.code_postal,
+        ville: updatedFournisseur.ville,
+        pays: updatedFournisseur.pays,
+        telephone: updatedFournisseur.telephone,
+        email: updatedFournisseur.email,
+        contactPrincipal: updatedFournisseur.contact_principal,
+        conditionsPaiement: updatedFournisseur.conditions_paiement,
+        notes: updatedFournisseur.notes,
+        statut: updatedFournisseur.statut,
+        dateCreation: updatedFournisseur.created_at,
+        tvaIntracommunautaire: updatedFournisseur.tva_intracommunautaire || '',
+        codeApeNaf: updatedFournisseur.code_ape_naf || '',
+        formeJuridique: updatedFournisseur.forme_juridique || '',
+        capitalSocial: updatedFournisseur.capital_social || '',
+        adresseSiege: updatedFournisseur.adresse_siege || '',
+        adresseLivraison: updatedFournisseur.adresse_livraison || '',
+        plafondCredit: updatedFournisseur.plafond_credit || '',
+        devise: updatedFournisseur.devise || 'EUR',
+        estSousTraitant: updatedFournisseur.est_sous_traitant || false,
+        compteComptable: updatedFournisseur.compte_comptable || '',
+        pasDeTvaGuyane: updatedFournisseur.pas_de_tva_guyane || false
+      };
     } catch (error) {
       gererErreurSupabase(error, 'mise à jour fournisseur');
     }
@@ -118,6 +202,52 @@ export const fournisseursService = {
       return true;
     } catch (error) {
       gererErreurSupabase(error, 'suppression fournisseur');
+    }
+  },
+
+  // Lister tous les fournisseurs depuis Supabase
+  async lister() {
+    try {
+      const { data, error } = await supabase
+        .from('fournisseurs')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      
+      // Transformer les données Supabase vers le format local
+      return data.map(fournisseur => ({
+        id: fournisseur.id,
+        codeFournisseur: fournisseur.code_fournisseur,
+        raisonSociale: fournisseur.raison_sociale,
+        siret: fournisseur.siret,
+        adresse: fournisseur.adresse,
+        codePostal: fournisseur.code_postal,
+        ville: fournisseur.ville,
+        pays: fournisseur.pays,
+        telephone: fournisseur.telephone,
+        email: fournisseur.email,
+        contactPrincipal: fournisseur.contact_principal,
+        conditionsPaiement: fournisseur.conditions_paiement,
+        notes: fournisseur.notes,
+        statut: fournisseur.statut,
+        dateCreation: fournisseur.created_at,
+        // Ajouter les champs manquants avec des valeurs par défaut
+        tvaIntracommunautaire: fournisseur.tva_intracommunautaire || '',
+        codeApeNaf: fournisseur.code_ape_naf || '',
+        formeJuridique: fournisseur.forme_juridique || '',
+        capitalSocial: fournisseur.capital_social || '',
+        adresseSiege: fournisseur.adresse_siege || '',
+        adresseLivraison: fournisseur.adresse_livraison || '',
+        plafondCredit: fournisseur.plafond_credit || '',
+        devise: fournisseur.devise || 'EUR',
+        estSousTraitant: fournisseur.est_sous_traitant || false,
+        compteComptable: fournisseur.compte_comptable || '',
+        pasDeTvaGuyane: fournisseur.pas_de_tva_guyane || false
+      }));
+    } catch (error) {
+      gererErreurSupabase(error, 'récupération fournisseurs');
+      return [];
     }
   }
 };

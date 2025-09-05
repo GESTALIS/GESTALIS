@@ -2044,14 +2044,15 @@ const Achats = () => {
                                    
                                    if (value.length > 0) {
                                      // Filtrer les comptes en temps réel
-                                     const filtered = planComptable.filter(compte => 
-                                       compte.numeroCompte.toLowerCase().includes(value.toLowerCase()) ||
-                                       compte.intitule.toLowerCase().includes(value.toLowerCase())
+                                     const filtered = comptes.filter(compte => 
+                                       (compte.numero && compte.numero.toString().toLowerCase().includes(value.toLowerCase())) ||
+                                       (compte.nom && compte.nom.toLowerCase().includes(value.toLowerCase())) ||
+                                       (compte.intitule && compte.intitule.toLowerCase().includes(value.toLowerCase()))
                                      );
                                      setFilteredPlanComptable(filtered);
                                      setShowCompteResults(true);
                                    } else {
-                                     setFilteredPlanComptable(planComptable);
+                                     setFilteredPlanComptable(comptes);
                                      setShowCompteResults(false);
                                    }
                                  }}
@@ -2069,18 +2070,18 @@ const Achats = () => {
                                  {filteredPlanComptable.length > 0 ? (
                                    filteredPlanComptable.map((compte) => (
                                      <div
-                                       key={compte.numeroCompte}
+                                       key={compte.numero || compte.id}
                                        onClick={() => {
-                                         setNewFournisseur({...newFournisseur, compteComptable: compte.numeroCompte});
-                                         setSearchCompteTerm(`${compte.numeroCompte} - ${compte.intitule}`);
+                                         setNewFournisseur({...newFournisseur, compteComptable: compte.numero});
+                                         setSearchCompteTerm(`${compte.numero} - ${compte.nom || compte.intitule}`);
                                          setShowCompteResults(false);
                                        }}
                                        className="px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0"
                                      >
                                        <div className="flex items-center justify-between">
                                          <div className="flex-1">
-                                           <div className="font-medium text-gray-900">{compte.numeroCompte}</div>
-                                           <div className="text-sm text-gray-600">{compte.intitule}</div>
+                                           <div className="font-medium text-gray-900">{compte.numero}</div>
+                                           <div className="text-sm text-gray-600">{compte.nom || compte.intitule}</div>
                                          </div>
                                          <div className="flex flex-col items-end text-xs">
                                            <span className={`px-2 py-1 rounded-full ${

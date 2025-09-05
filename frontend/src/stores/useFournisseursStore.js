@@ -110,7 +110,7 @@ export const useFournisseursStore = create(
           setLoading(true);
           setError(null);
           
-          const data = await fournisseursService.recupererTous();
+          const data = await fournisseursService.lister();
           setFournisseurs(data);
           
           console.log('✅ Fournisseurs chargés depuis Supabase:', data.length);

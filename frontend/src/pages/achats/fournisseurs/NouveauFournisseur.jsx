@@ -79,46 +79,39 @@ const NouveauFournisseur = () => {
     }
   }, [comptes.length, setComptes]);
   
-  // Transformer les comptes comptables en codes F...
-  const transformComptesToFCodes = (comptes) => {
-    return comptes.map(compte => {
-      // Transformer le numéro en code F...
-      let fCode = '';
-      if (compte.numero) {
-        // Si c'est un numéro numérique, le transformer en code F...
-        if (/^\d+$/.test(compte.numero.toString())) {
-          // Exemple: 4010005 -> F4010005 -> FRESO (logique de transformation)
-          const numero = compte.numero.toString();
-          // Créer un code F... basé sur le numéro
-          fCode = `F${numero}`;
-        } else {
-          // Si c'est déjà un code F..., l'utiliser tel quel
-          fCode = compte.numero.toString();
-        }
-      }
-      
-      return {
-        id: compte.id,
-        codeFournisseur: fCode,
-        raisonSociale: compte.nom || compte.intitule || 'Sans nom',
-        numeroOriginal: compte.numero,
-        isSuggestion: false
-      };
-    });
-  };
-  
-  // Filtrer les comptes comptables et les transformer en codes F...
+  // Recherche intelligente des comptes comptables (inspirée de la fiche produit)
   const filteredComptes = comptes.filter(compte => 
-    compte.numero?.toString().includes(searchCompteTerm) ||
+    compte.numero?.toString().toLowerCase().includes(searchCompteTerm.toLowerCase()) ||
     compte.nom?.toLowerCase().includes(searchCompteTerm.toLowerCase()) ||
     compte.intitule?.toLowerCase().includes(searchCompteTerm.toLowerCase())
   );
   
+  // Transformer les comptes en format F... pour l'affichage
+  const filteredFournisseurs = filteredComptes.map(compte => {
+    // Créer un code F... basé sur le numéro
+    let fCode = '';
+    if (compte.numero) {
+      if (/^\d+$/.test(compte.numero.toString())) {
+        // Numéro numérique -> F + numéro
+        fCode = `F${compte.numero}`;
+      } else {
+        // Déjà un code F... -> utiliser tel quel
+        fCode = compte.numero.toString();
+      }
+    }
+    
+    return {
+      id: compte.id,
+      codeFournisseur: fCode,
+      raisonSociale: compte.nom || compte.intitule || 'Sans nom',
+      numeroOriginal: compte.numero,
+      isSuggestion: false
+    };
+  });
+  
   console.log('🔍 Recherche:', searchCompteTerm);
   console.log('🔍 Comptes disponibles:', comptes);
   console.log('🔍 Comptes filtrés:', filteredComptes);
-  
-  const filteredFournisseurs = transformComptesToFCodes(filteredComptes);
   console.log('🔍 Fournisseurs transformés:', filteredFournisseurs);
 
   useEffect(() => {
