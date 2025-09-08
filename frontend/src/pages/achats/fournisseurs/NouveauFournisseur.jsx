@@ -273,7 +273,7 @@ const NouveauFournisseur = () => {
     if (isPicker) {
       cancelAndReturn();
     } else {
-      window.history.back();
+    window.history.back();
     }
   };
 

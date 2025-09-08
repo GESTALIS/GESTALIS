@@ -23,7 +23,6 @@ import {
   searchFournisseurs, 
   searchChantiers, 
   searchEmployes, 
-  searchUtilisateurs, 
   searchProduits 
 } from '../../services/searchService';
 
@@ -62,8 +61,8 @@ const CreationBonCommande = () => {
   // Initialiser le créateur avec l'utilisateur connecté
   useEffect(() => {
     if (user && !bonCommande.createur) {
-      setBonCommande(prev => ({
-        ...prev,
+      setBonCommande(prev => ({ 
+        ...prev, 
         createur: {
           id: user.id,
           label: `${user.prenom || ''} ${user.nom || ''} (${user.email || ''})`,
@@ -88,7 +87,7 @@ const CreationBonCommande = () => {
         localStorage.removeItem('selectedFournisseur');
         
         console.log('✅ Fournisseur sélectionné automatiquement:', fournisseur);
-      } catch (error) {
+        } catch (error) {
         console.error('Erreur lors du parsing du fournisseur sélectionné:', error);
       }
     }
@@ -100,41 +99,37 @@ const CreationBonCommande = () => {
     if (selectedEmploye) {
       try {
         const employe = JSON.parse(selectedEmploye);
+        
+        // Vérifier si c'est pour le demandeur ou le créateur
+        const smartpickerContext = sessionStorage.getItem('smartpicker_return_context');
+        let targetField = 'demandeur'; // Par défaut
+        
+        if (smartpickerContext) {
+          try {
+            const { returnField } = JSON.parse(smartpickerContext);
+            if (returnField === 'createur') {
+              targetField = 'createur';
+            }
+          } catch (error) {
+            console.error('Erreur lors du parsing du contexte pour déterminer le champ cible:', error);
+          }
+        }
+        
         setBonCommande(prev => ({
           ...prev,
-          demandeur: employe
+          [targetField]: employe
         }));
         
         // Nettoyer le localStorage
         localStorage.removeItem('selectedEmploye');
         
-        console.log('✅ Employé sélectionné automatiquement:', employe);
+        console.log(`✅ Employé sélectionné automatiquement pour ${targetField}:`, employe);
       } catch (error) {
         console.error('Erreur lors du parsing de l\'employé sélectionné:', error);
       }
     }
   }, []);
 
-  // Gérer le retour depuis la création d'utilisateur
-  useEffect(() => {
-    const selectedUser = localStorage.getItem('selectedUser');
-    if (selectedUser) {
-      try {
-        const user = JSON.parse(selectedUser);
-        setBonCommande(prev => ({
-          ...prev,
-          createur: user
-        }));
-        
-        // Nettoyer le localStorage
-        localStorage.removeItem('selectedUser');
-        
-        console.log('✅ Utilisateur sélectionné automatiquement:', user);
-      } catch (error) {
-        console.error('Erreur lors du parsing de l\'utilisateur sélectionné:', error);
-      }
-    }
-  }, []);
 
   // Gérer le retour depuis la création de chantier
   useEffect(() => {
@@ -151,7 +146,7 @@ const CreationBonCommande = () => {
         localStorage.removeItem('selectedChantier');
         
         console.log('✅ Chantier sélectionné automatiquement:', chantier);
-      } catch (error) {
+    } catch (error) {
         console.error('Erreur lors du parsing du chantier sélectionné:', error);
       }
     }
@@ -166,7 +161,7 @@ const CreationBonCommande = () => {
         
         // Ajouter automatiquement un nouvel article avec le produit sélectionné
         const nouvelArticle = {
-          id: Date.now(),
+        id: Date.now(),
           produit: produit,
           quantite: '1',
           prixUnitaire: '',
@@ -181,7 +176,7 @@ const CreationBonCommande = () => {
         localStorage.removeItem('selectedProduit');
         
         console.log('✅ Produit ajouté automatiquement comme article:', produit);
-      } catch (error) {
+    } catch (error) {
         console.error('Erreur lors du parsing du produit sélectionné:', error);
       }
     }
@@ -198,7 +193,7 @@ const CreationBonCommande = () => {
   // Gestion des articles
   const addArticle = () => {
     setArticles(prev => [...prev, {
-      id: Date.now(),
+        id: Date.now(),
       produit: null,
       quantite: '',
       prixUnitaire: '',
@@ -325,8 +320,8 @@ const CreationBonCommande = () => {
               </GestalisButton>
               <GestalisButton
                 variant="outline"
-                onClick={handleSave}
-                disabled={saving}
+                  onClick={handleSave}
+                  disabled={saving}
                 className="bg-white/10 border-white/20 text-white hover:bg-white/20"
               >
                 <Save className="h-4 w-4 mr-2" />
@@ -347,49 +342,49 @@ const CreationBonCommande = () => {
 
       {/* Contenu principal */}
       <div className="max-w-7xl mx-auto p-6 space-y-6">
-        {/* Informations générales */}
-        <GestalisCard>
-          <GestalisCardHeader>
-            <GestalisCardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Informations générales
-            </GestalisCardTitle>
-          </GestalisCardHeader>
-          <GestalisCardContent className="space-y-4">
+            {/* Informations générales */}
+            <GestalisCard>
+              <GestalisCardHeader>
+                <GestalisCardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Informations générales
+                </GestalisCardTitle>
+              </GestalisCardHeader>
+              <GestalisCardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Numéro de commande
-                </label>
-                <Input
-                  value={bonCommande.numeroCommande}
-                  readOnly
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Numéro de commande
+                    </label>
+                    <Input
+                      value={bonCommande.numeroCommande}
+                      readOnly
                   className="w-full bg-gray-50"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Date de commande
-                </label>
-                <Input
-                  type="date"
-                  value={bonCommande.dateCommande}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Date de commande
+                    </label>
+                    <Input
+                      type="date"
+                      value={bonCommande.dateCommande}
                   onChange={(e) => handleFieldChange('dateCommande', e.target.value)}
-                  className="w-full"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Date de livraison souhaitée
-                </label>
-                <Input
-                  type="date"
-                  value={bonCommande.dateLivraisonSouhaitee}
+                      className="w-full"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Date de livraison souhaitée
+                    </label>
+                    <Input
+                      type="date"
+                      value={bonCommande.dateLivraisonSouhaitee}
                   onChange={(e) => handleFieldChange('dateLivraisonSouhaitee', e.target.value)}
-                  className="w-full"
-                />
-              </div>
-            </div>
+                      className="w-full"
+                    />
+                  </div>
+                </div>
           </GestalisCardContent>
         </GestalisCard>
 
@@ -402,14 +397,14 @@ const CreationBonCommande = () => {
             </GestalisCardTitle>
           </GestalisCardHeader>
           <GestalisCardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <SmartPicker
                 label="Fournisseur"
                 required
                 value={bonCommande.fournisseur}
                 onChange={(value) => handleFieldChange('fournisseur', value)}
                 fetcher={searchFournisseurs}
-                placeholder="Rechercher un fournisseur..."
+                           placeholder="Rechercher un fournisseur..."
                 createUrl="/achats?tab=fournisseurs&create=true"
                 createLabel="Créer un fournisseur"
               />
@@ -420,7 +415,7 @@ const CreationBonCommande = () => {
                 value={bonCommande.chantier}
                 onChange={(value) => handleFieldChange('chantier', value)}
                 fetcher={searchChantiers}
-                placeholder="Rechercher un chantier..."
+                           placeholder="Rechercher un chantier..."
                 createUrl="/achats/chantiers/nouveau"
                 createLabel="Créer un chantier"
               />
@@ -431,7 +426,7 @@ const CreationBonCommande = () => {
                 onChange={(value) => handleFieldChange('demandeur', value)}
                 fetcher={searchEmployes}
                 placeholder="Rechercher un employé..."
-                createUrl="/rh/employes?create=true"
+                createUrl="/rh?tab=employes&create=true"
                 createLabel="Créer un employé"
               />
               
@@ -439,38 +434,38 @@ const CreationBonCommande = () => {
                 label="Créateur"
                 value={bonCommande.createur}
                 onChange={(value) => handleFieldChange('createur', value)}
-                fetcher={searchUtilisateurs}
-                placeholder="Rechercher un utilisateur..."
-                createUrl="/admin/users/nouveau"
-                createLabel="Créer un utilisateur"
+                fetcher={searchEmployes}
+                placeholder="Rechercher un employé..."
+                createUrl="/rh?tab=employes&create=true"
+                createLabel="Créer un employé"
               />
-            </div>
-          </GestalisCardContent>
-        </GestalisCard>
+                </div>
+              </GestalisCardContent>
+            </GestalisCard>
 
-        {/* Articles */}
-        <GestalisCard>
-          <GestalisCardHeader>
-            <GestalisCardTitle className="flex items-center gap-2">
-              <Package className="h-5 w-5" />
+            {/* Articles */}
+            <GestalisCard>
+              <GestalisCardHeader>
+                <GestalisCardTitle className="flex items-center gap-2">
+                  <Package className="h-5 w-5" />
               Articles
-            </GestalisCardTitle>
-          </GestalisCardHeader>
+                </GestalisCardTitle>
+              </GestalisCardHeader>
           <GestalisCardContent>
             <div className="space-y-4">
-              {articles.map((article, index) => (
+                {articles.map((article, index) => (
                 <div key={article.id} className="border border-gray-200 rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <h4 className="font-medium text-gray-900">Article {index + 1}</h4>
-                    <button
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="font-medium text-gray-900">Article {index + 1}</h4>
+                        <button
                       type="button"
-                      onClick={() => removeArticle(index)}
-                      className="text-red-600 hover:text-red-800 p-1"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                  
+                          onClick={() => removeArticle(index)}
+                          className="text-red-600 hover:text-red-800 p-1"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                    </div>
+                    
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div className="md:col-span-2">
                       <SmartPicker
@@ -485,57 +480,57 @@ const CreationBonCommande = () => {
                       />
                     </div>
                     
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                       <div>
+                         <label className="block text-sm font-medium text-gray-700 mb-2">
                         Quantité
-                      </label>
-                      <Input
+                         </label>
+                           <Input
                         type="number"
                         value={article.quantite}
                         onChange={(e) => updateArticle(index, 'quantite', e.target.value)}
                         placeholder="0"
                         className="w-full"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                           />
+                         </div>
+                         
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
                         Prix unitaire
-                      </label>
-                      <Input
-                        type="number"
+                        </label>
+                        <Input
+                          type="number"
                         step="0.01"
                         value={article.prixUnitaire}
                         onChange={(e) => updateArticle(index, 'prixUnitaire', e.target.value)}
                         placeholder="0.00"
-                        className="w-full"
-                      />
+                          className="w-full"
+                        />
                     </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Unité
-                      </label>
-                      <Input
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Unité
+                        </label>
+                          <Input
                         value={article.unite}
                         onChange={(e) => updateArticle(index, 'unite', e.target.value)}
                         placeholder="PIECE"
                         className="w-full"
-                      />
-                    </div>
+                          />
+                        </div>
                     
                     <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
                         Description
-                      </label>
-                      <Input
+                        </label>
+                        <Input
                         value={article.description}
                         onChange={(e) => updateArticle(index, 'description', e.target.value)}
                         placeholder="Description de l'article"
-                        className="w-full"
-                      />
+                          className="w-full"
+                        />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Montant total
@@ -546,75 +541,75 @@ const CreationBonCommande = () => {
                         className="w-full bg-gray-50"
                       />
                     </div>
+                    </div>
                   </div>
-                </div>
-              ))}
-              
-              <button
+                ))}
+
+                <button
                 type="button"
-                onClick={addArticle}
+                  onClick={addArticle}
                 className="w-full p-4 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-blue-500 hover:text-blue-600 transition-colors flex items-center justify-center gap-2"
-              >
-                <Plus className="h-5 w-5" />
-                Ajouter un article
-              </button>
+                >
+                  <Plus className="h-5 w-5" />
+                  Ajouter un article
+                </button>
             </div>
-          </GestalisCardContent>
-        </GestalisCard>
+              </GestalisCardContent>
+            </GestalisCard>
 
         {/* Total général */}
         {articles.length > 0 && (
-          <GestalisCard>
-            <GestalisCardContent>
+            <GestalisCard>
+              <GestalisCardContent>
               <div className="flex justify-end">
                 <div className="text-right">
                   <div className="text-sm text-gray-600">Total général</div>
                   <div className="text-2xl font-bold text-blue-600">
                     {totalGeneral.toFixed(2)} €
-                  </div>
-                </div>
-              </div>
-            </GestalisCardContent>
-          </GestalisCard>
-        )}
+          </div>
+                        </div>
+                        </div>
+                </GestalisCardContent>
+              </GestalisCard>
+            )}
 
         {/* Observations */}
-        <GestalisCard>
-          <GestalisCardHeader>
-            <GestalisCardTitle className="flex items-center gap-2">
+              <GestalisCard>
+                <GestalisCardHeader>
+                  <GestalisCardTitle className="flex items-center gap-2">
               <Info className="h-5 w-5" />
               Observations
-            </GestalisCardTitle>
-          </GestalisCardHeader>
-          <GestalisCardContent>
+                  </GestalisCardTitle>
+                </GestalisCardHeader>
+                <GestalisCardContent>
             <textarea
               value={bonCommande.observations}
               onChange={(e) => handleFieldChange('observations', e.target.value)}
               placeholder="Observations, notes spéciales..."
               className="w-full h-24 p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
-          </GestalisCardContent>
-        </GestalisCard>
-      </div>
+                </GestalisCardContent>
+              </GestalisCard>
+       </div>
 
       {/* Modal PDF */}
-      {showPDFModal && (
-        <BonCommandePDF
-          bonCommande={{
+       {showPDFModal && (
+         <BonCommandePDF
+           bonCommande={{
             ...bonCommande,
             totalGeneral: totalGeneral,
-            articles: articles.map(article => ({
+             articles: articles.map(article => ({
               ...article,
               quantite: parseFloat(article.quantite) || 0,
-              prixUnitaire: parseFloat(article.prixUnitaire) || 0,
-              montantTotal: (parseFloat(article.quantite) || 0) * (parseFloat(article.prixUnitaire) || 0)
-            }))
-          }}
-          onClose={() => setShowPDFModal(false)}
-        />
-      )}
-    </div>
-  );
-};
+               prixUnitaire: parseFloat(article.prixUnitaire) || 0,
+               montantTotal: (parseFloat(article.quantite) || 0) * (parseFloat(article.prixUnitaire) || 0)
+             }))
+           }}
+           onClose={() => setShowPDFModal(false)}
+         />
+       )}
+     </div>
+   );
+ };
 
 export default CreationBonCommande;
