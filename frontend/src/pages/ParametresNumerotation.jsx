@@ -185,10 +185,10 @@ const ParametresNumerotation = () => {
             <GestalisCardContent>
               <div className="bg-blue-50 p-4 rounded-lg">
                 <p className="text-blue-800 mb-3">
-                  <strong>Format par défaut inspiré d'ONAYA :</strong> AC{'{MM}'}{'{YYYY}'}-{'{SEQ:4}'}
+                  <strong>Format par défaut inspiré d'ONAYA :</strong> AC{'{MM}'}{'{YYYY}'}-{'{SEQ:3}'}
                 </p>
                 <p className="text-blue-700 text-sm">
-                  Exemple : AC012025-0001 (Achat + Janvier 2025 + Séquence 0001)
+                  Exemple : AC012025-001 (Achat + Janvier 2025 + Séquence 001)
                 </p>
                 <p className="text-blue-700 text-sm mt-2">
                   Chaque société peut personnaliser ses formats en utilisant les variables disponibles.

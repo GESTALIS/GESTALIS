@@ -1,18 +1,18 @@
 /**
  * Service de numérotation automatique des pièces comptables
- * Format par défaut inspiré d'ONAYA : AC{MM}{YYYY}-{SEQ:4}
+ * Format par défaut inspiré d'ONAYA : AC{MM}{YYYY}-{SEQ:3}
  */
 
 class NumerotationService {
   constructor() {
     // Formats par défaut (ONAYA-like)
     this.formatsParDefaut = {
-      'FACTURE_ACHAT': 'AC{MM}{YYYY}-{SEQ:4}',
-      'AVOIR_FOURNISSEUR': 'AVF{MM}{YYYY}-{SEQ:4}',
-      'FACTURE_VENTE': 'VE{MM}{YYYY}-{SEQ:4}',
-      'AVOIR_CLIENT': 'AVC{MM}{YYYY}-{SEQ:4}',
-      'BON_COMMANDE': 'BC{MM}{YYYY}-{SEQ:4}',
-      'BON_LIVRAISON': 'BL{MM}{YYYY}-{SEQ:4}'
+      'FACTURE_ACHAT': 'AC{MM}{YYYY}-{SEQ:3}',
+      'AVOIR_FOURNISSEUR': 'AVF{MM}{YYYY}-{SEQ:3}',
+      'FACTURE_VENTE': 'VE{MM}{YYYY}-{SEQ:3}',
+      'AVOIR_CLIENT': 'AVC{MM}{YYYY}-{SEQ:3}',
+      'BON_COMMANDE': 'BC{MM}{YYYY}-{SEQ:3}',
+      'BON_LIVRAISON': 'BL{MM}{YYYY}-{SEQ:3}'
     };
 
     // Variables disponibles pour personnalisation
@@ -22,6 +22,7 @@ class NumerotationService {
       '{YY}': 'Année sur 2 chiffres',
       '{MM}': 'Mois sur 2 chiffres',
       '{SEQ}': 'Séquence incrémentale',
+      '{SEQ:3}': 'Séquence avec padding 3 chiffres (001)',
       '{SEQ:4}': 'Séquence avec padding 4 chiffres (0001)',
       '{SEQ:5}': 'Séquence avec padding 5 chiffres (00001)',
       '{FOUR_CODE}': 'Code fournisseur',
@@ -68,6 +69,7 @@ class NumerotationService {
       numero = numero.replace('{YY}', datePiece.getFullYear().toString().slice(-2));
       numero = numero.replace('{MM}', (datePiece.getMonth() + 1).toString().padStart(2, '0'));
       numero = numero.replace('{SEQ}', sequence.toString());
+      numero = numero.replace('{SEQ:3}', sequence.toString().padStart(3, '0'));
       numero = numero.replace('{SEQ:4}', sequence.toString().padStart(4, '0'));
       numero = numero.replace('{SEQ:5}', sequence.toString().padStart(5, '0'));
       
