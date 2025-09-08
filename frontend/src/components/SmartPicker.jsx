@@ -92,7 +92,7 @@ export default function SmartPicker({
       
       // Sauvegarder le contexte de retour dans sessionStorage
       sessionStorage.setItem('smartpicker_return_context', JSON.stringify({
-        returnTo: window.location.pathname,
+        returnTo: window.location.href,
         returnField: label?.toLowerCase().replace('*', '').trim() || 'field',
         draftId,
         searchTerm: q.trim()

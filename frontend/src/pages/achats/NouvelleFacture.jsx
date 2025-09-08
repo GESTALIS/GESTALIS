@@ -10,6 +10,9 @@ import VentilationMultiChantiers from '../../components/achats/VentilationMultiC
 import SelectionProduit from '../../components/achats/SelectionProduit';
 import ParametresDecimales from '../../components/ui/ParametresDecimales';
 import ExportEcrituresComptables from '../../components/comptabilite/ExportEcrituresComptables';
+// NOUVEAUX IMPORTS POUR SMARTPICKER
+import SmartPicker from '../../components/SmartPicker';
+import { searchFournisseurs, searchChantiers, searchEmployes } from '../../services/searchService';
 
 
 const NouvelleFacture = ({ parametresEtape1, onRetourEtape1 }) => {
@@ -79,8 +82,49 @@ const NouvelleFacture = ({ parametresEtape1, onRetourEtape1 }) => {
   const [showCessionSuggestions, setShowCessionSuggestions] = useState(false);
   const [showSousTraitantSuggestions, setShowSousTraitantSuggestions] = useState(false);
   
+  // NOUVEAUX useEffect POUR GÉRER LE RETOUR SMARTPICKER
+  useEffect(() => {
+    // Gérer le retour depuis la création de fournisseur
+    const selectedFournisseur = localStorage.getItem('selectedFournisseur');
+    if (selectedFournisseur) {
+      try {
+        const fournisseur = JSON.parse(selectedFournisseur);
+        setFacture(prev => ({
+          ...prev,
+          fournisseur: fournisseur
+        }));
+        
+        // Nettoyer le localStorage
+        localStorage.removeItem('selectedFournisseur');
+        
+        console.log('✅ Fournisseur sélectionné automatiquement:', fournisseur);
+      } catch (error) {
+        console.error('Erreur lors du parsing du fournisseur sélectionné:', error);
+      }
+    }
+  }, []);
 
-  
+  useEffect(() => {
+    // Gérer le retour depuis la création de chantier
+    const selectedChantier = localStorage.getItem('selectedChantier');
+    if (selectedChantier) {
+      try {
+        const chantier = JSON.parse(selectedChantier);
+        setFacture(prev => ({
+          ...prev,
+          chantier: chantier
+        }));
+        
+        // Nettoyer le localStorage
+        localStorage.removeItem('selectedChantier');
+        
+        console.log('✅ Chantier sélectionné automatiquement:', chantier);
+      } catch (error) {
+        console.error('Erreur lors du parsing du chantier sélectionné:', error);
+      }
+    }
+  }, []);
+
   // États pour la ventilation multi-chantiers
   const [showVentilation, setShowVentilation] = useState(false);
   const [ligneVentilation, setLigneVentilation] = useState(null);
@@ -109,6 +153,43 @@ const NouvelleFacture = ({ parametresEtape1, onRetourEtape1 }) => {
       // Pas de calcul automatique
     }
   }, [facture.dateFacture]);
+
+  // NOUVEAUX useEffect POUR GÉRER LE RETOUR SMARTPICKER
+  useEffect(() => {
+    // Gérer le retour depuis la création de fournisseur
+    const selectedFournisseur = localStorage.getItem('selectedFournisseur');
+    if (selectedFournisseur) {
+      try {
+        const fournisseur = JSON.parse(selectedFournisseur);
+        setFacture(prev => ({
+          ...prev,
+          fournisseur: fournisseur
+        }));
+        localStorage.removeItem('selectedFournisseur');
+        console.log('✅ Fournisseur sélectionné automatiquement:', fournisseur);
+      } catch (error) {
+        console.error('Erreur lors du parsing du fournisseur sélectionné:', error);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    // Gérer le retour depuis la création de chantier
+    const selectedChantier = localStorage.getItem('selectedChantier');
+    if (selectedChantier) {
+      try {
+        const chantier = JSON.parse(selectedChantier);
+        setFacture(prev => ({
+          ...prev,
+          chantier: chantier
+        }));
+        localStorage.removeItem('selectedChantier');
+        console.log('✅ Chantier sélectionné automatiquement:', chantier);
+      } catch (error) {
+        console.error('Erreur lors du parsing du chantier sélectionné:', error);
+      }
+    }
+  }, []);
 
   // Calculer les totaux
   const calculerTotaux = () => {
@@ -550,6 +631,10 @@ const NouvelleFacture = ({ parametresEtape1, onRetourEtape1 }) => {
       
       alert('✅ Facture créée avec succès !');
       
+      // Nettoyer le localStorage du workflow
+      localStorage.removeItem('nouvelle-facture-etape');
+      localStorage.removeItem('nouvelle-facture-params');
+      
       // Retourner à la page précédente
       if (onRetourEtape1) {
         onRetourEtape1(); // Retour à l'étape 1
@@ -741,90 +826,28 @@ const NouvelleFacture = ({ parametresEtape1, onRetourEtape1 }) => {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="fournisseur-field">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Fournisseur *
-                  </label>
-                  <div className="relative">
-                    <Input
-                      value={facture.fournisseur}
-                      onChange={(e) => handleInputChange('fournisseur', e.target.value)}
-                      onFocus={() => setShowFournisseurSuggestions(true)}
-                      placeholder="Rechercher un fournisseur..."
-                      className="w-full pr-20"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => window.open('/achats/fournisseurs/nouveau', '_blank')}
-                      className="absolute right-2 top-1/2 transform -translate-y-1/2 px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
-                    >
-                      <Plus className="h-3 w-3 inline mr-1" />
-                      Nouveau
-                    </button>
-                  </div>
-                  
-                  {/* Suggestions fournisseurs */}
-                  {showFournisseurSuggestions && facture.fournisseur && (
-                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                      {getFournisseurSuggestions().map((fournisseur, index) => (
-                        <div
-                          key={index}
-                          className="px-3 py-2 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
-                          onClick={() => {
-                            handleInputChange('fournisseur', fournisseur.nom);
-                            setShowFournisseurSuggestions(false);
-                          }}
-                        >
-                          <div className="font-medium">{fournisseur.nom}</div>
-                          <div className="text-sm text-gray-600">
-                            {fournisseur.ville} • {fournisseur.conditions}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                <div>
+                  <SmartPicker
+                    value={facture.fournisseur}
+                    onChange={(value) => setFacture(prev => ({ ...prev, fournisseur: value }))}
+                    fetcher={searchFournisseurs}
+                    placeholder="Rechercher un fournisseur..."
+                    createUrl="/achats?tab=fournisseurs&create=true"
+                    createLabel="Créer un fournisseur"
+                    label="Fournisseur *"
+                  />
                 </div>
                 
-                <div className="chantier-field">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Chantier *
-                  </label>
-                  <div className="relative">
-                    <Input
-                      value={facture.chantier}
-                      onChange={(e) => handleInputChange('chantier', e.target.value)}
-                      onFocus={() => setShowChantierSuggestions(true)}
-                      placeholder="Rechercher un chantier..."
-                      className="w-full pr-20"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => window.open('/chantiers/nouveau', '_blank')}
-                      className="absolute right-2 top-1/2 transform -translate-y-1/2 px-2 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-blue-200 transition-colors"
-                    >
-                      <Plus className="h-3 w-3 inline mr-1" />
-                      Nouveau
-                    </button>
-                  </div>
-                  
-                  {/* Suggestions chantiers */}
-                  {showChantierSuggestions && facture.chantier && (
-                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                      {getChantierSuggestions().map((chantier, index) => (
-                        <div
-                          key={index}
-                          className="px-3 py-2 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
-                          onClick={() => {
-                            handleInputChange('chantier', chantier.nom);
-                            setShowChantierSuggestions(false);
-                          }}
-                        >
-                          <div className="font-medium">{chantier.nom}</div>
-                          <div className="text-sm text-gray-600">{chantier.adresse}</div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                <div>
+                  <SmartPicker
+                    value={facture.chantier}
+                    onChange={(value) => setFacture(prev => ({ ...prev, chantier: value }))}
+                    fetcher={searchChantiers}
+                    placeholder="Rechercher un chantier..."
+                    createUrl="/chantiers/nouveau"
+                    createLabel="Créer un chantier"
+                    label="Chantier *"
+                  />
                 </div>
               </div>
 

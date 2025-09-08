@@ -157,8 +157,8 @@ const NouveauChantier = () => {
         try {
           const { returnTo, returnField, draftId } = JSON.parse(smartpickerContext);
           console.log('🔍 Contexte parsé:', { returnTo, returnField, draftId });
-          if (returnTo && returnTo.includes('creation-bon-commande')) {
-            console.log('🚀 Retour vers le Bon de Commande depuis SmartPicker');
+          if (returnTo && (returnTo.includes('creation-bon-commande') || returnTo.includes('nouvelle-facture'))) {
+            console.log('🚀 Retour vers le formulaire depuis SmartPicker:', returnTo);
             const chantierFormate = {
               id: nouveauChantier.id,
               label: `${nouveauChantier.code} — ${nouveauChantier.nom}`,
@@ -167,12 +167,14 @@ const NouveauChantier = () => {
             console.log('💾 Chantier formaté pour retour:', chantierFormate);
             localStorage.setItem('selectedChantier', JSON.stringify(chantierFormate));
             sessionStorage.removeItem('smartpicker_return_context'); // Clean up here
-            alert(`✅ Chantier créé avec succès !\n\nNom: ${nouveauChantier.nom}\nCode: ${nouveauChantier.code}\nClient: ${nouveauChantier.clientNom}\nType: ${nouveauChantier.type}\n\nVous allez être redirigé vers le Bon de Commande.`);
+            
+            const destination = returnTo.includes('creation-bon-commande') ? 'Bon de Commande' : 'Facture';
+            alert(`✅ Chantier créé avec succès !\n\nNom: ${nouveauChantier.nom}\nCode: ${nouveauChantier.code}\nClient: ${nouveauChantier.clientNom}\nType: ${nouveauChantier.type}\n\nVous allez être redirigé vers le ${destination}.`);
             console.log('🔄 Navigation vers:', returnTo);
             window.location.href = returnTo;
             return;
           } else {
-            console.log('❌ Pas de retour vers Bon de Commande - returnTo:', returnTo);
+            console.log('❌ Pas de retour vers formulaire - returnTo:', returnTo);
           }
         } catch (error) {
           console.error('Erreur lors du parsing du contexte SmartPicker:', error);

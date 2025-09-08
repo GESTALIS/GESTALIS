@@ -140,8 +140,8 @@ const Achats = () => {
         const { returnTo, returnField, draftId, searchTerm } = JSON.parse(smartpickerContext);
         console.log('🔄 Retour depuis SmartPicker détecté:', { returnTo, returnField, draftId, searchTerm });
         
-        // Si on vient du Bon de Commande, ouvrir le modal de création approprié
-        if (returnTo && returnTo.includes('creation-bon-commande')) {
+        // Si on vient d'un formulaire (Bon de Commande ou Facture), ouvrir le modal de création approprié
+        if (returnTo && (returnTo.includes('creation-bon-commande') || returnTo.includes('nouvelle-facture'))) {
           console.log('🚀 Ouverture du modal de création depuis SmartPicker');
           
           // Déterminer quel modal ouvrir selon le champ
@@ -664,8 +664,8 @@ const Achats = () => {
             const { returnTo, returnField, draftId } = JSON.parse(smartpickerContext);
             console.log('🔍 Contexte parsé:', { returnTo, returnField, draftId });
             
-            if (returnTo && returnTo.includes('creation-bon-commande')) {
-              console.log('🚀 Retour vers le Bon de Commande depuis SmartPicker');
+            if (returnTo && (returnTo.includes('creation-bon-commande') || returnTo.includes('nouvelle-facture'))) {
+              console.log('🚀 Retour vers le formulaire depuis SmartPicker:', returnTo);
               
               // Retourner au Bon de Commande avec le nouveau fournisseur sélectionné
               const fournisseurFormate = {
@@ -686,15 +686,16 @@ const Achats = () => {
               setShowCreateModal(false);
               
               // Notification de succès
-              alert(`✅ Fournisseur créé avec succès !\n\nRaison sociale: ${nouveauFournisseur.raisonSociale}\nCode: ${nouveauFournisseur.codeFournisseur}\nSIRET: ${nouveauFournisseur.siret}\n\nVous allez être redirigé vers le Bon de Commande.`);
+              const destination = returnTo.includes('creation-bon-commande') ? 'Bon de Commande' : 'Facture';
+              alert(`✅ Fournisseur créé avec succès !\n\nRaison sociale: ${nouveauFournisseur.raisonSociale}\nCode: ${nouveauFournisseur.codeFournisseur}\nSIRET: ${nouveauFournisseur.siret}\n\nVous allez être redirigé vers le ${destination}.`);
               
-              // Retourner au Bon de Commande
+              // Retourner au formulaire d'origine
               console.log('🔄 Navigation vers:', returnTo);
               window.location.href = returnTo;
               
               return; // Sortir de la fonction pour éviter la réinitialisation
             } else {
-              console.log('❌ Pas de retour vers Bon de Commande - returnTo:', returnTo);
+              console.log('❌ Pas de retour vers formulaire - returnTo:', returnTo);
             }
           } catch (error) {
             console.error('Erreur lors du parsing du contexte SmartPicker:', error);
@@ -798,8 +799,8 @@ const Achats = () => {
         try {
           const { returnTo, returnField, draftId } = JSON.parse(smartpickerContext);
           console.log('🔍 Contexte parsé:', { returnTo, returnField, draftId });
-          if (returnTo && returnTo.includes('creation-bon-commande')) {
-            console.log('🚀 Retour vers le Bon de Commande depuis SmartPicker');
+          if (returnTo && (returnTo.includes('creation-bon-commande') || returnTo.includes('nouvelle-facture'))) {
+            console.log('🚀 Retour vers le formulaire depuis SmartPicker:', returnTo);
             const produitFormate = {
               id: nouveauProduit.id,
               label: `${nouveauProduit.code} — ${nouveauProduit.nom}`,
@@ -809,12 +810,13 @@ const Achats = () => {
             localStorage.setItem('selectedProduit', JSON.stringify(produitFormate));
             sessionStorage.removeItem('smartpicker_return_context'); // Clean up here
             setShowCreateProduitModal(false);
-            alert(`✅ Produit créé avec succès !\n\nCode: ${nouveauProduit.code}\nNom: ${nouveauProduit.nom}\nCatégorie: ${nouveauProduit.categorie}\n\nVous allez être redirigé vers le Bon de Commande.`);
+            const destination = returnTo.includes('creation-bon-commande') ? 'Bon de Commande' : 'Facture';
+            alert(`✅ Produit créé avec succès !\n\nCode: ${nouveauProduit.code}\nNom: ${nouveauProduit.nom}\nCatégorie: ${nouveauProduit.categorie}\n\nVous allez être redirigé vers le ${destination}.`);
             console.log('🔄 Navigation vers:', returnTo);
             window.location.href = returnTo;
             return;
           } else {
-            console.log('❌ Pas de retour vers Bon de Commande - returnTo:', returnTo);
+            console.log('❌ Pas de retour vers formulaire - returnTo:', returnTo);
           }
         } catch (error) {
           console.error('Erreur lors du parsing du contexte SmartPicker:', error);
