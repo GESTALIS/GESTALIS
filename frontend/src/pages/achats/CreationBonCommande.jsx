@@ -78,16 +78,16 @@ const CreationBonCommande = () => {
     if (selectedFournisseur) {
       try {
         const fournisseur = JSON.parse(selectedFournisseur);
-        setBonCommande(prev => ({
-          ...prev,
+      setBonCommande(prev => ({ 
+        ...prev, 
           fournisseur: fournisseur
-        }));
-        
+      }));
+      
         // Nettoyer le localStorage
         localStorage.removeItem('selectedFournisseur');
-        
+      
         console.log('✅ Fournisseur sélectionné automatiquement:', fournisseur);
-        } catch (error) {
+    } catch (error) {
         console.error('Erreur lors du parsing du fournisseur sélectionné:', error);
       }
     }
@@ -110,7 +110,7 @@ const CreationBonCommande = () => {
             if (returnField === 'createur') {
               targetField = 'createur';
             }
-          } catch (error) {
+    } catch (error) {
             console.error('Erreur lors du parsing du contexte pour déterminer le champ cible:', error);
           }
         }

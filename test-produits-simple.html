@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Produits</title>
+</head>
+<body>
+    <h1>Test des données de produits</h1>
+    <button onclick="testProduits()">Tester les produits</button>
+    <button onclick="creerProduits()">Créer les produits de test</button>
+    <div id="resultat"></div>
+
+    <script>
+        function testProduits() {
+            const resultat = document.getElementById('resultat');
+            resultat.innerHTML = '<h2>Test des produits...</h2>';
+            
+            // Vérifier le localStorage
+            const storeData = localStorage.getItem('gestalis_produits_services');
+            console.log('📦 Données du store:', storeData);
+            
+            if (storeData) {
+                try {
+                    const produits = JSON.parse(storeData);
+                    console.log('✅ Produits parsés:', produits);
+                    console.log('📊 Nombre de produits:', produits.length);
+                    
+                    resultat.innerHTML += `<p>✅ ${produits.length} produits trouvés</p>`;
+                    
+                    // Tester la recherche
+                    const query = 'carburant';
+                    const filtered = produits.filter(p => 
+                        p.actif && (
+                            p.designation?.toLowerCase().includes(query.toLowerCase()) ||
+                            p.code?.toLowerCase().includes(query.toLowerCase()) ||
+                            p.description?.toLowerCase().includes(query.toLowerCase())
+                        )
+                    );
+                    
+                    console.log('🔍 Résultats de recherche pour "carburant":', filtered);
+                    resultat.innerHTML += `<p>🔍 Recherche "carburant": ${filtered.length} résultats</p>`;
+                    
+                    // Afficher les produits
+                    produits.forEach(produit => {
+                        resultat.innerHTML += `<div style="border: 1px solid #ccc; margin: 5px; padding: 10px;">
+                            <strong>${produit.code}</strong> - ${produit.designation} (${produit.unite}) - ${produit.prixUnitaire}€
+                        </div>`;
+                    });
+                    
+                } catch (error) {
+                    console.error('❌ Erreur parsing:', error);
+                    resultat.innerHTML += `<p>❌ Erreur parsing: ${error.message}</p>`;
+                }
+            } else {
+                console.log('❌ Aucune donnée trouvée dans le store');
+                resultat.innerHTML += '<p>❌ Aucune donnée trouvée dans le store</p>';
+            }
+        }
+
+        function creerProduits() {
+            const resultat = document.getElementById('resultat');
+            resultat.innerHTML = '<h2>Création des produits de test...</h2>';
+            
+            const produitsTest = [
+                {
+                    id: 1,
+                    code: 'CARB-001',
+                    designation: 'Carburant Diesel',
+                    categorie: 'Carburant',
+                    unite: 'L',
+                    prixUnitaire: 1.85,
+                    description: 'Carburant diesel pour engins de chantier',
+                    actif: true,
+                    dateCreation: new Date().toISOString()
+                },
+                {
+                    id: 2,
+                    code: 'TELECOM-001',
+                    designation: 'Abonnement téléphonie mobile',
+                    categorie: 'Télécom',
+                    unite: 'Mois',
+                    prixUnitaire: 45.00,
+                    description: 'Forfait mobile illimité pour équipe chantier',
+                    actif: true,
+                    dateCreation: new Date().toISOString()
+                },
+                {
+                    id: 3,
+                    code: 'TRANS-001',
+                    designation: 'Transport de matériaux',
+                    categorie: 'Transport',
+                    unite: 'Km',
+                    prixUnitaire: 0.85,
+                    description: 'Transport de matériaux par camion',
+                    actif: true,
+                    dateCreation: new Date().toISOString()
+                },
+                {
+                    id: 4,
+                    code: 'MAT-001',
+                    designation: 'Ciment Portland',
+                    categorie: 'Matériel',
+                    unite: 'T',
+                    prixUnitaire: 120.00,
+                    description: 'Ciment Portland 32.5 pour construction',
+                    actif: true,
+                    dateCreation: new Date().toISOString()
+                },
+                {
+                    id: 5,
+                    code: 'SERV-001',
+                    designation: 'Location d\'engins',
+                    categorie: 'Services',
+                    unite: 'Jour',
+                    prixUnitaire: 350.00,
+                    description: 'Location d\'engins de chantier',
+                    actif: true,
+                    dateCreation: new Date().toISOString()
+                }
+            ];
+            
+            // Sauvegarder dans le localStorage
+            localStorage.setItem('gestalis_produits_services', JSON.stringify(produitsTest));
+            
+            console.log('✅ Données de test créées :', produitsTest.length, 'produits');
+            resultat.innerHTML += `<p>✅ ${produitsTest.length} produits de test créés</p>`;
+            
+            // Tester immédiatement
+            testProduits();
+        }
+    </script>
+</body>
+</html>

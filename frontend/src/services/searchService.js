@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import produitsService from './produitsService';
 
 export const searchFournisseurs = async (query) => {
   try {
@@ -150,21 +151,49 @@ export const searchUtilisateurs = async (query) => {
 
 export const searchProduits = async (query) => {
   try {
-    const { data, error } = await supabase
-      .from('produits')
-      .select('id, code_produit, designation, unite, prix_unitaire_ht')
-      .or(`designation.ilike.%${query}%,code_produit.ilike.%${query}%`)
-      .eq('statut', 'actif')
-      .limit(20);
-    
-    if (error) {
-      console.error('Erreur recherche produits:', error);
-      return [];
+    // Récupérer les produits depuis le store Zustand
+    const storeData = localStorage.getItem('gestalis-produits-store');
+    if (storeData) {
+      try {
+        const parsed = JSON.parse(storeData);
+        const produits = parsed.state?.produits || [];
+        
+        const filtered = produits.filter(p => 
+          p.statut === 'ACTIF' && (
+            p.nom?.toLowerCase().includes(query.toLowerCase()) ||
+            p.code?.toLowerCase().includes(query.toLowerCase()) ||
+            p.description?.toLowerCase().includes(query.toLowerCase())
+          )
+        );
+        
+        console.log('🔍 searchProduits - Query:', query, 'Results:', filtered);
+        
+        return filtered.map(produit => ({
+          id: produit.id,
+          label: `${produit.code} — ${produit.nom} (${produit.unite || 'U'})`,
+          data: produit
+        }));
+      } catch (parseError) {
+        console.error('Erreur parsing store produits:', parseError);
+      }
     }
     
-    return (data || []).map(produit => ({
+    // Fallback : utiliser le service produits si le store n'est pas disponible
+    const produits = produitsService.chargerProduits();
+    
+    const filtered = produits.filter(p => 
+      p.actif && (
+        p.designation?.toLowerCase().includes(query.toLowerCase()) ||
+        p.code?.toLowerCase().includes(query.toLowerCase()) ||
+        p.description?.toLowerCase().includes(query.toLowerCase())
+      )
+    );
+    
+    console.log('🔍 searchProduits (fallback) - Query:', query, 'Results:', filtered);
+    
+    return filtered.map(produit => ({
       id: produit.id,
-      label: `${produit.code_produit} — ${produit.designation} (${produit.unite})${produit.prix_unitaire_ht ? ` - ${produit.prix_unitaire_ht}€` : ''}`,
+      label: `${produit.code} — ${produit.designation} (${produit.unite})${produit.prixUnitaire ? ` - ${produit.prixUnitaire}€` : ''}`,
       data: produit
     }));
   } catch (error) {

@@ -49,6 +49,9 @@ export default function SmartPicker({
     onChange(row);
     setQ(row?.label || "");
     setOpen(false);
+    setResults([]);
+    setHighlight(-1);
+    setLoading(false);
   };
 
   const clear = () => {
@@ -59,15 +62,7 @@ export default function SmartPicker({
   };
 
   const shouldShowCreateButton = () => {
-    const shouldShow = createUrl && q.trim().length >= 2 && results.length === 0 && !loading;
-    console.log('🔍 SmartPicker Debug:', {
-      createUrl,
-      queryLength: q.trim().length,
-      resultsLength: results.length,
-      loading,
-      shouldShow
-    });
-    return shouldShow;
+    return createUrl && q.trim().length >= 2 && results.length === 0 && !loading;
   };
 
   const handleCreate = () => {
@@ -131,8 +126,16 @@ export default function SmartPicker({
   useEffect(() => {
     if (value?.label) {
       setQ(value.label);
+      setOpen(false); // Fermer immédiatement
+      setResults([]); // Vider les résultats
+      setHighlight(-1); // Réinitialiser la sélection
+      setLoading(false); // Arrêter le loading
     } else if (!value) {
       setQ("");
+      setOpen(false);
+      setResults([]);
+      setHighlight(-1);
+      setLoading(false);
     }
   }, [value]);
 

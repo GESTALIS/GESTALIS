@@ -12,7 +12,7 @@ import ParametresDecimales from '../../components/ui/ParametresDecimales';
 import ExportEcrituresComptables from '../../components/comptabilite/ExportEcrituresComptables';
 // NOUVEAUX IMPORTS POUR SMARTPICKER
 import SmartPicker from '../../components/SmartPicker';
-import { searchFournisseurs, searchChantiers, searchEmployes } from '../../services/searchService';
+import { searchFournisseurs, searchChantiers, searchEmployes, searchProduits } from '../../services/searchService';
 
 
 const NouvelleFacture = ({ parametresEtape1, onRetourEtape1 }) => {
@@ -121,6 +121,45 @@ const NouvelleFacture = ({ parametresEtape1, onRetourEtape1 }) => {
         console.log('✅ Chantier sélectionné automatiquement:', chantier);
       } catch (error) {
         console.error('Erreur lors du parsing du chantier sélectionné:', error);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    // Gérer le retour depuis la création de produit
+    const selectedProduit = localStorage.getItem('selectedProduit');
+    if (selectedProduit) {
+      try {
+        const produitFormate = JSON.parse(selectedProduit);
+        const produit = produitFormate.data; // Le produit est dans la propriété 'data'
+        
+        // Trouver la ligne de facture qui correspond au produit créé
+        const lignesMiseAJour = facture.lignes.map((ligne, index) => {
+          // Si c'est la première ligne vide ou si on a un contexte de retour
+          if (index === 0 && !ligne.produit) {
+            return {
+              ...ligne,
+              produit: produitFormate, // Stocker le format complet pour le SmartPicker
+              designation: produit.designation || produit.nom,
+              categorie: produit.categorie,
+              prixUnitaire: produit.prixUnitaire || 0,
+              montantHT: (ligne.quantite || 0) * (produit.prixUnitaire || 0)
+            };
+          }
+          return ligne;
+        });
+        
+        setFacture(prev => ({
+          ...prev,
+          lignes: lignesMiseAJour
+        }));
+        
+        // Nettoyer le localStorage
+        localStorage.removeItem('selectedProduit');
+        
+        console.log('✅ Produit sélectionné automatiquement:', produit);
+      } catch (error) {
+        console.error('Erreur lors du parsing du produit sélectionné:', error);
       }
     }
   }, []);
@@ -1055,32 +1094,23 @@ const NouvelleFacture = ({ parametresEtape1, onRetourEtape1 }) => {
                     <div className="grid grid-cols-1 md:grid-cols-8 gap-3">
                           {/* Produit/Service */}
                           <div className="md:col-span-2">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Produit/Service
-                            </label>
-                            <SelectionProduit
-                              produitSelectionne={ligne.produit}
-                              onSelectionner={(produit) => {
-                                handleLigneChange(index, 'produit', produit);
-                                handleLigneChange(index, 'designation', produit.designation);
+                            <SmartPicker
+                              value={ligne.produit}
+                              onChange={(produitFormate) => {
+                                const produit = produitFormate.data || produitFormate;
+                                handleLigneChange(index, 'produit', produitFormate); // Stocker le format complet
+                                handleLigneChange(index, 'designation', produit.designation || produit.nom);
                                 handleLigneChange(index, 'categorie', produit.categorie);
                                 handleLigneChange(index, 'prixUnitaire', produit.prixUnitaire);
                                 // Recalculer le montant HT
                                 const nouveauMontant = (ligne.quantite || 0) * produit.prixUnitaire;
                                 handleLigneChange(index, 'montantHT', nouveauMontant);
                               }}
-                              onNouveauProduit={(nouveauProduit) => {
-                                // Le produit est déjà sauvegardé par le composant
-                                // On peut l'utiliser directement
-                                handleLigneChange(index, 'produit', nouveauProduit);
-                                handleLigneChange(index, 'designation', nouveauProduit.designation);
-                                handleLigneChange(index, 'categorie', nouveauProduit.categorie);
-                                handleLigneChange(index, 'prixUnitaire', nouveauProduit.prixUnitaire);
-                                // Recalculer le montant HT
-                                const nouveauMontant = (ligne.quantite || 0) * nouveauProduit.prixUnitaire;
-                                handleLigneChange(index, 'montantHT', nouveauMontant);
-                              }}
-                              categorieFiltree={ligne.categorie}
+                              fetcher={searchProduits}
+                              placeholder="Rechercher un produit/service..."
+                              createUrl="/achats?tab=produits&create=true"
+                              createLabel="Créer un produit"
+                              label="Produit"
                             />
                           </div>
 

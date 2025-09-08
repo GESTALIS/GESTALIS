@@ -36,10 +36,28 @@ class ProduitsService {
   chargerProduits() {
     try {
       const produitsJson = localStorage.getItem(this.storageKey);
-      return produitsJson ? JSON.parse(produitsJson) : this.getProduitsParDefaut();
+      if (produitsJson) {
+        return JSON.parse(produitsJson);
+      } else {
+        // Créer les données par défaut si elles n'existent pas
+        const produitsParDefaut = this.getProduitsParDefaut();
+        this.sauvegarderProduits(produitsParDefaut);
+        return produitsParDefaut;
+      }
     } catch (error) {
       console.error('Erreur lors du chargement des produits:', error);
       return this.getProduitsParDefaut();
+    }
+  }
+
+  // Sauvegarder tous les produits
+  sauvegarderProduits(produits) {
+    try {
+      localStorage.setItem(this.storageKey, JSON.stringify(produits));
+      return true;
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde des produits:', error);
+      return false;
     }
   }
 
@@ -364,5 +382,8 @@ class ProduitsService {
 
 // Instance singleton
 const produitsService = new ProduitsService();
+
+// Initialiser les données par défaut au démarrage
+produitsService.chargerProduits();
 
 export default produitsService;
