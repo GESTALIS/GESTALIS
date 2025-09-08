@@ -632,10 +632,8 @@ const Achats = () => {
         // Utiliser Zustand pour mettre Ã  jour
         updateFournisseur(selectedFournisseur.id, fournisseurModifie);
         
-        // SAUVEGARDER IMMÃ‰DIATEMENT DANS LOCALSTORAGE pour Ã©viter la perte
-        const fournisseursActuels = get().fournisseurs;
-        localStorage.setItem('gestalis-fournisseurs', JSON.stringify(fournisseursActuels));
-        console.log('ðŸ’¾ Fournisseur modifiÃ© sauvegardÃ© immÃ©diatement dans localStorage');
+        // DÉSACTIVÉ : Plus de sauvegarde localStorage - Supabase est la source de vérité
+        console.log('🎯 Fournisseur modifié - Supabase est la source de vérité');
         
         // Fermer le modal et rÃ©initialiser
         setShowCreateModal(false);
@@ -667,10 +665,8 @@ const Achats = () => {
         // Utiliser Zustand pour ajouter
         addFournisseur(nouveauFournisseur);
         
-        // SAUVEGARDER IMMÃ‰DIATEMENT DANS LOCALSTORAGE pour Ã©viter la perte
-        const fournisseursActuels = get().fournisseurs;
-        localStorage.setItem('gestalis-fournisseurs', JSON.stringify(fournisseursActuels));
-        console.log('ðŸ’¾ Fournisseur sauvegardÃ© immÃ©diatement dans localStorage');
+        // DÉSACTIVÉ : Plus de sauvegarde localStorage - Supabase est la source de vérité
+        console.log('🎯 Fournisseur créé - Supabase est la source de vérité');
         
         // VÃ©rifier si on doit retourner au Bon de Commande (SmartPicker)
         const smartpickerContext = sessionStorage.getItem('smartpicker_return_context');
@@ -808,11 +804,9 @@ const Achats = () => {
       
       // Utiliser Zustand pour ajouter
       addProduit(nouveauProduit);
-      
-      // SAUVEGARDER IMMÃ‰DIATEMENT DANS LOCALSTORAGE pour Ã©viter la perte
-      const produitsActuels = get().produits;
-      localStorage.setItem('gestalis-produits-store', JSON.stringify(produitsActuels));
-      console.log('ðŸ’¾ Produit sauvegardÃ© immÃ©diatement dans localStorage');
+        
+      // DÉSACTIVÉ : Plus de sauvegarde localStorage - Supabase est la source de vérité
+      console.log('🎯 Produit créé - Supabase est la source de vérité');
 
       // VÃ©rifier si on doit retourner au Bon de Commande (nouveau systÃ¨me SmartPicker)
       const smartpickerContext = sessionStorage.getItem('smartpicker_return_context');
@@ -930,10 +924,8 @@ const Achats = () => {
         // Supprimer du store Zustand
         deleteFournisseur(id);
         
-        // SAUVEGARDER IMMÃ‰DIATEMENT DANS LOCALSTORAGE pour Ã©viter la perte
-        const fournisseursActuels = get().fournisseurs;
-        localStorage.setItem('gestalis-fournisseurs', JSON.stringify(fournisseursActuels));
-        console.log('ðŸ’¾ Fournisseur supprimÃ© sauvegardÃ© immÃ©diatement dans localStorage');
+        // DÉSACTIVÉ : Plus de sauvegarde localStorage - Supabase est la source de vérité
+        console.log('🎯 Fournisseur supprimé - Supabase est la source de vérité');
         
         // Notification de succÃ¨s
         alert('âœ… Fournisseur supprimÃ© avec succÃ¨s !');
@@ -1017,10 +1009,8 @@ const Achats = () => {
       // Supprimer chaque fournisseur via Zustand
       selectedFournisseurs.forEach(id => deleteFournisseur(id));
       
-      // SAUVEGARDER IMMÃ‰DIATEMENT DANS LOCALSTORAGE pour Ã©viter la perte
-      const fournisseursActuels = get().fournisseurs;
-      localStorage.setItem('gestalis-fournisseurs', JSON.stringify(fournisseursActuels));
-      console.log('ðŸ’¾ Fournisseurs supprimÃ©s en masse sauvegardÃ©s immÃ©diatement dans localStorage');
+      // DÉSACTIVÉ : Plus de sauvegarde localStorage - Supabase est la source de vérité
+      console.log('🎯 Fournisseurs supprimés en masse - Supabase est la source de vérité');
       
       // RÃ©initialiser la sÃ©lection
       setSelectedFournisseurs([]);
@@ -1583,7 +1573,9 @@ const Achats = () => {
                             onClick={() => {
                               if (confirm(`ÃŠtes-vous sÃ»r de vouloir supprimer le produit "${produit.nom}" ?`)) {
                                 setProduits(prev => prev.filter(p => p.id !== produit.id));
-                                localStorage.setItem('gestalis-produits', JSON.stringify(produits.filter(p => p.id !== produit.id)));
+                                // DÉSACTIVÉ : Plus de localStorage - Supabase est la source de vérité
+                                deleteProduit(produit.id);
+                                console.log('🎯 Produit supprimé - Supabase est la source de vérité');
                               }
                             }}
                             className="p-2 text-gray-400 hover:text-red-600 transition-colors"
@@ -3187,5 +3179,6 @@ const Achats = () => {
 };
 
 export default Achats; 
+
 
 

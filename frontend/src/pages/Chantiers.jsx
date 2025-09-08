@@ -35,20 +35,23 @@ const Chantiers = () => {
   const [filteredChantiers, setFilteredChantiers] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // Charger les chantiers depuis localStorage uniquement (pas de données de test)
+  // Charger les chantiers depuis Supabase uniquement (source de vérité)
   useEffect(() => {
-    const savedChantiers = localStorage.getItem('gestalis-chantiers');
-    if (savedChantiers) {
-      const parsedChantiers = JSON.parse(savedChantiers);
-      setChantiers(parsedChantiers);
-      setFilteredChantiers(parsedChantiers);
-    } else {
-      // DÉSACTIVÉ : Plus de données de test automatiques
-      // Les chantiers viennent maintenant uniquement de Supabase
-      console.log('🎯 Aucun chantier en localStorage - chargement depuis Supabase uniquement');
-      setChantiers([]);
-      setFilteredChantiers([]);
-    }
+    const chargerChantiers = async () => {
+      try {
+        // SUPABASE COMME UNIQUE SOURCE DE VÉRITÉ
+        // TODO: Implémenter chantiersService.recupererTous() quand la table sera créée
+        console.log('🎯 Chantiers - chargement depuis Supabase uniquement (table à créer)');
+        setChantiers([]);
+        setFilteredChantiers([]);
+      } catch (error) {
+        console.error('❌ Erreur chargement chantiers depuis Supabase:', error);
+        setChantiers([]);
+        setFilteredChantiers([]);
+      }
+    };
+    
+    chargerChantiers();
   }, []);
 
   // Filtrer les chantiers
@@ -98,22 +101,34 @@ const Chantiers = () => {
     navigate(`/chantiers/${chantier.id}/modifier`);
   };
 
-  const handleDeleteChantier = (chantierId) => {
+  const handleDeleteChantier = async (chantierId) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer ce chantier ?')) {
-      const updatedChantiers = chantiers.filter(c => c.id !== chantierId);
-      setChantiers(updatedChantiers);
-      localStorage.setItem('gestalis-chantiers', JSON.stringify(updatedChantiers));
+      try {
+        // TODO: Implémenter chantiersService.supprimer() pour soft delete
+        console.log('🎯 Soft delete chantier:', chantierId);
+        // Pour l'instant, supprimer localement
+        const updatedChantiers = chantiers.filter(c => c.id !== chantierId);
+        setChantiers(updatedChantiers);
+      } catch (error) {
+        console.error('❌ Erreur suppression chantier:', error);
+      }
     }
   };
 
-  const handleDeleteSelected = () => {
+  const handleDeleteSelected = async () => {
     if (selectedChantiers.length === 0) return;
     
     if (window.confirm(`Êtes-vous sûr de vouloir supprimer ${selectedChantiers.length} chantier(s) ?`)) {
-      const updatedChantiers = chantiers.filter(c => !selectedChantiers.includes(c.id));
-      setChantiers(updatedChantiers);
-      setSelectedChantiers([]);
-      localStorage.setItem('gestalis-chantiers', JSON.stringify(updatedChantiers));
+      try {
+        // TODO: Implémenter chantiersService.supprimer() pour soft delete
+        console.log('🎯 Soft delete chantiers sélectionnés:', selectedChantiers);
+        // Pour l'instant, supprimer localement
+        const updatedChantiers = chantiers.filter(c => !selectedChantiers.includes(c.id));
+        setChantiers(updatedChantiers);
+        setSelectedChantiers([]);
+      } catch (error) {
+        console.error('❌ Erreur suppression chantiers:', error);
+      }
     }
   };
 
