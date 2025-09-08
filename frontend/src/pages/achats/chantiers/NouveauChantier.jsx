@@ -59,6 +59,24 @@ const NouveauChantier = () => {
     }
   }, [chantier.code]);
 
+  // Détecter le retour depuis SmartPicker
+  useEffect(() => {
+    const smartpickerContext = sessionStorage.getItem('smartpicker_return_context');
+    if (smartpickerContext) {
+      try {
+        const { returnTo, returnField, draftId, searchTerm } = JSON.parse(smartpickerContext);
+        console.log('🔄 Retour depuis SmartPicker détecté:', { returnTo, returnField, draftId, searchTerm });
+        if (returnTo && returnTo.includes('creation-bon-commande') && searchTerm) {
+          // Pré-remplir le nom du chantier avec le terme de recherche
+          setChantier(prev => ({ ...prev, nom: searchTerm }));
+          console.log('🚀 Chantier pré-rempli depuis SmartPicker:', searchTerm);
+        }
+      } catch (error) {
+        console.error('Erreur lors du parsing du contexte SmartPicker:', error);
+      }
+    }
+  }, []);
+
   const handleInputChange = (field, value) => {
     setChantier(prev => ({ ...prev, [field]: value }));
   };
@@ -131,6 +149,37 @@ const NouveauChantier = () => {
       // Ajouter à la liste
       const updatedChantiers = [...existingChantiers, nouveauChantier];
       localStorage.setItem('gestalis-chantiers', JSON.stringify(updatedChantiers));
+
+      // Vérifier si on doit retourner au Bon de Commande (nouveau système SmartPicker)
+      const smartpickerContext = sessionStorage.getItem('smartpicker_return_context');
+      console.log('🔍 Contexte SmartPicker trouvé:', smartpickerContext);
+      if (smartpickerContext) {
+        try {
+          const { returnTo, returnField, draftId } = JSON.parse(smartpickerContext);
+          console.log('🔍 Contexte parsé:', { returnTo, returnField, draftId });
+          if (returnTo && returnTo.includes('creation-bon-commande')) {
+            console.log('🚀 Retour vers le Bon de Commande depuis SmartPicker');
+            const chantierFormate = {
+              id: nouveauChantier.id,
+              label: `${nouveauChantier.code} — ${nouveauChantier.nom}`,
+              data: nouveauChantier
+            };
+            console.log('💾 Chantier formaté pour retour:', chantierFormate);
+            localStorage.setItem('selectedChantier', JSON.stringify(chantierFormate));
+            sessionStorage.removeItem('smartpicker_return_context'); // Clean up here
+            alert(`✅ Chantier créé avec succès !\n\nNom: ${nouveauChantier.nom}\nCode: ${nouveauChantier.code}\nClient: ${nouveauChantier.clientNom}\nType: ${nouveauChantier.type}\n\nVous allez être redirigé vers le Bon de Commande.`);
+            console.log('🔄 Navigation vers:', returnTo);
+            window.location.href = returnTo;
+            return;
+          } else {
+            console.log('❌ Pas de retour vers Bon de Commande - returnTo:', returnTo);
+          }
+        } catch (error) {
+          console.error('Erreur lors du parsing du contexte SmartPicker:', error);
+        }
+      } else {
+        console.log('❌ Aucun contexte SmartPicker trouvé');
+      }
 
       // Redirection vers la liste des chantiers
       navigate('/chantiers');

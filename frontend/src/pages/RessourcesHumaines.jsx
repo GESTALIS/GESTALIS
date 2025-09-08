@@ -33,7 +33,7 @@ const RhBanner = ({ description, children }) => {
 
   return (
     <div className="module-banner rh-banner" style={rhStyle}>
-      <div className="module-icon" style={{ fontSize: '1.8rem' }}>👥</div>
+      <div className="module-icon" style={{ fontSize: '1.8rem' }}></div>
       <div>
         <div className="module-title" style={{ fontWeight: 700, fontSize: '1.5rem' }}>Module Ressources Humaines</div>
         {description && (
@@ -132,7 +132,7 @@ const RessourcesHumaines = () => {
     
     if (createFlag === 'true' && searchTerm) {
       console.log('🎯 Ouverture automatique du modal depuis le bon de commande');
-      console.log('🔍 Terme de recherche:', searchTerm);
+      console.log(' Terme de recherche:', searchTerm);
       
       // Pré-remplir le formulaire avec le terme de recherche
       setNewEmploye(prev => ({
@@ -161,6 +161,28 @@ const RessourcesHumaines = () => {
     } else {
       localStorage.setItem('gestalis-employes', JSON.stringify(employes));
       console.log('💾 Employés par défaut sauvegardés dans localStorage');
+    }
+  }, []);
+
+  // Détecter le retour depuis SmartPicker
+  useEffect(() => {
+    const smartpickerContext = sessionStorage.getItem('smartpicker_return_context');
+    if (smartpickerContext) {
+      try {
+        const { returnTo, returnField, draftId, searchTerm } = JSON.parse(smartpickerContext);
+        console.log('🔄 Retour depuis SmartPicker détecté:', { returnTo, returnField, draftId, searchTerm });
+        if (returnTo && returnTo.includes('creation-bon-commande')) {
+          console.log('🚀 Ouverture du modal de création depuis SmartPicker');
+          setShowEmployeModal(true);
+          if (searchTerm) {
+            // Pré-remplir le nom avec le terme de recherche
+            setNewEmploye(prev => ({ ...prev, nom: searchTerm }));
+          }
+          // NE PAS nettoyer le contexte ici - on en a besoin pour le retour après création
+        }
+      } catch (error) {
+        console.error('Erreur lors du parsing du contexte SmartPicker:', error);
+      }
     }
   }, []);
 
@@ -225,6 +247,38 @@ const RessourcesHumaines = () => {
       };
       
       setEmployes(prev => [nouvelEmploye, ...prev]);
+      
+      // Vérifier si on doit retourner au Bon de Commande (nouveau système SmartPicker)
+      const smartpickerContext = sessionStorage.getItem('smartpicker_return_context');
+      console.log('🔍 Contexte SmartPicker trouvé:', smartpickerContext);
+      if (smartpickerContext) {
+        try {
+          const { returnTo, returnField, draftId } = JSON.parse(smartpickerContext);
+          console.log('🔍 Contexte parsé:', { returnTo, returnField, draftId });
+          if (returnTo && returnTo.includes('creation-bon-commande')) {
+            console.log('🚀 Retour vers le Bon de Commande depuis SmartPicker');
+            const employeFormate = {
+              id: nouvelEmploye.id,
+              label: `${nouvelEmploye.matricule} — ${nouvelEmploye.prenom} ${nouvelEmploye.nom}${nouvelEmploye.poste ? ` (${nouvelEmploye.poste})` : ''}`,
+              data: nouvelEmploye
+            };
+            console.log('💾 Employé formaté pour retour:', employeFormate);
+            localStorage.setItem('selectedEmploye', JSON.stringify(employeFormate));
+            sessionStorage.removeItem('smartpicker_return_context'); // Clean up here
+            setShowEmployeModal(false);
+            alert(`✅ Employé créé avec succès !\n\nNom: ${nouvelEmploye.nom} ${nouvelEmploye.prenom}\nMatricule: ${nouvelEmploye.matricule}\nPoste: ${nouvelEmploye.poste}\n\nVous allez être redirigé vers le Bon de Commande.`);
+            console.log('🔄 Navigation vers:', returnTo);
+            window.location.href = returnTo;
+            return;
+          } else {
+            console.log('❌ Pas de retour vers Bon de Commande - returnTo:', returnTo);
+          }
+        } catch (error) {
+          console.error('Erreur lors du parsing du contexte SmartPicker:', error);
+        }
+      } else {
+        console.log('❌ Aucun contexte SmartPicker trouvé');
+      }
       
       console.log('✅ Employé créé avec succès:', nouvelEmploye);
       alert(`✅ Employé "${nouvelEmploye.nom} ${nouvelEmploye.prenom}" créé avec succès !`);
@@ -307,7 +361,7 @@ const RessourcesHumaines = () => {
     return matchesSearch;
   });
 
-  console.log('🎯 Rendu du composant avec:', { activeTab, employes: employes.length, filteredEmployes: filteredEmployes.length });
+  console.log(' Rendu du composant avec:', { activeTab, employes: employes.length, filteredEmployes: filteredEmployes.length });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">

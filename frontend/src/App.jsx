@@ -239,6 +239,11 @@ const App = () => {
                   <Route path="/tresorerie" element={<div>Règlements & Trésorerie</div>} />
                   <Route path="/tiers" element={<Tiers />} />
                   <Route path="/rh" element={<RessourcesHumaines />} />
+                  <Route path="/rh/employes" element={<RessourcesHumaines />} />
+                  <Route path="/rh/conges" element={<RessourcesHumaines />} />
+                  <Route path="/rh/formations" element={<RessourcesHumaines />} />
+                  <Route path="/rh/paie" element={<RessourcesHumaines />} />
+                  <Route path="/rh/planning" element={<RessourcesHumaines />} />
                   <Route path="/rh-test" element={<div style={{backgroundColor: 'blue', color: 'white', padding: '50px', fontSize: '24px'}}>🔵 ROUTE TEST RH-TEST 🔵</div>} />
 
                   <Route path="/analyse" element={<div>Analyse & Reporting</div>} />

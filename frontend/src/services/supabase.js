@@ -56,7 +56,7 @@ export const fournisseursService = {
           code_fournisseur: fournisseur.codeFournisseur,
           raison_sociale: fournisseur.raisonSociale,
           siret: fournisseur.siret,
-          adresse: fournisseur.adresse,
+          adresse: fournisseur.adresse || fournisseur.adresseSiege,
           code_postal: fournisseur.codePostal,
           ville: fournisseur.ville,
           pays: fournisseur.pays || 'France',
@@ -65,19 +65,8 @@ export const fournisseursService = {
           contact_principal: fournisseur.contactPrincipal,
           conditions_paiement: fournisseur.conditionsPaiement,
           notes: fournisseur.notes,
-          statut: fournisseur.statut || 'actif',
-          // Ajouter tous les nouveaux champs
-          tva_intracommunautaire: fournisseur.tvaIntracommunautaire,
-          code_ape_naf: fournisseur.codeApeNaf,
-          forme_juridique: fournisseur.formeJuridique,
-          capital_social: fournisseur.capitalSocial,
-          adresse_siege: fournisseur.adresseSiege,
-          adresse_livraison: fournisseur.adresseLivraison,
-          plafond_credit: fournisseur.plafondCredit,
-          devise: fournisseur.devise,
-          est_sous_traitant: fournisseur.estSousTraitant,
-          compte_comptable: fournisseur.compteComptable,
-          pas_de_tva_guyane: fournisseur.pasDeTvaGuyane
+          statut: fournisseur.statut || 'actif'
+          // Utiliser seulement les colonnes qui existent dans la table
         }])
         .select();
       
@@ -143,7 +132,7 @@ export const fournisseursService = {
           forme_juridique: fournisseur.formeJuridique,
           capital_social: fournisseur.capitalSocial,
           adresse_siege: fournisseur.adresseSiege,
-          adresse_livraison: fournisseur.adresseLivraison,
+          // adresse_livraison: fournisseur.adresseLivraison, // Colonne n'existe pas dans la table
           plafond_credit: fournisseur.plafondCredit,
           devise: fournisseur.devise,
           est_sous_traitant: fournisseur.estSousTraitant,

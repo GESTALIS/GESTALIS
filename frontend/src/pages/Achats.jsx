@@ -132,6 +132,39 @@ const Achats = () => {
     }
   }, [location.state]);
 
+  // Gérer le retour depuis le SmartPicker
+  useEffect(() => {
+    const smartpickerContext = sessionStorage.getItem('smartpicker_return_context');
+    if (smartpickerContext) {
+      try {
+        const { returnTo, returnField, draftId, searchTerm } = JSON.parse(smartpickerContext);
+        console.log('🔄 Retour depuis SmartPicker détecté:', { returnTo, returnField, draftId, searchTerm });
+        
+        // Si on vient du Bon de Commande, ouvrir le modal de création approprié
+        if (returnTo && returnTo.includes('creation-bon-commande')) {
+          console.log('🚀 Ouverture du modal de création depuis SmartPicker');
+          
+          // Déterminer quel modal ouvrir selon le champ
+          if (returnField === 'fournisseur') {
+            setShowCreateModal(true);
+            if (searchTerm) {
+              setNewFournisseur(prev => ({ ...prev, raisonSociale: searchTerm }));
+            }
+          } else if (returnField === 'produit') {
+            setShowCreateProduitModal(true);
+            if (searchTerm) {
+              setNewProduit(prev => ({ ...prev, nom: searchTerm }));
+            }
+          }
+          
+          // NE PAS nettoyer le contexte ici - on en a besoin pour le retour après création
+        }
+      } catch (error) {
+        console.error('Erreur lors du parsing du contexte SmartPicker:', error);
+      }
+    }
+  }, []);
+
   // États pour la gestion des fournisseurs
   const { 
     fournisseurs, 
@@ -206,6 +239,9 @@ const Achats = () => {
     unite: 'U',
     commentaires: ''
   });
+
+  // État pour indiquer si le code a été généré automatiquement
+  const [codeAutoGenere, setCodeAutoGenere] = useState(false);
 
   const [produitFournisseurs, setProduitFournisseurs] = useState([
     {
@@ -619,6 +655,54 @@ const Achats = () => {
         // Utiliser Zustand pour ajouter
         addFournisseur(nouveauFournisseur);
         
+        // Vérifier si on doit retourner au Bon de Commande (SmartPicker)
+        const smartpickerContext = sessionStorage.getItem('smartpicker_return_context');
+        console.log('🔍 Contexte SmartPicker trouvé:', smartpickerContext);
+        
+        if (smartpickerContext) {
+          try {
+            const { returnTo, returnField, draftId } = JSON.parse(smartpickerContext);
+            console.log('🔍 Contexte parsé:', { returnTo, returnField, draftId });
+            
+            if (returnTo && returnTo.includes('creation-bon-commande')) {
+              console.log('🚀 Retour vers le Bon de Commande depuis SmartPicker');
+              
+              // Retourner au Bon de Commande avec le nouveau fournisseur sélectionné
+              const fournisseurFormate = {
+                id: nouveauFournisseur.id,
+                label: `${nouveauFournisseur.codeFournisseur} — ${nouveauFournisseur.raisonSociale}`,
+                data: nouveauFournisseur
+              };
+              
+              console.log('💾 Fournisseur formaté pour retour:', fournisseurFormate);
+              
+              // Sauvegarder le fournisseur sélectionné pour le retour
+              localStorage.setItem('selectedFournisseur', JSON.stringify(fournisseurFormate));
+              
+              // Nettoyer le contexte
+              sessionStorage.removeItem('smartpicker_return_context');
+              
+              // Fermer le modal
+              setShowCreateModal(false);
+              
+              // Notification de succès
+              alert(`✅ Fournisseur créé avec succès !\n\nRaison sociale: ${nouveauFournisseur.raisonSociale}\nCode: ${nouveauFournisseur.codeFournisseur}\nSIRET: ${nouveauFournisseur.siret}\n\nVous allez être redirigé vers le Bon de Commande.`);
+              
+              // Retourner au Bon de Commande
+              console.log('🔄 Navigation vers:', returnTo);
+              window.location.href = returnTo;
+              
+              return; // Sortir de la fonction pour éviter la réinitialisation
+            } else {
+              console.log('❌ Pas de retour vers Bon de Commande - returnTo:', returnTo);
+            }
+          } catch (error) {
+            console.error('Erreur lors du parsing du contexte SmartPicker:', error);
+          }
+        } else {
+          console.log('❌ Aucun contexte SmartPicker trouvé');
+        }
+        
         // Réinitialiser le formulaire
         setNewFournisseur({
           raisonSociale: '',
@@ -706,6 +790,38 @@ const Achats = () => {
       
       // Utiliser Zustand pour ajouter
       addProduit(nouveauProduit);
+
+      // Vérifier si on doit retourner au Bon de Commande (nouveau système SmartPicker)
+      const smartpickerContext = sessionStorage.getItem('smartpicker_return_context');
+      console.log('🔍 Contexte SmartPicker trouvé:', smartpickerContext);
+      if (smartpickerContext) {
+        try {
+          const { returnTo, returnField, draftId } = JSON.parse(smartpickerContext);
+          console.log('🔍 Contexte parsé:', { returnTo, returnField, draftId });
+          if (returnTo && returnTo.includes('creation-bon-commande')) {
+            console.log('🚀 Retour vers le Bon de Commande depuis SmartPicker');
+            const produitFormate = {
+              id: nouveauProduit.id,
+              label: `${nouveauProduit.code} — ${nouveauProduit.nom}`,
+              data: nouveauProduit
+            };
+            console.log('💾 Produit formaté pour retour:', produitFormate);
+            localStorage.setItem('selectedProduit', JSON.stringify(produitFormate));
+            sessionStorage.removeItem('smartpicker_return_context'); // Clean up here
+            setShowCreateProduitModal(false);
+            alert(`✅ Produit créé avec succès !\n\nCode: ${nouveauProduit.code}\nNom: ${nouveauProduit.nom}\nCatégorie: ${nouveauProduit.categorie}\n\nVous allez être redirigé vers le Bon de Commande.`);
+            console.log('🔄 Navigation vers:', returnTo);
+            window.location.href = returnTo;
+            return;
+          } else {
+            console.log('❌ Pas de retour vers Bon de Commande - returnTo:', returnTo);
+          }
+        } catch (error) {
+          console.error('Erreur lors du parsing du contexte SmartPicker:', error);
+        }
+      } else {
+        console.log('❌ Aucun contexte SmartPicker trouvé');
+      }
         
       // Réinitialiser le formulaire
       setNewProduit({
@@ -726,6 +842,9 @@ const Achats = () => {
         
       // Fermer le modal
       setShowCreateProduitModal(false);
+      
+      // Réinitialiser l'état du code auto-généré
+      setCodeAutoGenere(false);
       
       // S'assurer qu'on est dans l'onglet Produits
       setActiveTab('produits');
@@ -2615,6 +2734,7 @@ const Achats = () => {
                   onClick={() => {
                     setShowCreateProduitModal(false);
                     setSelectedProduit(null);
+                    setCodeAutoGenere(false);
                   }}
                   className="text-white/80 hover:text-white"
                 >
@@ -2642,15 +2762,29 @@ const Achats = () => {
                         type="text"
                         placeholder="ex: MAT-001 (Matériaux TP)"
                         value={newProduit.code}
-                        onChange={(e) => setNewProduit({...newProduit, code: e.target.value.toUpperCase()})}
-                        className="flex-1 rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
+                        onChange={(e) => {
+                          if (!codeAutoGenere) {
+                            setNewProduit({...newProduit, code: e.target.value.toUpperCase()});
+                          }
+                        }}
+                        className={`flex-1 rounded-lg border px-3 py-2 focus:outline-none ${
+                          codeAutoGenere 
+                            ? 'border-green-300 bg-green-50 text-green-800 cursor-not-allowed' 
+                            : 'border-gray-300 focus:border-blue-500'
+                        }`}
+                        readOnly={codeAutoGenere}
+                        title={codeAutoGenere ? "Code généré automatiquement - non modifiable" : ""}
                       />
                       <button
                         type="button"
-                        onClick={() => setNewProduit({...newProduit, code: generateProduitCode(newProduit.categorie)})}
+                        onClick={() => {
+                          const codeGenere = generateProduitCode(newProduit.categorie);
+                          setNewProduit({...newProduit, code: codeGenere});
+                          setCodeAutoGenere(true);
+                        }}
                         className="px-3 py-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors text-sm whitespace-nowrap"
-                        disabled={!newProduit.categorie}
-                        title="Générer automatiquement le code"
+                        disabled={!newProduit.categorie || codeAutoGenere}
+                        title={codeAutoGenere ? "Code déjà généré automatiquement" : "Générer automatiquement le code"}
                       >
                         <Package className="h-4 w-4 inline mr-1" />
                         Auto
@@ -2708,6 +2842,7 @@ const Achats = () => {
                           categorie: newCategorie, 
                           code: generateProduitCode(newCategorie)
                         });
+                        setCodeAutoGenere(true); // Marquer comme auto-généré
                       }}
                       className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
                     >

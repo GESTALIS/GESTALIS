@@ -12,8 +12,25 @@ import { Input } from '../../../components/ui/input';
 import { api } from '../../../utils/api';
 import { useFournisseursStore } from '../../../stores/useFournisseursStore';
 import { useComptesStore } from '../../../stores/useComptesStore';
+import { useReturnNav } from '../../../hooks/useReturnNav';
+import { useNavigate } from 'react-router-dom';
 
 const NouveauFournisseur = () => {
+  const navigate = useNavigate();
+  
+  // Hook de navigation pour le mode picker
+  const { 
+    isPicker, 
+    returnTo, 
+    returnField, 
+    draftId, 
+    goBackWith, 
+    cancelAndReturn,
+    setAwaitingPick,
+    clearAwaitingPick,
+    checkAwaitingPick
+  } = useReturnNav();
+
   const [fournisseur, setFournisseur] = useState({
     raisonSociale: '',
     codeFournisseur: '',
@@ -131,6 +148,70 @@ const NouveauFournisseur = () => {
     }
   }, []);
 
+  // Gestion du retour depuis le mode picker
+  useEffect(() => {
+    if (isPicker && draftId) {
+      // Restaurer le brouillon depuis sessionStorage
+      const draftKey = `draft_fournisseur_${draftId}`;
+      const savedDraft = sessionStorage.getItem(draftKey);
+      if (savedDraft) {
+        try {
+          const draft = JSON.parse(savedDraft);
+          setFournisseur(draft);
+          console.log('🔄 Brouillon restauré:', draft);
+        } catch (error) {
+          console.error('Erreur lors de la restauration du brouillon:', error);
+        }
+      }
+
+      // Vérifier s'il y a une sélection en attente
+      const { isExpired, isCurrentDraft } = checkAwaitingPick();
+      if (!isExpired && isCurrentDraft) {
+        clearAwaitingPick();
+      }
+    }
+  }, [isPicker, draftId, checkAwaitingPick, clearAwaitingPick]);
+
+  // Gestion du retour depuis le plan comptable
+  useEffect(() => {
+    const handleMessage = (event) => {
+      if (event.data && event.data.type === 'PICKED_COMPTE') {
+        const { field, value, draftId: returnedDraftId } = event.data;
+        
+        if (returnedDraftId === draftId && field === returnField) {
+          // Mettre à jour le champ avec la valeur sélectionnée
+          setFournisseur(prev => ({
+            ...prev,
+            [field]: value.id,
+            compteComptable: value.numero,
+            compteFournisseur: `F${value.numero}`
+          }));
+          
+          // Nettoyer l'état d'attente
+          clearAwaitingPick();
+          
+          console.log('✅ Compte sélectionné:', value);
+        }
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [draftId, returnField, clearAwaitingPick]);
+
+  // Persistance du brouillon avec debounce
+  useEffect(() => {
+    if (isPicker && draftId) {
+      const timeoutId = setTimeout(() => {
+        const draftKey = `draft_fournisseur_${draftId}`;
+        sessionStorage.setItem(draftKey, JSON.stringify(fournisseur));
+        console.log('💾 Brouillon sauvegardé:', fournisseur);
+      }, 300);
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [fournisseur, isPicker, draftId]);
+
   const handleInputChange = (field, value) => {
     setFournisseur(prev => ({ ...prev, [field]: value }));
   };
@@ -189,7 +270,31 @@ const NouveauFournisseur = () => {
   };
 
   const handleCancel = () => {
-    window.history.back();
+    if (isPicker) {
+      cancelAndReturn();
+    } else {
+      window.history.back();
+    }
+  };
+
+  // Fonction pour naviguer vers le plan comptable en mode picker
+  const goCreateCompte = () => {
+    if (isPicker && draftId) {
+      // Sauvegarder l'état d'attente
+      setAwaitingPick();
+      
+      // Naviguer vers le plan comptable avec le contexte picker
+      navigate('/comptabilite?context=picker', {
+        state: {
+          returnTo: returnTo,
+          returnField: returnField,
+          draftId: draftId
+        }
+      });
+    } else {
+      // Mode normal - ouvrir dans un nouvel onglet
+      window.open('/comptabilite', '_blank');
+    }
   };
 
   return (
@@ -255,7 +360,7 @@ const NouveauFournisseur = () => {
                     Compte fournisseur *
                   </label>
                   <div className="relative">
-                    <Input
+                  <Input
                       value={searchCompteTerm}
                       onChange={(e) => handleCompteSearch(e.target.value)}
                       placeholder="Rechercher un compte comptable (ex: FRESO, FEXE)"

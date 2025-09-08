@@ -1,0 +1,347 @@
+warning: in the working copy of 'frontend/src/App.jsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/src/pages/Achats.jsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/src/pages/achats/CreationBonCommande.jsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/src/pages/achats/fournisseurs/NouveauFournisseur.jsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/src/stores/useFournisseursStore.js', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/frontend/src/App.jsx b/frontend/src/App.jsx[m
+[1mindex 7d3c4f6..9d3da2b 100644[m
+[1m--- a/frontend/src/App.jsx[m
+[1m+++ b/frontend/src/App.jsx[m
+[36m@@ -239,6 +239,11 @@[m [mconst App = () => {[m
+                   <Route path="/tresorerie" element={<div>Règlements & Trésorerie</div>} />[m
+                   <Route path="/tiers" element={<Tiers />} />[m
+                   <Route path="/rh" element={<RessourcesHumaines />} />[m
+[32m+[m[32m                  <Route path="/rh/employes" element={<RessourcesHumaines />} />[m
+[32m+[m[32m                  <Route path="/rh/conges" element={<RessourcesHumaines />} />[m
+[32m+[m[32m                  <Route path="/rh/formations" element={<RessourcesHumaines />} />[m
+[32m+[m[32m                  <Route path="/rh/paie" element={<RessourcesHumaines />} />[m
+[32m+[m[32m                  <Route path="/rh/planning" element={<RessourcesHumaines />} />[m
+                   <Route path="/rh-test" element={<div style={{backgroundColor: 'blue', color: 'white', padding: '50px', fontSize: '24px'}}>🔵 ROUTE TEST RH-TEST 🔵</div>} />[m
+ [m
+                   <Route path="/analyse" element={<div>Analyse & Reporting</div>} />[m
+[1mdiff --git a/frontend/src/pages/Achats.jsx b/frontend/src/pages/Achats.jsx[m
+[1mindex 7e0e6d2..240319b 100644[m
+[1m--- a/frontend/src/pages/Achats.jsx[m
+[1m+++ b/frontend/src/pages/Achats.jsx[m
+[36m@@ -207,6 +207,9 @@[m [mconst Achats = () => {[m
+     commentaires: ''[m
+   });[m
+ [m
+[32m+[m[32m  // État pour indiquer si le code a été généré automatiquement[m
+[32m+[m[32m  const [codeAutoGenere, setCodeAutoGenere] = useState(false);[m
+[32m+[m
+   const [produitFournisseurs, setProduitFournisseurs] = useState([[m
+     {[m
+       fournisseurId: '',[m
+[36m@@ -727,6 +730,9 @@[m [mconst Achats = () => {[m
+       // Fermer le modal[m
+       setShowCreateProduitModal(false);[m
+       [m
+[32m+[m[32m      // Réinitialiser l'état du code auto-généré[m
+[32m+[m[32m      setCodeAutoGenere(false);[m
+[32m+[m[41m      [m
+       // S'assurer qu'on est dans l'onglet Produits[m
+       setActiveTab('produits');[m
+         [m
+[36m@@ -2615,6 +2621,7 @@[m [mconst Achats = () => {[m
+                   onClick={() => {[m
+                     setShowCreateProduitModal(false);[m
+                     setSelectedProduit(null);[m
+[32m+[m[32m                    setCodeAutoGenere(false);[m
+                   }}[m
+                   className="text-white/80 hover:text-white"[m
+                 >[m
+[36m@@ -2642,15 +2649,29 @@[m [mconst Achats = () => {[m
+                         type="text"[m
+                         placeholder="ex: MAT-001 (Matériaux TP)"[m
+                         value={newProduit.code}[m
+[31m-                        onChange={(e) => setNewProduit({...newProduit, code: e.target.value.toUpperCase()})}[m
+[31m-                        className="flex-1 rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"[m
+[32m+[m[32m                        onChange={(e) => {[m
+[32m+[m[32m                          if (!codeAutoGenere) {[m
+[32m+[m[32m                            setNewProduit({...newProduit, code: e.target.value.toUpperCase()});[m
+[32m+[m[32m                          }[m
+[32m+[m[32m                        }}[m
+[32m+[m[32m                        className={`flex-1 rounded-lg border px-3 py-2 focus:outline-none ${[m
+[32m+[m[32m                          codeAutoGenere[m[41m [m
+[32m+[m[32m                            ? 'border-green-300 bg-green-50 text-green-800 cursor-not-allowed'[m[41m [m
+[32m+[m[32m                            : 'border-gray-300 focus:border-blue-500'[m
+[32m+[m[32m                        }`}[m
+[32m+[m[32m                        readOnly={codeAutoGenere}[m
+[32m+[m[32m                        title={codeAutoGenere ? "Code généré automatiquement - non modifiable" : ""}[m
+                       />[m
+                       <button[m
+                         type="button"[m
+[31m-                        onClick={() => setNewProduit({...newProduit, code: generateProduitCode(newProduit.categorie)})}[m
+[32m+[m[32m                        onClick={() => {[m
+[32m+[m[32m                          const codeGenere = generateProduitCode(newProduit.categorie);[m
+[32m+[m[32m                          setNewProduit({...newProduit, code: codeGenere});[m
+[32m+[m[32m                          setCodeAutoGenere(true);[m
+[32m+[m[32m                        }}[m
+                         className="px-3 py-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors text-sm whitespace-nowrap"[m
+[31m-                        disabled={!newProduit.categorie}[m
+[31m-                        title="Générer automatiquement le code"[m
+[32m+[m[32m                        disabled={!newProduit.categorie || codeAutoGenere}[m
+[32m+[m[32m                        title={codeAutoGenere ? "Code déjà généré automatiquement" : "Générer automatiquement le code"}[m
+                       >[m
+                         <Package className="h-4 w-4 inline mr-1" />[m
+                         Auto[m
+[36m@@ -2708,6 +2729,7 @@[m [mconst Achats = () => {[m
+                           categorie: newCategorie, [m
+                           code: generateProduitCode(newCategorie)[m
+                         });[m
+[32m+[m[32m                        setCodeAutoGenere(true); // Marquer comme auto-généré[m
+                       }}[m
+                       className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"[m
+                     >[m
+[1mdiff --git a/frontend/src/pages/RessourcesHumaines.jsx b/frontend/src/pages/RessourcesHumaines.jsx[m
+[1mindex e5c2c66..ddbc56d 100644[m
+[1m--- a/frontend/src/pages/RessourcesHumaines.jsx[m
+[1m+++ b/frontend/src/pages/RessourcesHumaines.jsx[m
+[36m@@ -33,7 +33,7 @@[m [mconst RhBanner = ({ description, children }) => {[m
+ [m
+   return ([m
+     <div className="module-banner rh-banner" style={rhStyle}>[m
+[31m-      <div className="module-icon" style={{ fontSize: '1.8rem' }}>👥</div>[m
+[32m+[m[32m      <div className="module-icon" style={{ fontSize: '1.8rem' }}></div>[m
+       <div>[m
+         <div className="module-title" style={{ fontWeight: 700, fontSize: '1.5rem' }}>Module Ressources Humaines</div>[m
+         {description && ([m
+[36m@@ -132,7 +132,7 @@[m [mconst RessourcesHumaines = () => {[m
+     [m
+     if (createFlag === 'true' && searchTerm) {[m
+       console.log('🎯 Ouverture automatique du modal depuis le bon de commande');[m
+[31m-      console.log('🔍 Terme de recherche:', searchTerm);[m
+[32m+[m[32m      console.log(' Terme de recherche:', searchTerm);[m
+       [m
+       // Pré-remplir le formulaire avec le terme de recherche[m
+       setNewEmploye(prev => ({[m
+[36m@@ -307,7 +307,7 @@[m [mconst RessourcesHumaines = () => {[m
+     return matchesSearch;[m
+   });[m
+ [m
+[31m-  console.log('🎯 Rendu du composant avec:', { activeTab, employes: employes.length, filteredEmployes: filteredEmployes.length });[m
+[32m+[m[32m  console.log(' Rendu du composant avec:', { activeTab, employes: employes.length, filteredEmployes: filteredEmployes.length });[m
+ [m
+   return ([m
+     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">[m
+[36m@@ -760,3 +760,235 @@[m [mconst RessourcesHumaines = () => {[m
+ };[m
+ [m
+ export default RessourcesHumaines;[m
+[32m+[m[32m            <p className="text-gray-500">Gestion des salaires et avantages</p>[m
+[32m+[m
+[32m+[m[32m          </div>[m
+[32m+[m
+[32m+[m[32m        )}[m
+[32m+[m
+[32m+[m
+[32m+[m
+[32m+[m[32m        {activeTab === 'conges' && ([m
+[32m+[m
+[32m+[m[32m          <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">[m
+[32m+[m
+[32m+[m[32m              <Users className="h-16 w-16 text-gray-400 mx-auto mb-4" />[m
+[32m+[m[32m            <h3 className="text-xl font-medium text-gray-900 mb-2">Congés</h3>[m
+[32m+[m
+[32m+[m[32m            <p className="text-gray-500">Gestion des congés et absences</p>[m
+[32m+[m
+[32m+[m[32m          </div>[m
+[32m+[m
+[32m+[m[32m        )}[m
+[32m+[m
+[32m+[m
+[32m+[m[32m          {activeTab === 'planning' && ([m
+[32m+[m[32m            <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">[m
+[32m+[m[32m              <Calendar className="h-16 w-16 text-gray-400 mx-auto mb-4" />[m
+[32m+[m[32m              <h3 className="text-xl font-medium text-gray-900 mb-2">Planning</h3>[m
+[32m+[m[32m              <p className="text-gray-500">Gestion des plannings et horaires</p>[m
+[32m+[m[32m            </div>[m
+[32m+[m[32m          )}[m
+[32m+[m
+[32m+[m[32m        </div>[m
+[32m+[m
+[32m+[m[32m      </div>[m
+[32m+[m
+[32m+[m
+[32m+[m
+[32m+[m[32m      {/* Modal Employé */}[m
+[32m+[m
+[32m+[m[32m      {showEmployeModal && ([m
+[32m+[m
+[32m+[m[32m        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">[m
+[32m+[m
+[32m+[m[32m          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">[m
+[32m+[m
+[32m+[m[32m            {/* Header du modal */}[m
+[32m+[m
+[32m+[m[32m            <div className="bg-gradient-to-r from-orange-500 to-orange-600 p-6 text-white rounded-t-2xl">[m
+[32m+[m[32m              <div className="flex items-center justify-between">[m
+[32m+[m
+[32m+[m[32m                <h3 className="text-xl font-semibold">[m
+[32m+[m
+[32m+[m[32m                  {selectedEmploye ? 'Modifier l\'employé' : 'Nouvel Employé'}[m
+[32m+[m[32m                </h3>[m
+[32m+[m
+[32m+[m[32m                <button[m
+[32m+[m
+[32m+[m[32m                  onClick={() => {[m
+[32m+[m[32m                    setShowEmployeModal(false);[m
+[32m+[m[32m                    setSelectedEmploye(null);[m
+[32m+[m[32m                  }}[m
+[32m+[m[32m                  className="text-white/80 hover:text-white"[m
+[32m+[m
+[32m+[m[32m                >[m
+[32m+[m
+[32m+[m[32m                  <X className="h-6 w-6" />[m
+[32m+[m
+[32m+[m[32m                </button>[m
+[32m+[m
+[32m+[m[32m              </div>[m
+[32m+[m
+[32m+[m[32m            </div>[m
+[32m+[m
+[32m+[m[41m            [m
+[32m+[m
+[32m+[m[32m            {/* Contenu du modal */}[m
+[32m+[m
+[32m+[m[32m            <div className="p-6">[m
+[32m+[m
+[32m+[m[32m              <div className="grid grid-cols-2 gap-6">[m
+[32m+[m
+[32m+[m[32m                  <div>[m
+[32m+[m
+[32m+[m[32m                    <label className="block text-sm font-medium text-gray-700 mb-2">[m
+[32m+[m
+[32m+[m[32m                    Prénom <span className="text-red-500">*</span>[m
+[32m+[m[32m                    </label>[m
+[32m+[m
+[32m+[m[32m                    <input[m
+[32m+[m
+[32m+[m[32m                      type="text"[m
+[32m+[m
+[32m+[m[32m                    className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-orange-500 focus:outline-none"[m
+[32m+[m[32m                    placeholder="Prénom"[m
+[32m+[m[32m                  />[m
+[32m+[m[32m                  </div>[m
+[32m+[m
+[32m+[m[32m                    <div>[m
+[32m+[m
+[32m+[m[32m                      <label className="block text-sm font-medium text-gray-700 mb-2">[m
+[32m+[m
+[32m+[m[32m                        Nom <span className="text-red-500">*</span>[m
+[32m+[m
+[32m+[m[32m                      </label>[m
+[32m+[m
+[32m+[m[32m                      <input[m
+[32m+[m
+[32m+[m[32m                        type="text"[m
+[32m+[m
+[32m+[m[32m                    className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-orange-500 focus:outline-none"[m
+[32m+[m[32m                    placeholder="Nom"[m
+[32m+[m[32m                  />[m
+[32m+[m[32m                    </div>[m
+[32m+[m
+[32m+[m[32m                    <div>[m
+[32m+[m
+[32m+[m[32m                      <label className="block text-sm font-medium text-gray-700 mb-2">[m
+[32m+[m
+[32m+[m[32m                    Email <span className="text-red-500">*</span>[m
+[32m+[m[32m                      </label>[m
+[32m+[m
+[32m+[m[32m                      <input[m
+[32m+[m
+[32m+[m[32m                    type="email"[m
+[32m+[m[32m                      className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-orange-500 focus:outline-none"[m
+[32m+[m
+[32m+[m[32m                    placeholder="email@gestalis.com"[m
+[32m+[m[32m                    />[m
+[32m+[m
+[32m+[m[32m                  </div>[m
+[32m+[m
+[32m+[m[32m                  <div>[m
+[32m+[m
+[32m+[m[32m                    <label className="block text-sm font-medium text-gray-700 mb-2">[m
+[32m+[m
+[32m+[m[32m                      Poste <span className="text-red-500">*</span>[m
+[32m+[m
+[32m+[m[32m                    </label>[m
+[32m+[m
+[32m+[m[32m                    <input[m
+[32m+[m
+[32m+[m[32m                      type="text"[m
+[32m+[m
+[32m+[m[32m                    className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-orange-500 focus:outline-none"[m
+[32m+[m[32m                    placeholder="Poste"[m
+[32m+[m[32m                  />[m
+[32m+[m[32m                  </div>[m
+[32m+[m
+[32m+[m[32m                  <div>[m
+[32m+[m
+[32m+[m[32m                    <label className="block text-sm font-medium text-gray-700 mb-2">[m
+[32m+[m
+[32m+[m[32m                      Date d'embauche <span className="text-red-500">*</span>[m
+[32m+[m
+[32m+[m[32m                    </label>[m
+[32m+[m
+[32m+[m[32m                    <input[m
+[32m+[m
+[32m+[m[32m                      type="date"[m
+[32m+[m
+[32m+[m[32m                      className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-orange-500 focus:outline-none"[m
+[32m+[m
+[32m+[m[32m                    />[m
+[32m+[m
+[32m+[m[32m                  </div>[m
+[32m+[m
+[32m+[m[32m                <div>[m
+[32m+[m
+[32m+[m[32m                  <label className="block text-sm font-medium text-gray-700 mb-2">[m
+[32m+[m[32m                    Salaire <span className="text-red-500">*</span>[m
+[32m+[m[32m                  </label>[m
+[32m+[m[32m                  <input[m
+[32m+[m
+[32m+[m[32m                    type="text"[m
+[32m+[m
+[32m+[m[32m                    className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-orange-500 focus:outline-none"[m
+[32m+[m
+[32m+[m[32m                    placeholder="2500€"[m
+[32m+[m[32m                  />[m
+[32m+[m
+[32m+[m[32m                </div>[m
+[32m+[m
+[32m+[m[32m              </div>[m
+[32m+[m
+[32m+[m
+[32m+[m
+[32m+[m[32m              {/* Boutons d'action */}[m
+[32m+[m
+[32m+[m[32m              <div className="flex gap-3 mt-8 pt-6 border-t border-gray-200">[m
+[32m+[m
+[32m+[m[32m                <button[m
+[32m+[m
+[32m+[m[32m                  onClick={() => {[m
+[32m+[m[32m                    setShowEmployeModal(false);[m
+[32m+[m[32m                    setSelectedEmploye(null);[m
+[32m+[m[32m                  }}[m
+[32m+[m[32m                  className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"[m
+[32m+[m
+[32m+[m[32m                >[m
+[32m+[m
+[32m+[m[32m                  Annuler[m
+[32m+[m
+[32m+[m[32m                </button>[m
+[32m+[m
+[32m+[m[32m                <button[m
+[32m+[m
+[32m+[m[32m                  className="flex-1 px-4 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"[m
+[32m+[m[32m                >[m
+[32m+[m
+[32m+[m[32m                  {selectedEmploye ? 'Modifier' : 'Créer'}[m
+[32m+[m[32m                </button>[m
+[32m+[m
+[32m+[m[32m              </div>[m
+[32m+[m
+[32m+[m[32m            </div>[m
+[32m+[m
+

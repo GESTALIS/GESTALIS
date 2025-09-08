@@ -29,12 +29,13 @@ const NouvelUtilisateur = () => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    // Récupérer le terme de recherche depuis localStorage
-    const createFromSearch = localStorage.getItem('createFromSearch');
-    if (createFromSearch) {
+    // Détecter le retour depuis SmartPicker
+    const smartpickerContext = sessionStorage.getItem('smartpicker_return_context');
+    if (smartpickerContext) {
       try {
-        const { type, searchTerm } = JSON.parse(createFromSearch);
-        if (type === 'user' && searchTerm) {
+        const { returnTo, returnField, draftId, searchTerm } = JSON.parse(smartpickerContext);
+        console.log('🔄 Retour depuis SmartPicker détecté:', { returnTo, returnField, draftId, searchTerm });
+        if (returnTo && returnTo.includes('creation-bon-commande') && searchTerm) {
           // Essayer de deviner si c'est un prénom ou un nom
           const words = searchTerm.trim().split(' ');
           if (words.length >= 2) {
@@ -46,11 +47,10 @@ const NouvelUtilisateur = () => {
           } else {
             setUser(prev => ({ ...prev, prenom: searchTerm }));
           }
-          // Nettoyer le localStorage
-          localStorage.removeItem('createFromSearch');
+          console.log('🚀 Utilisateur pré-rempli depuis SmartPicker:', searchTerm);
         }
       } catch (error) {
-        console.error('Erreur lors de la récupération du terme de recherche:', error);
+        console.error('Erreur lors du parsing du contexte SmartPicker:', error);
       }
     }
   }, []);
@@ -70,6 +70,38 @@ const NouvelUtilisateur = () => {
       }
       
       const response = await api.post('/api/users', user);
+      const nouvelUtilisateur = response.data;
+      
+      // Vérifier si on doit retourner au Bon de Commande (nouveau système SmartPicker)
+      const smartpickerContext = sessionStorage.getItem('smartpicker_return_context');
+      console.log('🔍 Contexte SmartPicker trouvé:', smartpickerContext);
+      if (smartpickerContext) {
+        try {
+          const { returnTo, returnField, draftId } = JSON.parse(smartpickerContext);
+          console.log('🔍 Contexte parsé:', { returnTo, returnField, draftId });
+          if (returnTo && returnTo.includes('creation-bon-commande')) {
+            console.log('🚀 Retour vers le Bon de Commande depuis SmartPicker');
+            const utilisateurFormate = {
+              id: nouvelUtilisateur.id,
+              label: `${nouvelUtilisateur.prenom} ${nouvelUtilisateur.nom}${nouvelUtilisateur.poste ? ` (${nouvelUtilisateur.poste})` : ''}`,
+              data: nouvelUtilisateur
+            };
+            console.log('💾 Utilisateur formaté pour retour:', utilisateurFormate);
+            localStorage.setItem('selectedUser', JSON.stringify(utilisateurFormate));
+            sessionStorage.removeItem('smartpicker_return_context'); // Clean up here
+            alert(`✅ Utilisateur créé avec succès !\n\nNom: ${nouvelUtilisateur.prenom} ${nouvelUtilisateur.nom}\nEmail: ${nouvelUtilisateur.email}\nRôle: ${nouvelUtilisateur.role}\n\nVous allez être redirigé vers le Bon de Commande.`);
+            console.log('🔄 Navigation vers:', returnTo);
+            window.location.href = returnTo;
+            return;
+          } else {
+            console.log('❌ Pas de retour vers Bon de Commande - returnTo:', returnTo);
+          }
+        } catch (error) {
+          console.error('Erreur lors du parsing du contexte SmartPicker:', error);
+        }
+      } else {
+        console.log('❌ Aucun contexte SmartPicker trouvé');
+      }
       
       alert('✅ Utilisateur créé avec succès !');
       console.log('Utilisateur créé:', response.data);

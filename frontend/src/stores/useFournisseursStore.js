@@ -36,8 +36,11 @@ export const useFournisseursStore = create(
           const nextNumber = currentNumber + 1;
           const newCode = `FPRO97-${String(nextNumber).padStart(4, '0')}`;
           
+          // Recharger toutes les données depuis Supabase pour s'assurer de la cohérence
+          const { loadFromSupabase } = get();
+          await loadFromSupabase();
+          
           set({ 
-            fournisseurs: [newFournisseur, ...fournisseurs],
             nextFournisseurCode: newCode,
             lastUpdate: new Date().toISOString()
           });
