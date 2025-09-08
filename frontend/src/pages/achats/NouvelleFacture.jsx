@@ -163,7 +163,7 @@ const NouvelleFacture = ({ parametresEtape1, onRetourEtape1 }) => {
       }
     }
   }, []);
-
+  
   // États pour la ventilation multi-chantiers
   const [showVentilation, setShowVentilation] = useState(false);
   const [ligneVentilation, setLigneVentilation] = useState(null);
@@ -867,22 +867,22 @@ const NouvelleFacture = ({ parametresEtape1, onRetourEtape1 }) => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <SmartPicker
-                    value={facture.fournisseur}
+                      value={facture.fournisseur}
                     onChange={(value) => setFacture(prev => ({ ...prev, fournisseur: value }))}
                     fetcher={searchFournisseurs}
-                    placeholder="Rechercher un fournisseur..."
+                      placeholder="Rechercher un fournisseur..."
                     createUrl="/achats?tab=fournisseurs&create=true"
                     createLabel="Créer un fournisseur"
                     label="Fournisseur *"
                   />
-                </div>
-                
+                  </div>
+                  
                 <div>
                   <SmartPicker
-                    value={facture.chantier}
+                      value={facture.chantier}
                     onChange={(value) => setFacture(prev => ({ ...prev, chantier: value }))}
                     fetcher={searchChantiers}
-                    placeholder="Rechercher un chantier..."
+                      placeholder="Rechercher un chantier..."
                     createUrl="/chantiers/nouveau"
                     createLabel="Créer un chantier"
                     label="Chantier *"
@@ -1154,8 +1154,9 @@ const NouvelleFacture = ({ parametresEtape1, onRetourEtape1 }) => {
                             </label>
                             <div className="relative">
                               <Input
+                                key={`prix-${index}-${ligne.prixUnitaire}`}
                                 type="number"
-                                value={ligne.prixUnitaire}
+                                value={ligne.prixUnitaire === 0 ? '' : ligne.prixUnitaire}
                                 onChange={(e) => {
                                   const prix = parseFloat(e.target.value) || 0;
                                   handleLigneChange(index, 'prixUnitaire', prix);

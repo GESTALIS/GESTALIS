@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
   Building2, 
@@ -55,7 +55,7 @@ const Achats = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   
-  // Gérer les paramètres d'URL pour l'onglet et la création
+  // GÃ©rer les paramÃ¨tres d'URL pour l'onglet et la crÃ©ation
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const tabParam = searchParams.get('tab');
@@ -64,14 +64,14 @@ const Achats = () => {
     if (tabParam) {
       setActiveTab(tabParam);
       
-      // Si on doit créer quelque chose, ouvrir le modal approprié
+      // Si on doit crÃ©er quelque chose, ouvrir le modal appropriÃ©
       if (createParam === 'true') {
         // Si on est dans l'onglet fournisseurs, ouvrir directement le modal
         if (tabParam === 'fournisseurs') {
-          console.log('🚀 Ouverture automatique du modal de création de fournisseur');
+          console.log('ðŸš€ Ouverture automatique du modal de crÃ©ation de fournisseur');
           setShowCreateModal(true);
           
-          // Pré-remplir avec les données du localStorage si disponibles
+          // PrÃ©-remplir avec les donnÃ©es du localStorage si disponibles
           const createData = localStorage.getItem('createFromSearch');
           if (createData) {
             try {
@@ -82,39 +82,39 @@ const Achats = () => {
               // Nettoyer le localStorage
               localStorage.removeItem('createFromSearch');
             } catch (error) {
-              console.error('Erreur lors du parsing des données de création:', error);
+              console.error('Erreur lors du parsing des donnÃ©es de crÃ©ation:', error);
             }
           }
         }
         
         // Si on est dans l'onglet produits, ouvrir directement le modal
         if (tabParam === 'produits') {
-          console.log('🚀 Ouverture automatique du modal de création de produit');
+          console.log('ðŸš€ Ouverture automatique du modal de crÃ©ation de produit');
           setShowCreateProduitModal(true);
         }
       }
     }
   }, [location.search]);
 
-  // Gérer le retour depuis la comptabilité (mode picker)
+  // GÃ©rer le retour depuis la comptabilitÃ© (mode picker)
   useEffect(() => {
     if (location.state?.type === "PICKED_COMPTE" && location.state?.value) {
-      console.log('🔄 Retour depuis la comptabilité avec compte sélectionné:', location.state.value);
+      console.log('ðŸ”„ Retour depuis la comptabilitÃ© avec compte sÃ©lectionnÃ©:', location.state.value);
       
-      // Ouvrir automatiquement le modal de création de fournisseur
+      // Ouvrir automatiquement le modal de crÃ©ation de fournisseur
       setShowCreateModal(true);
       
-      // Aller directement à l'onglet compta
+      // Aller directement Ã  l'onglet compta
       setActiveCreateTab('compta');
       
-      // Injecter le compte sélectionné dans le formulaire fournisseur
+      // Injecter le compte sÃ©lectionnÃ© dans le formulaire fournisseur
       setNewFournisseur(prev => ({
         ...prev,
         compteComptable: location.state.value.numero
       }));
       
-      // Mettre à jour le champ de recherche
-      setSearchCompteTerm(`${location.state.value.numero} — ${location.state.value.intitule}`);
+      // Mettre Ã  jour le champ de recherche
+      setSearchCompteTerm(`${location.state.value.numero} â€” ${location.state.value.intitule}`);
       
       // Restaurer le brouillon si disponible
       if (location.state.draftId) {
@@ -132,19 +132,19 @@ const Achats = () => {
     }
   }, [location.state]);
 
-  // Gérer le retour depuis le SmartPicker
+  // GÃ©rer le retour depuis le SmartPicker
   useEffect(() => {
     const smartpickerContext = sessionStorage.getItem('smartpicker_return_context');
     if (smartpickerContext) {
       try {
         const { returnTo, returnField, draftId, searchTerm } = JSON.parse(smartpickerContext);
-        console.log('🔄 Retour depuis SmartPicker détecté:', { returnTo, returnField, draftId, searchTerm });
+        console.log('ðŸ”„ Retour depuis SmartPicker dÃ©tectÃ©:', { returnTo, returnField, draftId, searchTerm });
         
-        // Si on vient d'un formulaire (Bon de Commande ou Facture), ouvrir le modal de création approprié
+        // Si on vient d'un formulaire (Bon de Commande ou Facture), ouvrir le modal de crÃ©ation appropriÃ©
         if (returnTo && (returnTo.includes('creation-bon-commande') || returnTo.includes('nouvelle-facture'))) {
-          console.log('🚀 Ouverture du modal de création depuis SmartPicker');
+          console.log('ðŸš€ Ouverture du modal de crÃ©ation depuis SmartPicker');
           
-          // Déterminer quel modal ouvrir selon le champ
+          // DÃ©terminer quel modal ouvrir selon le champ
           if (returnField === 'fournisseur') {
             setShowCreateModal(true);
             if (searchTerm) {
@@ -157,7 +157,7 @@ const Achats = () => {
             }
           }
           
-          // NE PAS nettoyer le contexte ici - on en a besoin pour le retour après création
+          // NE PAS nettoyer le contexte ici - on en a besoin pour le retour aprÃ¨s crÃ©ation
         }
       } catch (error) {
         console.error('Erreur lors du parsing du contexte SmartPicker:', error);
@@ -165,7 +165,7 @@ const Achats = () => {
     }
   }, []);
 
-  // États pour la gestion des fournisseurs
+  // Ã‰tats pour la gestion des fournisseurs
   const { 
     fournisseurs, 
     loading: fournisseursLoading,
@@ -179,18 +179,18 @@ const Achats = () => {
   
   const { comptes, loadFromSupabase: loadComptesFromSupabase } = useComptesStore();
 
-  // Charger les données depuis Supabase au démarrage
+  // Charger les donnÃ©es depuis Supabase au dÃ©marrage
   useEffect(() => {
     const loadData = async () => {
       try {
-        console.log('🔄 Chargement des données depuis Supabase...');
+        console.log('ðŸ”„ Chargement des donnÃ©es depuis Supabase...');
         await Promise.all([
           loadFournisseursFromSupabase(),
           loadComptesFromSupabase()
         ]);
-        console.log('✅ Données chargées depuis Supabase');
+        console.log('âœ… DonnÃ©es chargÃ©es depuis Supabase');
       } catch (error) {
-        console.error('❌ Erreur chargement données:', error);
+        console.error('âŒ Erreur chargement donnÃ©es:', error);
       }
     };
     
@@ -206,7 +206,7 @@ const Achats = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedFournisseur, setSelectedFournisseur] = useState(null);
 
-  // États pour la gestion des produits
+  // Ã‰tats pour la gestion des produits
 
   const [showCreateProduitModal, setShowCreateProduitModal] = useState(false);
   const [selectedProduit, setSelectedProduit] = useState(null);
@@ -222,7 +222,7 @@ const Achats = () => {
     plafondCredit: '',
     devise: 'EUR',
     estSousTraitant: false,
-    // Conditions de règlement
+    // Conditions de rÃ¨glement
     modeReglement: 'VIR',
     echeanceType: '30J',
     respectEcheance: true,
@@ -240,7 +240,7 @@ const Achats = () => {
     commentaires: ''
   });
 
-  // État pour indiquer si le code a été généré automatiquement
+  // Ã‰tat pour indiquer si le code a Ã©tÃ© gÃ©nÃ©rÃ© automatiquement
   const [codeAutoGenere, setCodeAutoGenere] = useState(false);
 
   const [produitFournisseurs, setProduitFournisseurs] = useState([
@@ -253,7 +253,7 @@ const Achats = () => {
     }
   ]);
 
-  // États pour la sidebar de création de compte comptable
+  // Ã‰tats pour la sidebar de crÃ©ation de compte comptable
   const [showCompteSelectionModal, setShowCompteSelectionModal] = useState(false);
   const [newCompteComptable, setNewCompteComptable] = useState({
     numero: '',
@@ -267,14 +267,14 @@ const Achats = () => {
   });
   const [compteErrors, setCompteErrors] = useState({});
 
-  // Catégories de produits TP (Travaux Publics)
+  // CatÃ©gories de produits TP (Travaux Publics)
   const categoriesProduits = [
-    'Matériaux TP',
-    'Équipements TP',
+    'MatÃ©riaux TP',
+    'Ã‰quipements TP',
     'Outillage TP',
     'Hydraulique',
     'Signalisation',
-    'Sécurité chantier',
+    'SÃ©curitÃ© chantier',
     'Services TP',
     'Divers TP'
   ];
@@ -282,29 +282,29 @@ const Achats = () => {
 
 
   const unitesMesure = [
-    { value: 'U', label: 'Unité (U)' },
-    { value: 'M', label: 'Mètre linéaire (M)' },
-    { value: 'M2', label: 'Mètre carré (M²)' },
-    { value: 'M3', label: 'Mètre cube (M³)' },
+    { value: 'U', label: 'UnitÃ© (U)' },
+    { value: 'M', label: 'MÃ¨tre linÃ©aire (M)' },
+    { value: 'M2', label: 'MÃ¨tre carrÃ© (MÂ²)' },
+    { value: 'M3', label: 'MÃ¨tre cube (MÂ³)' },
     { value: 'KG', label: 'Kilogramme (KG)' },
     { value: 'T', label: 'Tonne (T)' },
     { value: 'L', label: 'Litre (L)' },
     { value: 'PAQ', label: 'Paquet' },
     { value: 'LOT', label: 'Lot' },
-    { value: 'M2/J', label: 'M² par jour' },
-    { value: 'M3/J', label: 'M³ par jour' },
+    { value: 'M2/J', label: 'MÂ² par jour' },
+    { value: 'M3/J', label: 'MÂ³ par jour' },
     { value: 'H', label: 'Heure (H)' },
     { value: 'J', label: 'Jour (J)' }
   ];
 
-  // Préfixes de codes par catégorie TP
+  // PrÃ©fixes de codes par catÃ©gorie TP
   const prefixesCodes = {
-    'Matériaux TP': 'MAT',
-    'Équipements TP': 'EQU',
+    'MatÃ©riaux TP': 'MAT',
+    'Ã‰quipements TP': 'EQU',
     'Outillage TP': 'OUT',
     'Hydraulique': 'HYD',
     'Signalisation': 'SIG',
-    'Sécurité chantier': 'SEC',
+    'SÃ©curitÃ© chantier': 'SEC',
     'Services TP': 'SER',
     'Divers TP': 'DIV'
   };
@@ -315,7 +315,7 @@ const Achats = () => {
       try {
         // 1. Charger depuis Supabase
         const fournisseursSupabase = await fournisseursService.recupererTous();
-        console.log('✅ Fournisseurs chargés depuis Supabase:', fournisseursSupabase);
+        console.log('âœ… Fournisseurs chargÃ©s depuis Supabase:', fournisseursSupabase);
         
         // 2. Charger depuis localStorage
         const fournisseursLocal = localStorage.getItem('gestalis-fournisseurs');
@@ -324,38 +324,45 @@ const Achats = () => {
         if (fournisseursLocal) {
           try {
             fournisseursLocalStorage = JSON.parse(fournisseursLocal);
-            console.log('💾 Fournisseurs chargés depuis localStorage:', fournisseursLocalStorage);
+            console.log('ðŸ’¾ Fournisseurs chargÃ©s depuis localStorage:', fournisseursLocalStorage);
           } catch (error) {
-            console.error('❌ Erreur parsing localStorage fournisseurs:', error);
+            console.error('âŒ Erreur parsing localStorage fournisseurs:', error);
           }
         }
         
-        // 3. Combiner les deux sources (Supabase + localStorage)
-        const fournisseursCombines = [...fournisseursSupabase, ...fournisseursLocalStorage];
+        // 3. PRIORITÃ‰ AUX DONNÃ‰ES LOCALES (utilisateur a effacÃ© les donnÃ©es de test)
+        // Si localStorage contient des donnÃ©es, utiliser SEULEMENT localStorage
+        // Sinon, utiliser Supabase (premiÃ¨re fois)
+        let fournisseursFinaux = [];
         
-        // 4. Éliminer les doublons basés sur l'ID
-        const fournisseursUniques = fournisseursCombines.filter((fournisseur, index, self) => 
-          index === self.findIndex(f => f.id === fournisseur.id)
-        );
+        if (fournisseursLocalStorage.length > 0) {
+          // L'utilisateur a des donnÃ©es locales (a effacÃ© les donnÃ©es de test)
+          console.log('ðŸŽ¯ Utilisation des donnÃ©es locales uniquement (donnÃ©es de test effacÃ©es)');
+          fournisseursFinaux = fournisseursLocalStorage;
+        } else {
+          // PremiÃ¨re fois ou localStorage vide, utiliser Supabase
+          console.log('ðŸŽ¯ PremiÃ¨re utilisation, chargement depuis Supabase');
+          fournisseursFinaux = fournisseursSupabase;
+        }
         
-        console.log('🔄 Fournisseurs combinés (Supabase + localStorage):', fournisseursUniques);
+        console.log('ðŸ”„ Fournisseurs finaux chargÃ©s:', fournisseursFinaux);
         
-        setFournisseurs(fournisseursUniques);
-        setFilteredFournisseurs(fournisseursUniques);
+        setFournisseurs(fournisseursFinaux);
+        setFilteredFournisseurs(fournisseursFinaux);
         
       } catch (error) {
-        console.error('❌ Erreur chargement fournisseurs:', error);
+        console.error('âŒ Erreur chargement fournisseurs:', error);
         
         // En cas d'erreur Supabase, utiliser uniquement localStorage
         const fournisseursLocal = localStorage.getItem('gestalis-fournisseurs');
         if (fournisseursLocal) {
           try {
             const fournisseursLocalStorage = JSON.parse(fournisseursLocal);
-            console.log('🔄 Utilisation des fournisseurs du localStorage en fallback:', fournisseursLocalStorage);
+            console.log('ðŸ”„ Utilisation des fournisseurs du localStorage en fallback:', fournisseursLocalStorage);
             setFournisseurs(fournisseursLocalStorage);
             setFilteredFournisseurs(fournisseursLocalStorage);
           } catch (parseError) {
-            console.error('❌ Erreur parsing localStorage en fallback:', parseError);
+            console.error('âŒ Erreur parsing localStorage en fallback:', parseError);
             setFournisseurs([]);
             setFilteredFournisseurs([]);
           }
@@ -375,25 +382,25 @@ const Achats = () => {
       try {
         const produitsParsed = JSON.parse(produitsLocal);
         setProduits(produitsParsed);
-        console.log('📦 Produits chargés au montage du composant:', produitsParsed);
+        console.log('ðŸ“¦ Produits chargÃ©s au montage du composant:', produitsParsed);
       } catch (error) {
-        console.error('❌ Erreur lors du parsing des produits:', error);
+        console.error('âŒ Erreur lors du parsing des produits:', error);
       }
     }
-  }, []); // Se déclenche une seule fois au montage
+  }, []); // Se dÃ©clenche une seule fois au montage
 
 
 
   const fetchPlanComptable = async () => {
     try {
-      // Essayer de récupérer les comptes depuis le localStorage du module Comptabilité
+      // Essayer de rÃ©cupÃ©rer les comptes depuis le localStorage du module ComptabilitÃ©
       const comptesComptabilite = localStorage.getItem('gestalis-comptes');
       let comptesDisponibles = [];
       
       if (comptesComptabilite) {
         try {
           const comptesParsed = JSON.parse(comptesComptabilite);
-          // Filtrer les comptes de type fournisseur ou créer des comptes adaptés
+          // Filtrer les comptes de type fournisseur ou crÃ©er des comptes adaptÃ©s
           comptesDisponibles = comptesParsed
             .filter(compte => compte.type === 'charge' || compte.type === 'passif' || compte.classe?.includes('Tiers'))
             .map(compte => ({
@@ -402,35 +409,35 @@ const Achats = () => {
               type: compte.type,
               classe: compte.classe
             }));
-          console.log('✅ Comptes comptables récupérés depuis Comptabilité:', comptesDisponibles);
+          console.log('âœ… Comptes comptables rÃ©cupÃ©rÃ©s depuis ComptabilitÃ©:', comptesDisponibles);
         } catch (parseError) {
           console.error('Erreur lors du parsing des comptes comptables:', parseError);
         }
       }
       
-      // Si aucun compte trouvé, utiliser les données par défaut
+      // Si aucun compte trouvÃ©, utiliser les donnÃ©es par dÃ©faut
       if (comptesDisponibles.length === 0) {
-        console.log('📊 Utilisation des comptes par défaut');
+        console.log('ðŸ“Š Utilisation des comptes par dÃ©faut');
         comptesDisponibles = [
-          { numeroCompte: '401', intitule: 'Fournisseurs - Général', type: 'passif', classe: '4 - Tiers' },
-          { numeroCompte: '401001', intitule: 'Fournisseurs - Matériaux', type: 'passif', classe: '4 - Tiers' },
+          { numeroCompte: '401', intitule: 'Fournisseurs - GÃ©nÃ©ral', type: 'passif', classe: '4 - Tiers' },
+          { numeroCompte: '401001', intitule: 'Fournisseurs - MatÃ©riaux', type: 'passif', classe: '4 - Tiers' },
           { numeroCompte: '401002', intitule: 'Fournisseurs - Sous-traitance', type: 'passif', classe: '4 - Tiers' },
           { numeroCompte: '401003', intitule: 'Fournisseurs - Services', type: 'passif', classe: '4 - Tiers' },
-          { numeroCompte: '606', intitule: 'Achats - Matériaux', type: 'charge', classe: '6 - Charges' },
+          { numeroCompte: '606', intitule: 'Achats - MatÃ©riaux', type: 'charge', classe: '6 - Charges' },
           { numeroCompte: '607', intitule: 'Achats - Services', type: 'charge', classe: '6 - Charges' },
         ];
       }
       
       setPlanComptable(comptesDisponibles);
       setFilteredPlanComptable(comptesDisponibles);
-      console.log('💾 Plan comptable mis à jour:', comptesDisponibles);
+      console.log('ðŸ’¾ Plan comptable mis Ã  jour:', comptesDisponibles);
       
     } catch (error) {
       console.error('Erreur lors du chargement du plan comptable:', error);
-      // En cas d'erreur, utiliser les données par défaut
+      // En cas d'erreur, utiliser les donnÃ©es par dÃ©faut
       const planComptableDefault = [
-        { numeroCompte: '401', intitule: 'Fournisseurs - Général', type: 'passif', classe: '4 - Tiers' },
-        { numeroCompte: '401001', intitule: 'Fournisseurs - Matériaux', type: 'passif', classe: '4 - Tiers' },
+        { numeroCompte: '401', intitule: 'Fournisseurs - GÃ©nÃ©ral', type: 'passif', classe: '4 - Tiers' },
+        { numeroCompte: '401001', intitule: 'Fournisseurs - MatÃ©riaux', type: 'passif', classe: '4 - Tiers' },
         { numeroCompte: '401002', intitule: 'Fournisseurs - Sous-traitance', type: 'passif', classe: '4 - Tiers' },
       ];
       setPlanComptable(planComptableDefault);
@@ -438,7 +445,7 @@ const Achats = () => {
     }
   };
 
-  // États pour la création de fournisseur moderne
+  // Ã‰tats pour la crÃ©ation de fournisseur moderne
   const [activeCreateTab, setActiveCreateTab] = useState('coordonnees');
   const [showCreateCompteModal, setShowCreateCompteModal] = useState(false);
   const [showCreateConditionModal, setShowCreateConditionModal] = useState(false);
@@ -446,14 +453,14 @@ const Achats = () => {
     { numeroCompte: 'F0001', intitule: 'Fournisseurs' },
     { numeroCompte: 'F0002', intitule: 'Fournisseurs - Sous-traitants' },
     { numeroCompte: 'F0003', intitule: 'Fournisseurs - Frais de transport' },
-    { numeroCompte: 'F0004', intitule: 'Fournisseurs - Frais de dépôt' },
+    { numeroCompte: 'F0004', intitule: 'Fournisseurs - Frais de dÃ©pÃ´t' },
     { numeroCompte: 'F0005', intitule: 'Fournisseurs - Frais de douane' },
   ]);
   const [filteredPlanComptable, setFilteredPlanComptable] = useState([
     { numeroCompte: 'F0001', intitule: 'Fournisseurs' },
     { numeroCompte: 'F0002', intitule: 'Fournisseurs - Sous-traitants' },
     { numeroCompte: 'F0003', intitule: 'Fournisseurs - Frais de transport' },
-    { numeroCompte: 'F0004', intitule: 'Fournisseurs - Frais de dépôt' },
+    { numeroCompte: 'F0004', intitule: 'Fournisseurs - Frais de dÃ©pÃ´t' },
     { numeroCompte: 'F0005', intitule: 'Fournisseurs - Frais de douane' },
   ]);
   const [searchCompteTerm, setSearchCompteTerm] = useState('');
@@ -466,14 +473,14 @@ const Achats = () => {
     { id: 'ESCOMPTE_5_NET_10', libelle: 'Escompte 5% Net 10 jours' },
   ]);
 
-  // États pour la création de compte comptable
+  // Ã‰tats pour la crÃ©ation de compte comptable
   const [newCompte, setNewCompte] = useState({
     numeroCompte: '',
     intitule: '',
     typeCompte: 'FOURNISSEUR'
   });
 
-  // États pour la création de condition de paiement
+  // Ã‰tats pour la crÃ©ation de condition de paiement
   const [newConditionPaiement, setNewConditionPaiement] = useState({
     libelle: '',
     type: 'COMPTANT',
@@ -482,16 +489,16 @@ const Achats = () => {
     description: ''
   });
 
-  // État pour le code fournisseur automatique
+  // Ã‰tat pour le code fournisseur automatique
 
 
-  // État pour la case TVA Guyane
+  // Ã‰tat pour la case TVA Guyane
   const [pasDeTvaGuyane, setPasDeTvaGuyane] = useState(false);
 
-  // État pour les contacts multiples
+  // Ã‰tat pour les contacts multiples
   const [contacts, setContacts] = useState([]);
 
-  // Données réelles (vides au démarrage)
+  // DonnÃ©es rÃ©elles (vides au dÃ©marrage)
   const [stats, setStats] = useState([
     {
       title: 'Fournisseurs',
@@ -512,7 +519,7 @@ const Achats = () => {
       textColor: 'text-blue-700'
     },
     {
-      title: 'Factures à payer',
+      title: 'Factures Ã  payer',
       value: '0',
       change: '0',
       icon: Receipt,
@@ -522,7 +529,7 @@ const Achats = () => {
     },
     {
       title: 'Montant total',
-      value: '€0',
+      value: 'â‚¬0',
       change: '0',
       icon: DollarSign,
       color: 'bg-gradient-to-br from-blue-500 to-teal-600',
@@ -531,24 +538,24 @@ const Achats = () => {
     }
   ]);
 
-  // Données réelles (vides au démarrage)
+  // DonnÃ©es rÃ©elles (vides au dÃ©marrage)
   const [recentActivities, setRecentActivities] = useState([]);
 
-  // États pour les fournisseurs
+  // Ã‰tats pour les fournisseurs
   const [filteredFournisseurs, setFilteredFournisseurs] = useState([]);
   const [selectedFournisseurs, setSelectedFournisseurs] = useState([]);
   const [showDeleteBulkModal, setShowDeleteBulkModal] = useState(false);
 
   useEffect(() => {
-    // Simulation de chargement des données réelles
-          // Loading géré par Zustand
-    // Loading géré par Zustand
-    // Ici on chargerait les vraies données depuis l'API
+    // Simulation de chargement des donnÃ©es rÃ©elles
+          // Loading gÃ©rÃ© par Zustand
+    // Loading gÃ©rÃ© par Zustand
+    // Ici on chargerait les vraies donnÃ©es depuis l'API
     setFournisseurs([]);
     setFilteredFournisseurs([]);
   }, []);
 
-  // Mise à jour des statistiques quand les fournisseurs changent
+  // Mise Ã  jour des statistiques quand les fournisseurs changent
   useEffect(() => {
     setStats(prev => prev.map(stat => {
       if (stat.title === 'Fournisseurs') {
@@ -569,7 +576,7 @@ const Achats = () => {
     setFilteredFournisseurs(filtered);
   }, [fournisseurs, searchTerm, selectedStatus]);
 
-  // Fermer les résultats de recherche des comptes quand on clique ailleurs
+  // Fermer les rÃ©sultats de recherche des comptes quand on clique ailleurs
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (!event.target.closest('.compte-search-container')) {
@@ -584,24 +591,24 @@ const Achats = () => {
   }, []);
 
   const handleCreateFournisseur = async () => {
-    // Vérifier si nous sommes en mode édition ou création
+    // VÃ©rifier si nous sommes en mode Ã©dition ou crÃ©ation
     const isEditing = selectedFournisseur !== null;
     
     if (isEditing) {
-      console.log('🔄 Tentative de modification du fournisseur...', newFournisseur);
+      console.log('ðŸ”„ Tentative de modification du fournisseur...', newFournisseur);
     } else {
-      console.log('🚀 Tentative de création du fournisseur...', newFournisseur);
+      console.log('ðŸš€ Tentative de crÃ©ation du fournisseur...', newFournisseur);
     }
     
     // Validation des champs obligatoires
     if (!newFournisseur.raisonSociale || !newFournisseur.siret) {
-      alert('❌ Erreur de validation :\n- La raison sociale est obligatoire\n- Le SIRET est obligatoire');
+      alert('âŒ Erreur de validation :\n- La raison sociale est obligatoire\n- Le SIRET est obligatoire');
       return;
     }
 
     try {
       if (isEditing) {
-        // MODE ÉDITION : Mettre à jour le fournisseur existant
+        // MODE Ã‰DITION : Mettre Ã  jour le fournisseur existant
         const fournisseurModifie = {
           ...selectedFournisseur,
           raisonSociale: newFournisseur.raisonSociale,
@@ -620,20 +627,25 @@ const Achats = () => {
           updatedAt: new Date().toISOString()
         };
 
-        console.log('✅ Fournisseur modifié avec succès:', fournisseurModifie);
+        console.log('âœ… Fournisseur modifiÃ© avec succÃ¨s:', fournisseurModifie);
         
-        // Utiliser Zustand pour mettre à jour
+        // Utiliser Zustand pour mettre Ã  jour
         updateFournisseur(selectedFournisseur.id, fournisseurModifie);
         
-        // Fermer le modal et réinitialiser
+        // SAUVEGARDER IMMÃ‰DIATEMENT DANS LOCALSTORAGE pour Ã©viter la perte
+        const fournisseursActuels = get().fournisseurs;
+        localStorage.setItem('gestalis-fournisseurs', JSON.stringify(fournisseursActuels));
+        console.log('ðŸ’¾ Fournisseur modifiÃ© sauvegardÃ© immÃ©diatement dans localStorage');
+        
+        // Fermer le modal et rÃ©initialiser
         setShowCreateModal(false);
         setSelectedFournisseur(null);
         
-        // Notification de succès
-        alert(`✅ Fournisseur modifié avec succès !\n\nRaison sociale: ${fournisseurModifie.raisonSociale}\nCode: ${fournisseurModifie.codeFournisseur}\nSIRET: ${fournisseurModifie.siret}`);
+        // Notification de succÃ¨s
+        alert(`âœ… Fournisseur modifiÃ© avec succÃ¨s !\n\nRaison sociale: ${fournisseurModifie.raisonSociale}\nCode: ${fournisseurModifie.codeFournisseur}\nSIRET: ${fournisseurModifie.siret}`);
         
       } else {
-        // MODE CRÉATION : Créer un nouveau fournisseur
+        // MODE CRÃ‰ATION : CrÃ©er un nouveau fournisseur
         const nouveauFournisseur = {
           raisonSociale: newFournisseur.raisonSociale,
           siret: newFournisseur.siret,
@@ -650,33 +662,38 @@ const Achats = () => {
           compteComptable: newFournisseur.compteComptable || null
         };
 
-        console.log('✅ Fournisseur créé avec succès:', nouveauFournisseur);
+        console.log('âœ… Fournisseur crÃ©Ã© avec succÃ¨s:', nouveauFournisseur);
         
         // Utiliser Zustand pour ajouter
         addFournisseur(nouveauFournisseur);
         
-        // Vérifier si on doit retourner au Bon de Commande (SmartPicker)
+        // SAUVEGARDER IMMÃ‰DIATEMENT DANS LOCALSTORAGE pour Ã©viter la perte
+        const fournisseursActuels = get().fournisseurs;
+        localStorage.setItem('gestalis-fournisseurs', JSON.stringify(fournisseursActuels));
+        console.log('ðŸ’¾ Fournisseur sauvegardÃ© immÃ©diatement dans localStorage');
+        
+        // VÃ©rifier si on doit retourner au Bon de Commande (SmartPicker)
         const smartpickerContext = sessionStorage.getItem('smartpicker_return_context');
-        console.log('🔍 Contexte SmartPicker trouvé:', smartpickerContext);
+        console.log('ðŸ” Contexte SmartPicker trouvÃ©:', smartpickerContext);
         
         if (smartpickerContext) {
           try {
             const { returnTo, returnField, draftId } = JSON.parse(smartpickerContext);
-            console.log('🔍 Contexte parsé:', { returnTo, returnField, draftId });
+            console.log('ðŸ” Contexte parsÃ©:', { returnTo, returnField, draftId });
             
             if (returnTo && (returnTo.includes('creation-bon-commande') || returnTo.includes('nouvelle-facture'))) {
-              console.log('🚀 Retour vers le formulaire depuis SmartPicker:', returnTo);
+              console.log('ðŸš€ Retour vers le formulaire depuis SmartPicker:', returnTo);
               
-              // Retourner au Bon de Commande avec le nouveau fournisseur sélectionné
+              // Retourner au Bon de Commande avec le nouveau fournisseur sÃ©lectionnÃ©
               const fournisseurFormate = {
                 id: nouveauFournisseur.id,
-                label: `${nouveauFournisseur.codeFournisseur} — ${nouveauFournisseur.raisonSociale}`,
+                label: `${nouveauFournisseur.codeFournisseur} â€” ${nouveauFournisseur.raisonSociale}`,
                 data: nouveauFournisseur
               };
               
-              console.log('💾 Fournisseur formaté pour retour:', fournisseurFormate);
+              console.log('ðŸ’¾ Fournisseur formatÃ© pour retour:', fournisseurFormate);
               
-              // Sauvegarder le fournisseur sélectionné pour le retour
+              // Sauvegarder le fournisseur sÃ©lectionnÃ© pour le retour
               localStorage.setItem('selectedFournisseur', JSON.stringify(fournisseurFormate));
               
               // Nettoyer le contexte
@@ -685,26 +702,26 @@ const Achats = () => {
               // Fermer le modal
               setShowCreateModal(false);
               
-              // Notification de succès
+              // Notification de succÃ¨s
               const destination = returnTo.includes('creation-bon-commande') ? 'Bon de Commande' : 'Facture';
-              alert(`✅ Fournisseur créé avec succès !\n\nRaison sociale: ${nouveauFournisseur.raisonSociale}\nCode: ${nouveauFournisseur.codeFournisseur}\nSIRET: ${nouveauFournisseur.siret}\n\nVous allez être redirigé vers le ${destination}.`);
+              alert(`âœ… Fournisseur crÃ©Ã© avec succÃ¨s !\n\nRaison sociale: ${nouveauFournisseur.raisonSociale}\nCode: ${nouveauFournisseur.codeFournisseur}\nSIRET: ${nouveauFournisseur.siret}\n\nVous allez Ãªtre redirigÃ© vers le ${destination}.`);
               
               // Retourner au formulaire d'origine
-              console.log('🔄 Navigation vers:', returnTo);
+              console.log('ðŸ”„ Navigation vers:', returnTo);
               window.location.href = returnTo;
               
-              return; // Sortir de la fonction pour éviter la réinitialisation
+              return; // Sortir de la fonction pour Ã©viter la rÃ©initialisation
             } else {
-              console.log('❌ Pas de retour vers formulaire - returnTo:', returnTo);
+              console.log('âŒ Pas de retour vers formulaire - returnTo:', returnTo);
             }
           } catch (error) {
             console.error('Erreur lors du parsing du contexte SmartPicker:', error);
           }
         } else {
-          console.log('❌ Aucun contexte SmartPicker trouvé');
+          console.log('âŒ Aucun contexte SmartPicker trouvÃ©');
         }
         
-        // Réinitialiser le formulaire
+        // RÃ©initialiser le formulaire
         setNewFournisseur({
           raisonSociale: '',
           siret: '',
@@ -717,7 +734,7 @@ const Achats = () => {
           plafondCredit: '',
           devise: 'EUR',
           estSousTraitant: false,
-          // Conditions de règlement
+          // Conditions de rÃ¨glement
           modeReglement: 'VIR',
           echeanceType: '30J',
           respectEcheance: true,
@@ -729,25 +746,25 @@ const Achats = () => {
         setPasDeTvaGuyane(false);
         setActiveCreateTab('coordonnees');
         
-        // Fermer le modal et réinitialiser
+        // Fermer le modal et rÃ©initialiser
         setShowCreateModal(false);
       
         // S'assurer qu'on est dans l'onglet Fournisseurs
         setActiveTab('fournisseurs');
           
-        // Notification de succès
-        alert(`✅ Fournisseur créé avec succès !\n\nRaison sociale: ${nouveauFournisseur.raisonSociale}\nCode: ${nouveauFournisseur.codeFournisseur}\nSIRET: ${nouveauFournisseur.siret}`);
+        // Notification de succÃ¨s
+        alert(`âœ… Fournisseur crÃ©Ã© avec succÃ¨s !\n\nRaison sociale: ${nouveauFournisseur.raisonSociale}\nCode: ${nouveauFournisseur.codeFournisseur}\nSIRET: ${nouveauFournisseur.siret}`);
       }
       
     } catch (error) {
-      console.error('❌ Erreur lors de la création/modification:', error);
+      console.error('âŒ Erreur lors de la crÃ©ation/modification:', error);
       if (isEditing) {
-        alert('❌ Erreur lors de la modification du fournisseur');
+        alert('âŒ Erreur lors de la modification du fournisseur');
       } else {
-        alert('❌ Erreur lors de la création du fournisseur');
+        alert('âŒ Erreur lors de la crÃ©ation du fournisseur');
       }
     } finally {
-      // setLoading(false); // Commenté car setLoading n'est pas défini dans cette fonction
+      // setLoading(false); // CommentÃ© car setLoading n'est pas dÃ©fini dans cette fonction
     }
   };
 
@@ -764,16 +781,16 @@ const Achats = () => {
   };
 
   const handleCreateProduit = () => {
-    console.log('🚀 Tentative de création du produit...', newProduit);
+    console.log('ðŸš€ Tentative de crÃ©ation du produit...', newProduit);
     
     // Validation des champs obligatoires
     if (!newProduit.code || !newProduit.nom || !newProduit.categorie) {
-      alert('❌ Erreur de validation :\n- Le code produit est obligatoire\n- Le nom est obligatoire\n- La catégorie est obligatoire');
+      alert('âŒ Erreur de validation :\n- Le code produit est obligatoire\n- Le nom est obligatoire\n- La catÃ©gorie est obligatoire');
       return;
     }
 
     try {
-      // Créer le produit localement
+      // CrÃ©er le produit localement
       const nouveauProduit = {
         id: Date.now(),
         code: newProduit.code,
@@ -787,45 +804,50 @@ const Achats = () => {
         statut: 'ACTIF'
       };
 
-      console.log('✅ Produit créé avec succès:', nouveauProduit);
+      console.log('âœ… Produit crÃ©Ã© avec succÃ¨s:', nouveauProduit);
       
       // Utiliser Zustand pour ajouter
       addProduit(nouveauProduit);
+      
+      // SAUVEGARDER IMMÃ‰DIATEMENT DANS LOCALSTORAGE pour Ã©viter la perte
+      const produitsActuels = get().produits;
+      localStorage.setItem('gestalis-produits-store', JSON.stringify(produitsActuels));
+      console.log('ðŸ’¾ Produit sauvegardÃ© immÃ©diatement dans localStorage');
 
-      // Vérifier si on doit retourner au Bon de Commande (nouveau système SmartPicker)
+      // VÃ©rifier si on doit retourner au Bon de Commande (nouveau systÃ¨me SmartPicker)
       const smartpickerContext = sessionStorage.getItem('smartpicker_return_context');
-      console.log('🔍 Contexte SmartPicker trouvé:', smartpickerContext);
+      console.log('ðŸ” Contexte SmartPicker trouvÃ©:', smartpickerContext);
       if (smartpickerContext) {
         try {
           const { returnTo, returnField, draftId } = JSON.parse(smartpickerContext);
-          console.log('🔍 Contexte parsé:', { returnTo, returnField, draftId });
+          console.log('ðŸ” Contexte parsÃ©:', { returnTo, returnField, draftId });
           if (returnTo && (returnTo.includes('creation-bon-commande') || returnTo.includes('nouvelle-facture'))) {
-            console.log('🚀 Retour vers le formulaire depuis SmartPicker:', returnTo);
+            console.log('ðŸš€ Retour vers le formulaire depuis SmartPicker:', returnTo);
             const produitFormate = {
               id: nouveauProduit.id,
-              label: `${nouveauProduit.code} — ${nouveauProduit.nom}`,
+              label: `${nouveauProduit.code} â€” ${nouveauProduit.nom}`,
               data: nouveauProduit
             };
-            console.log('💾 Produit formaté pour retour:', produitFormate);
+            console.log('ðŸ’¾ Produit formatÃ© pour retour:', produitFormate);
             localStorage.setItem('selectedProduit', JSON.stringify(produitFormate));
             sessionStorage.removeItem('smartpicker_return_context'); // Clean up here
             setShowCreateProduitModal(false);
             const destination = returnTo.includes('creation-bon-commande') ? 'Bon de Commande' : 'Facture';
-            alert(`✅ Produit créé avec succès !\n\nCode: ${nouveauProduit.code}\nNom: ${nouveauProduit.nom}\nCatégorie: ${nouveauProduit.categorie}\n\nVous allez être redirigé vers le ${destination}.`);
-            console.log('🔄 Navigation vers:', returnTo);
+            alert(`âœ… Produit crÃ©Ã© avec succÃ¨s !\n\nCode: ${nouveauProduit.code}\nNom: ${nouveauProduit.nom}\nCatÃ©gorie: ${nouveauProduit.categorie}\n\nVous allez Ãªtre redirigÃ© vers le ${destination}.`);
+            console.log('ðŸ”„ Navigation vers:', returnTo);
             window.location.href = returnTo;
             return;
           } else {
-            console.log('❌ Pas de retour vers formulaire - returnTo:', returnTo);
+            console.log('âŒ Pas de retour vers formulaire - returnTo:', returnTo);
           }
         } catch (error) {
           console.error('Erreur lors du parsing du contexte SmartPicker:', error);
         }
       } else {
-        console.log('❌ Aucun contexte SmartPicker trouvé');
+        console.log('âŒ Aucun contexte SmartPicker trouvÃ©');
       }
         
-      // Réinitialiser le formulaire
+      // RÃ©initialiser le formulaire
       setNewProduit({
         code: '',
         nom: '',
@@ -845,18 +867,18 @@ const Achats = () => {
       // Fermer le modal
       setShowCreateProduitModal(false);
       
-      // Réinitialiser l'état du code auto-généré
+      // RÃ©initialiser l'Ã©tat du code auto-gÃ©nÃ©rÃ©
       setCodeAutoGenere(false);
       
       // S'assurer qu'on est dans l'onglet Produits
       setActiveTab('produits');
         
-      // Notification de succès
-      alert(`✅ Produit créé avec succès !\n\nCode: ${nouveauProduit.code}\nNom: ${nouveauProduit.nom}\nCatégorie: ${nouveauProduit.categorie}`);
+      // Notification de succÃ¨s
+      alert(`âœ… Produit crÃ©Ã© avec succÃ¨s !\n\nCode: ${nouveauProduit.code}\nNom: ${nouveauProduit.nom}\nCatÃ©gorie: ${nouveauProduit.categorie}`);
       
     } catch (error) {
-      console.error('❌ Erreur lors de la création du produit:', error);
-      alert('❌ Erreur lors de la création du produit');
+      console.error('âŒ Erreur lors de la crÃ©ation du produit:', error);
+      alert('âŒ Erreur lors de la crÃ©ation du produit');
     }
   };
 
@@ -881,7 +903,7 @@ const Achats = () => {
     setProduitFournisseurs(produitFournisseurs.filter((_, i) => i !== index));
   };
 
-  // Générer automatiquement le code produit basé sur la catégorie
+  // GÃ©nÃ©rer automatiquement le code produit basÃ© sur la catÃ©gorie
   const generateProduitCode = (categorie) => {
     if (!categorie) return '';
     
@@ -903,16 +925,21 @@ const Achats = () => {
   };
 
   const handleDeleteFournisseur = async (id) => {
-    if (confirm('Êtes-vous sûr de vouloir supprimer ce fournisseur ?')) {
+    if (confirm('ÃŠtes-vous sÃ»r de vouloir supprimer ce fournisseur ?')) {
       try {
         // Supprimer du store Zustand
         deleteFournisseur(id);
         
-        // Notification de succès
-        alert('✅ Fournisseur supprimé avec succès !');
+        // SAUVEGARDER IMMÃ‰DIATEMENT DANS LOCALSTORAGE pour Ã©viter la perte
+        const fournisseursActuels = get().fournisseurs;
+        localStorage.setItem('gestalis-fournisseurs', JSON.stringify(fournisseursActuels));
+        console.log('ðŸ’¾ Fournisseur supprimÃ© sauvegardÃ© immÃ©diatement dans localStorage');
+        
+        // Notification de succÃ¨s
+        alert('âœ… Fournisseur supprimÃ© avec succÃ¨s !');
       } catch (error) {
-        console.error('❌ Erreur lors de la suppression:', error);
-        alert('❌ Erreur lors de la suppression du fournisseur');
+        console.error('âŒ Erreur lors de la suppression:', error);
+        alert('âŒ Erreur lors de la suppression du fournisseur');
       }
     }
   };
@@ -924,7 +951,7 @@ const Achats = () => {
   };
 
   const handleEditFournisseur = (fournisseur) => {
-    // Pré-remplir le formulaire avec les données du fournisseur
+    // PrÃ©-remplir le formulaire avec les donnÃ©es du fournisseur
     setNewFournisseur({
       raisonSociale: fournisseur.raisonSociale || '',
       siret: fournisseur.siret || '',
@@ -946,13 +973,13 @@ const Achats = () => {
       compteComptable: fournisseur.compteComptable || ''
     });
     
-    // Marquer que nous sommes en mode édition
+    // Marquer que nous sommes en mode Ã©dition
     setSelectedFournisseur(fournisseur);
     
-    // Ouvrir le modal de création (qui servira aussi pour la modification)
+    // Ouvrir le modal de crÃ©ation (qui servira aussi pour la modification)
     setShowCreateModal(true);
     
-    // Aller directement à l'onglet coordonnées
+    // Aller directement Ã  l'onglet coordonnÃ©es
     setActiveCreateTab('coordonnees');
   };
 
@@ -982,18 +1009,23 @@ const Achats = () => {
 
   const handleDeleteBulkFournisseurs = () => {
     if (selectedFournisseurs.length === 0) {
-      alert('Aucun fournisseur sélectionné');
+      alert('Aucun fournisseur sÃ©lectionnÃ©');
       return;
     }
     
-    if (confirm(`Êtes-vous sûr de vouloir supprimer ${selectedFournisseurs.length} fournisseur(s) ?`)) {
+    if (confirm(`ÃŠtes-vous sÃ»r de vouloir supprimer ${selectedFournisseurs.length} fournisseur(s) ?`)) {
       // Supprimer chaque fournisseur via Zustand
       selectedFournisseurs.forEach(id => deleteFournisseur(id));
       
-      // Réinitialiser la sélection
+      // SAUVEGARDER IMMÃ‰DIATEMENT DANS LOCALSTORAGE pour Ã©viter la perte
+      const fournisseursActuels = get().fournisseurs;
+      localStorage.setItem('gestalis-fournisseurs', JSON.stringify(fournisseursActuels));
+      console.log('ðŸ’¾ Fournisseurs supprimÃ©s en masse sauvegardÃ©s immÃ©diatement dans localStorage');
+      
+      // RÃ©initialiser la sÃ©lection
       setSelectedFournisseurs([]);
       setShowDeleteBulkModal(false);
-      alert(`✅ ${selectedFournisseurs.length} fournisseur(s) supprimé(s) avec succès !`);
+      alert(`âœ… ${selectedFournisseurs.length} fournisseur(s) supprimÃ©(s) avec succÃ¨s !`);
     }
   };
 
@@ -1008,12 +1040,12 @@ const Achats = () => {
     setShowCreateCompteModal(false);
     setNewCompte({ numeroCompte: '', intitule: '', typeCompte: 'FOURNISSEUR' });
     
-    // Mettre à jour le champ de recherche avec le nouveau compte
+    // Mettre Ã  jour le champ de recherche avec le nouveau compte
     setSearchCompteTerm(`${newCompteData.numeroCompte} - ${newCompteData.intitule}`);
     setNewFournisseur({...newFournisseur, compteComptable: newCompteData.numeroCompte});
     
-    // Notification de succès
-    alert(`✅ Compte comptable créé avec succès !\nNuméro: ${newCompteData.numeroCompte}\nIntitulé: ${newCompteData.intitule}`);
+    // Notification de succÃ¨s
+    alert(`âœ… Compte comptable crÃ©Ã© avec succÃ¨s !\nNumÃ©ro: ${newCompteData.numeroCompte}\nIntitulÃ©: ${newCompteData.intitule}`);
   };
 
   const handleCreateConditionPaiement = () => {
@@ -1043,7 +1075,7 @@ const Achats = () => {
     switch (statut) {
       case 'ACTIF': return 'Actif';
       case 'SUSPENDU': return 'Suspendu';
-      case 'ARCHIVE': return 'Archivé';
+      case 'ARCHIVE': return 'ArchivÃ©';
       default: return 'Inconnu';
     }
   };
@@ -1051,16 +1083,16 @@ const Achats = () => {
   const [showCreateEcheanceModal, setShowCreateEcheanceModal] = useState(false);
   const [newEcheance, setNewEcheance] = useState({ libelle: '', delai: '', description: '' });
   const [echeances, setEcheances] = useState([
-    { id: 'COMPTANT', libelle: 'COMPTANT - 0 jour', delai: 0, description: 'Paiement immédiat' },
-    { id: '30J', libelle: '30J - 30 Jours date de facture', delai: 30, description: '30 jours après facture' },
-    { id: '45J', libelle: '45J - 45 Jours date de facture', delai: 45, description: '45 jours après facture' },
-    { id: '60J', libelle: '60J - 60 Jours date de facture', delai: 60, description: '60 jours après facture' },
+    { id: 'COMPTANT', libelle: 'COMPTANT - 0 jour', delai: 0, description: 'Paiement immÃ©diat' },
+    { id: '30J', libelle: '30J - 30 Jours date de facture', delai: 30, description: '30 jours aprÃ¨s facture' },
+    { id: '45J', libelle: '45J - 45 Jours date de facture', delai: 45, description: '45 jours aprÃ¨s facture' },
+    { id: '60J', libelle: '60J - 60 Jours date de facture', delai: 60, description: '60 jours aprÃ¨s facture' },
     { id: 'FINMOIS30J', libelle: 'Fin de mois + 30J', delai: 30, description: 'Fin de mois + 30 jours' }
   ]);
 
   const handleCreateEcheance = () => {
     if (!newEcheance.libelle || !newEcheance.delai) {
-      alert('Veuillez remplir le libellé et le délai');
+      alert('Veuillez remplir le libellÃ© et le dÃ©lai');
       return;
     }
     
@@ -1075,18 +1107,18 @@ const Achats = () => {
     setShowCreateEcheanceModal(false);
     setNewEcheance({ libelle: '', delai: '', description: '' });
     
-    // Notification de succès
-    alert(`✅ Échéance créée avec succès !\nLibellé: ${newEcheanceData.libelle}\nDélai: ${newEcheanceData.delai} jours`);
+    // Notification de succÃ¨s
+    alert(`âœ… Ã‰chÃ©ance crÃ©Ã©e avec succÃ¨s !\nLibellÃ©: ${newEcheanceData.libelle}\nDÃ©lai: ${newEcheanceData.delai} jours`);
   };
 
-  // Fonction pour créer un compte comptable depuis la sidebar
+  // Fonction pour crÃ©er un compte comptable depuis la sidebar
   const handleCreateCompteComptable = () => {
-    console.log('🚀 Tentative de création du compte...', newCompteComptable);
+    console.log('ðŸš€ Tentative de crÃ©ation du compte...', newCompteComptable);
     const errors = {};
     
     // Validation des champs obligatoires
     if (!newCompteComptable.numero) {
-      errors.numero = 'Le numéro de compte est obligatoire';
+      errors.numero = 'Le numÃ©ro de compte est obligatoire';
     }
     if (!newCompteComptable.nom) {
       errors.nom = 'Le nom du compte est obligatoire';
@@ -1096,13 +1128,13 @@ const Achats = () => {
     }
 
     if (Object.keys(errors).length > 0) {
-      console.log('❌ Erreurs de validation:', errors);
+      console.log('âŒ Erreurs de validation:', errors);
       setCompteErrors(errors);
-      alert(`❌ Erreur de validation :\n${Object.values(errors).join('\n')}`);
+      alert(`âŒ Erreur de validation :\n${Object.values(errors).join('\n')}`);
       return;
     }
 
-    // Détection automatique de la classe et du type
+    // DÃ©tection automatique de la classe et du type
     const detectCompteClasse = (numero) => {
       const num = parseInt(numero);
       if (num >= 1 && num <= 5) return 'Actifs';
@@ -1134,16 +1166,16 @@ const Achats = () => {
       dateCreation: new Date().toISOString()
     };
 
-    console.log('✅ Compte créé avec succès:', compte);
+    console.log('âœ… Compte crÃ©Ã© avec succÃ¨s:', compte);
 
     // Utiliser Zustand pour ajouter le compte
     const { addCompte } = useComptesStore.getState();
     addCompte(compte);
 
-    // Sélectionner automatiquement le nouveau compte
+    // SÃ©lectionner automatiquement le nouveau compte
     setNewFournisseur({...newFournisseur, compteComptable: compte.numero});
     
-    // Fermer la sidebar et réinitialiser
+    // Fermer la sidebar et rÃ©initialiser
     setShowCompteSelectionModal(false);
     setNewCompteComptable({
       numero: '', nom: '', type: 'charge', classe: '', description: '',
@@ -1151,12 +1183,12 @@ const Achats = () => {
     });
     setCompteErrors({});
 
-    alert(`✅ Compte créé et sélectionné avec succès !\n\nNuméro: ${compte.numero}\nNom: ${compte.nom}\nClasse: ${compte.classe}\nType: ${compte.type}`);
+    alert(`âœ… Compte crÃ©Ã© et sÃ©lectionnÃ© avec succÃ¨s !\n\nNumÃ©ro: ${compte.numero}\nNom: ${compte.nom}\nClasse: ${compte.classe}\nType: ${compte.type}`);
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
-      {/* AchatsBanner STICKY - reste fixé en haut */}
+      {/* AchatsBanner STICKY - reste fixÃ© en haut */}
       <div className="sticky top-0 z-30 bg-white shadow-sm border-b border-gray-200">
         <div className="px-6 py-4">
          <div className="max-w-7xl mx-auto">
@@ -1195,7 +1227,7 @@ const Achats = () => {
         </div>
         </div>
 
-      {/* Contenu principal avec padding-top pour compenser les éléments sticky */}
+      {/* Contenu principal avec padding-top pour compenser les Ã©lÃ©ments sticky */}
       <div className="max-w-7xl mx-auto px-6 py-8 pt-4">
         {/* Statistiques - UNIQUEMENT dans Vue d'ensemble */}
         {activeTab === 'overview' && (
@@ -1229,7 +1261,7 @@ const Achats = () => {
             {/* Section Fournisseurs */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">Fournisseurs récents</h2>
+                <h2 className="text-xl font-semibold text-gray-900">Fournisseurs rÃ©cents</h2>
         <button
                   onClick={() => setActiveTab('fournisseurs')}
                   className="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-2 transition-colors"
@@ -1271,14 +1303,14 @@ const Achats = () => {
                        }}
                        className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 text-white rounded-lg font-medium transition-all duration-200"
                      >
-                       🧪 Test Modal Modifier
+                       ðŸ§ª Test Modal Modifier
                      </button>
                    </div>
                  </div>
                ) : (
                  <div className="space-y-4">
                    <div className="flex items-center justify-between mb-4">
-                     <h4 className="text-sm font-medium text-gray-600">Fournisseurs créés</h4>
+                     <h4 className="text-sm font-medium text-gray-600">Fournisseurs crÃ©Ã©s</h4>
                      <span className="text-sm text-gray-500">Total: {fournisseurs.length}</span>
                    </div>
                    <div className="grid gap-3">
@@ -1289,7 +1321,7 @@ const Achats = () => {
                          </div>
                          <div className="flex-1">
                            <h4 className="font-medium text-gray-900">{fournisseur.raisonSociale}</h4>
-                           <p className="text-sm text-gray-500">{fournisseur.codeFournisseur} • {fournisseur.siret}</p>
+                           <p className="text-sm text-gray-500">{fournisseur.codeFournisseur} â€¢ {fournisseur.siret}</p>
                          </div>
                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(fournisseur.statut)}`}>
                            {getStatusText(fournisseur.statut)}
@@ -1303,7 +1335,7 @@ const Achats = () => {
           onClick={() => setActiveTab('fournisseurs')}
                          className="text-blue-600 hover:text-blue-700 text-sm font-medium"
                        >
-                         Voir tous les {fournisseurs.length} fournisseurs →
+                         Voir tous les {fournisseurs.length} fournisseurs â†’
         </button>
                      </div>
                    )}
@@ -1314,7 +1346,7 @@ const Achats = () => {
             {/* Section Produits */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">Produits récents</h2>
+                <h2 className="text-xl font-semibold text-gray-900">Produits rÃ©cents</h2>
                 <button
                   onClick={() => setActiveTab('produits')}
                   className="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-2 transition-colors"
@@ -1340,7 +1372,7 @@ const Achats = () => {
               ) : (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between mb-4">
-                    <h4 className="text-sm font-medium text-gray-600">Produits créés</h4>
+                    <h4 className="text-sm font-medium text-gray-600">Produits crÃ©Ã©s</h4>
                     <span className="text-sm text-gray-500">Total: {produits.length}</span>
                   </div>
                   <div className="grid gap-3">
@@ -1351,7 +1383,7 @@ const Achats = () => {
                         </div>
                         <div className="flex-1">
                           <h4 className="font-medium text-gray-900">{produit.nom}</h4>
-                          <p className="text-sm text-gray-500">{produit.code} • {produit.categorie}</p>
+                          <p className="text-sm text-gray-500">{produit.code} â€¢ {produit.categorie}</p>
                         </div>
                         <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                           {produit.statut}
@@ -1365,7 +1397,7 @@ const Achats = () => {
                         onClick={() => setActiveTab('produits')}
                         className="text-blue-600 hover:text-blue-700 text-sm font-medium"
                       >
-                        Voir tous les {produits.length} produits →
+                        Voir tous les {produits.length} produits â†’
                       </button>
                     </div>
                   )}
@@ -1373,14 +1405,14 @@ const Achats = () => {
               )}
             </div>
 
-            {/* Section Activités récentes */}
+            {/* Section ActivitÃ©s rÃ©centes */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">Activités récentes</h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-6">ActivitÃ©s rÃ©centes</h2>
               
               {recentActivities.length === 0 ? (
                 <div className="text-center py-8">
                   <Clock className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                  <p className="text-gray-500">Aucune activité récente</p>
+                  <p className="text-gray-500">Aucune activitÃ© rÃ©cente</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -1405,7 +1437,7 @@ const Achats = () => {
           <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">
             <ClipboardList className="h-16 w-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-xl font-medium text-gray-900 mb-2">Demandes de prix</h3>
-            <p className="text-gray-500">Fonctionnalité à coder beaucoup plus tard</p>
+            <p className="text-gray-500">FonctionnalitÃ© Ã  coder beaucoup plus tard</p>
           </div>
         )}
 
@@ -1421,7 +1453,7 @@ const Achats = () => {
           <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">
             <TrendingUp className="h-16 w-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-xl font-medium text-gray-900 mb-2">Module Analytics</h3>
-            <p className="text-gray-500">Fonctionnalité en cours de développement</p>
+            <p className="text-gray-500">FonctionnalitÃ© en cours de dÃ©veloppement</p>
           </div>
         )}
 
@@ -1449,7 +1481,7 @@ const Achats = () => {
                       onChange={(e) => setSelectedStatus(e.target.value)}
                       className="border border-gray-300 rounded-xl px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
-                      <option value="all">Toutes les catégories</option>
+                      <option value="all">Toutes les catÃ©gories</option>
                       {categoriesProduits.map(cat => (
                         <option key={cat} value={cat}>{cat}</option>
                       ))}
@@ -1467,7 +1499,7 @@ const Achats = () => {
               </GestalisCardContent>
             </GestalisCard>
 
-            {/* En-tête avec bouton d'ajout */}
+            {/* En-tÃªte avec bouton d'ajout */}
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-semibold text-gray-900">
                 Produits ({produits.length})
@@ -1485,7 +1517,7 @@ const Achats = () => {
             {produits.length === 0 ? (
               <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">
                 <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-xl font-medium text-gray-900 mb-2">Aucun produit trouvé</h3>
+                <h3 className="text-xl font-medium text-gray-900 mb-2">Aucun produit trouvÃ©</h3>
                 <p className="text-gray-500 mb-6">Commencez par ajouter votre premier produit</p>
               </div>
             ) : (
@@ -1514,7 +1546,7 @@ const Achats = () => {
                             </div>
 
                             <div>
-                              <p className="text-sm font-medium text-gray-500">Unité</p>
+                              <p className="text-sm font-medium text-gray-500">UnitÃ©</p>
                               <p className="text-sm text-gray-900">{produit.unite}</p>
                             </div>
                             <div>
@@ -1532,7 +1564,7 @@ const Achats = () => {
                           <button
                             onClick={() => setSelectedProduit(produit)}
                             className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
-                            title="Voir les détails"
+                            title="Voir les dÃ©tails"
                           >
                             <Eye className="h-4 w-4" />
                           </button>
@@ -1549,7 +1581,7 @@ const Achats = () => {
                           </button>
                           <button
                             onClick={() => {
-                              if (confirm(`Êtes-vous sûr de vouloir supprimer le produit "${produit.nom}" ?`)) {
+                              if (confirm(`ÃŠtes-vous sÃ»r de vouloir supprimer le produit "${produit.nom}" ?`)) {
                                 setProduits(prev => prev.filter(p => p.id !== produit.id));
                                 localStorage.setItem('gestalis-produits', JSON.stringify(produits.filter(p => p.id !== produit.id)));
                               }
@@ -1596,7 +1628,7 @@ const Achats = () => {
                       <option value="all">Tous les statuts</option>
                       <option value="ACTIF">Actif</option>
                       <option value="SUSPENDU">Suspendu</option>
-                      <option value="ARCHIVE">Archivé</option>
+                      <option value="ARCHIVE">ArchivÃ©</option>
                     </select>
                     
                     <GestalisButton 
@@ -1611,7 +1643,7 @@ const Achats = () => {
               </GestalisCardContent>
             </GestalisCard>
 
-            {/* En-tête avec bouton d'ajout */}
+            {/* En-tÃªte avec bouton d'ajout */}
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-semibold text-gray-900">
                 Fournisseurs ({fournisseurs.length})
@@ -1633,7 +1665,7 @@ const Achats = () => {
             ) : fournisseurs.length === 0 ? (
               <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">
                 <Building2 className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-xl font-medium text-gray-900 mb-2">Aucun fournisseur trouvé</h3>
+                <h3 className="text-xl font-medium text-gray-900 mb-2">Aucun fournisseur trouvÃ©</h3>
                 <p className="text-gray-500 mb-6">Commencez par ajouter votre premier fournisseur</p>
               </div>
             ) : (
@@ -1651,7 +1683,7 @@ const Achats = () => {
                               </span>
                               {fournisseur.estSousTraitant && (
                                 <span className="px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800 flex items-center gap-1">
-                                  🏗️ Sous-traitant
+                                  ðŸ—ï¸ Sous-traitant
                                 </span>
                               )}
                             </div>
@@ -1726,7 +1758,7 @@ const Achats = () => {
                 <X className="h-6 w-6" />
         </button>
             </div>
-            <p className="text-gray-600 mb-4">Fonctionnalité en cours de développement</p>
+            <p className="text-gray-600 mb-4">FonctionnalitÃ© en cours de dÃ©veloppement</p>
             <div className="flex justify-end">
               <GestalisButton onClick={() => setShowContactModal(false)}>
                 Fermer
@@ -1745,7 +1777,7 @@ const Achats = () => {
                 <X className="h-6 w-6" />
               </button>
             </div>
-            <p className="text-gray-600 mb-4">Fonctionnalité en cours de développement</p>
+            <p className="text-gray-600 mb-4">FonctionnalitÃ© en cours de dÃ©veloppement</p>
             <div className="flex justify-end">
               <GestalisButton onClick={() => setShowDocumentModal(false)}>
                 Fermer
@@ -1755,11 +1787,11 @@ const Achats = () => {
         </div>
       )}
 
-      {/* Modal de création de fournisseur moderne */}
+      {/* Modal de crÃ©ation de fournisseur moderne */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl h-[90vh] flex">
-            {/* Sidebar colorée avec navigation */}
+            {/* Sidebar colorÃ©e avec navigation */}
             <div className="w-80 bg-gradient-to-b from-blue-500 to-teal-600 p-6 text-white">
               <div className="mb-8">
                 <h3 className="text-2xl font-bold mb-2">
@@ -1770,7 +1802,7 @@ const Achats = () => {
               
               <nav className="space-y-2">
                 {[
-                  { id: 'coordonnees', label: 'Coordonnées', icon: Building2 },
+                  { id: 'coordonnees', label: 'CoordonnÃ©es', icon: Building2 },
                   { id: 'infosJuridiques', label: 'Infos juridiques', icon: Shield },
                   { id: 'contacts', label: 'Contacts', icon: Users },
                   { id: 'conditionsCommerciales', label: 'Informations bancaires', icon: CreditCard },
@@ -1796,7 +1828,7 @@ const Achats = () => {
             <div className="flex-1 p-6 overflow-y-auto">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-xl font-semibold text-gray-900">
-                  {activeCreateTab === 'coordonnees' && 'Coordonnées du fournisseur'}
+                  {activeCreateTab === 'coordonnees' && 'CoordonnÃ©es du fournisseur'}
                   {activeCreateTab === 'infosJuridiques' && 'Informations juridiques'}
                   {activeCreateTab === 'contacts' && 'Contacts du fournisseur'}
                   {activeCreateTab === 'conditionsCommerciales' && 'Informations bancaires'}
@@ -1810,7 +1842,7 @@ const Achats = () => {
         </button>
       </div>
 
-              {/* Onglet Coordonnées */}
+              {/* Onglet CoordonnÃ©es */}
               {activeCreateTab === 'coordonnees' && (
       <div className="space-y-6">
                   <div className="grid grid-cols-2 gap-6">
@@ -1821,7 +1853,7 @@ const Achats = () => {
                         disabled
                         className="w-full bg-gray-100"
                       />
-                      <p className="text-sm text-gray-500 mt-1">Code généré automatiquement</p>
+                      <p className="text-sm text-gray-500 mt-1">Code gÃ©nÃ©rÃ© automatiquement</p>
                           </div>
                           <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Raison sociale *</label>
@@ -1863,7 +1895,7 @@ const Achats = () => {
                         onChange={(e) => setNewFournisseur({...newFournisseur, formeJuridique: e.target.value})}
                         className="w-full border border-gray-300 rounded-md px-3 py-2"
                       >
-                        <option value="">Sélectionner</option>
+                        <option value="">SÃ©lectionner</option>
                         <option value="SARL">SARL</option>
                         <option value="SAS">SAS</option>
                         <option value="SA">SA</option>
@@ -1873,7 +1905,7 @@ const Achats = () => {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Adresse du siège</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Adresse du siÃ¨ge</label>
                       <Input
                         value={newFournisseur.adresseSiege}
                         onChange={(e) => setNewFournisseur({...newFournisseur, adresseSiege: e.target.value})}
@@ -1900,8 +1932,8 @@ const Achats = () => {
                     <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                       <p className="text-sm text-blue-800">
                         <strong>Information :</strong> En cochant cette case, le fournisseur sera automatiquement 
-                        classé comme sous-traitant dans la comptabilité et des règles spécifiques s'appliqueront 
-                        (ex: TVA différente, documents obligatoires, etc.).
+                        classÃ© comme sous-traitant dans la comptabilitÃ© et des rÃ¨gles spÃ©cifiques s'appliqueront 
+                        (ex: TVA diffÃ©rente, documents obligatoires, etc.).
                       </p>
                     </div>
                   )}
@@ -1920,7 +1952,7 @@ const Achats = () => {
                       className="rounded border-gray-300"
                     />
                     <label htmlFor="pasDeTvaGuyane" className="text-sm font-medium text-gray-700">
-                      ✅ Pas de TVA – Guyane (CGI art. 294, 1°)
+                      âœ… Pas de TVA â€“ Guyane (CGI art. 294, 1Â°)
                     </label>
                   </div>
                   
@@ -1980,7 +2012,7 @@ const Achats = () => {
 
                   <div className="grid grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Téléphone fixe</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">TÃ©lÃ©phone fixe</label>
                       <Input
                         value={newFournisseur.contactPrincipal?.telephone || ''}
                         onChange={(e) => setNewFournisseur({
@@ -1992,7 +2024,7 @@ const Achats = () => {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Téléphone portable</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">TÃ©lÃ©phone portable</label>
                       <Input
                         value={newFournisseur.contactPrincipal?.portable || ''}
                         onChange={(e) => setNewFournisseur({
@@ -2019,7 +2051,7 @@ const Achats = () => {
                     />
                         </div>
 
-                  {/* Contacts supplémentaires */}
+                  {/* Contacts supplÃ©mentaires */}
                   {contacts.map((contact, index) => (
                     <div key={contact.id} className="p-4 border border-gray-200 rounded-lg">
                       <div className="flex justify-between items-center mb-3">
@@ -2043,7 +2075,7 @@ const Achats = () => {
                           onChange={(e) => updateContact(contact.id, 'fonction', e.target.value)}
                         />
                         <Input
-                          placeholder="Téléphone"
+                          placeholder="TÃ©lÃ©phone"
                           value={contact.telephone}
                           onChange={(e) => updateContact(contact.id, 'telephone', e.target.value)}
                         />
@@ -2122,7 +2154,7 @@ const Achats = () => {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Numéro de compte</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">NumÃ©ro de compte</label>
                       <Input
                         value={newFournisseur.numeroCompte || ''}
                         onChange={(e) => setNewFournisseur({...newFournisseur, numeroCompte: e.target.value})}
@@ -2133,7 +2165,7 @@ const Achats = () => {
                   </div>
 
                         <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Clé RIB</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">ClÃ© RIB</label>
                     <Input
                       value={newFournisseur.cleRib || ''}
                       onChange={(e) => setNewFournisseur({...newFournisseur, cleRib: e.target.value})}
@@ -2149,9 +2181,9 @@ const Achats = () => {
                  <div className="space-y-6">
                    <div className="grid grid-cols-2 gap-6">
                      <div>
-                       <label className="block text-sm font-medium text-gray-700 mb-2">Numéro de compte</label>
+                       <label className="block text-sm font-medium text-gray-700 mb-2">NumÃ©ro de compte</label>
                        
-                       {/* Combobox : Recherche + Sélection en un seul endroit */}
+                       {/* Combobox : Recherche + SÃ©lection en un seul endroit */}
                        <div className="relative mb-2 compte-search-container">
                          <div className="flex gap-2">
                            <div className="flex-1 relative">
@@ -2164,7 +2196,7 @@ const Achats = () => {
                                    setSearchCompteTerm(value);
                                    
                                    if (value.length > 0) {
-                                     // Filtrer les comptes en temps réel
+                                     // Filtrer les comptes en temps rÃ©el
                                      const filtered = comptes.filter(compte => 
                                        (compte.numero && compte.numero.toString().toLowerCase().includes(value.toLowerCase())) ||
                                        (compte.nom && compte.nom.toLowerCase().includes(value.toLowerCase())) ||
@@ -2185,7 +2217,7 @@ const Achats = () => {
                                className="pl-10 pr-4 py-2 w-full border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                              />
                              
-                             {/* Résultats de recherche en dropdown */}
+                             {/* RÃ©sultats de recherche en dropdown */}
                              {showCompteResults && searchCompteTerm.length > 0 && (
                                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
                                  {filteredPlanComptable.length > 0 ? (
@@ -2221,7 +2253,7 @@ const Achats = () => {
                                    ))
                                  ) : (
                                    <div className="px-4 py-3 text-gray-500 text-center">
-                                     Aucun compte trouvé
+                                     Aucun compte trouvÃ©
                   </div>
                                  )}
             </div>
@@ -2230,11 +2262,11 @@ const Achats = () => {
                            
                            <button
                              onClick={() => {
-                               // Sauvegarde immédiate du brouillon du fournisseur
+                               // Sauvegarde immÃ©diate du brouillon du fournisseur
                                const draftId = `draft_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
                                localStorage.setItem(`draft_fournisseur_${draftId}`, JSON.stringify(newFournisseur));
                                
-                               // Marquer qu'on attend une sélection
+                               // Marquer qu'on attend une sÃ©lection
                                sessionStorage.setItem('awaiting_pick', `1|${Date.now()}|${draftId}`);
                                
                                // Naviguer vers le plan comptable en mode picker
@@ -2247,7 +2279,7 @@ const Achats = () => {
                                });
                              }}
                              className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center gap-1"
-                             title="Créer un nouveau compte comptable"
+                             title="CrÃ©er un nouveau compte comptable"
                            >
                              <Plus className="h-3 w-3" />
                              <span className="text-xs font-medium">Nouveau</span>
@@ -2255,7 +2287,7 @@ const Achats = () => {
                          </div>
                          
                          <p className="text-sm text-gray-500 mt-1">
-                           {searchCompteTerm.length > 0 ? `${filteredPlanComptable.length} compte(s) trouvé(s)` : 'Tapez pour rechercher un compte existant ou créez-en un nouveau'}
+                           {searchCompteTerm.length > 0 ? `${filteredPlanComptable.length} compte(s) trouvÃ©(s)` : 'Tapez pour rechercher un compte existant ou crÃ©ez-en un nouveau'}
                          </p>
                        </div>
                      </div>
@@ -2266,15 +2298,15 @@ const Achats = () => {
                          onChange={(e) => setNewFournisseur({...newFournisseur, devise: e.target.value})}
                          className="w-full border border-gray-300 rounded-md px-3 py-2"
                        >
-                         <option value="EUR">EUR (€)</option>
+                         <option value="EUR">EUR (â‚¬)</option>
                          <option value="USD">USD ($)</option>
-                         <option value="GBP">GBP (£)</option>
+                         <option value="GBP">GBP (Â£)</option>
                        </select>
                      </div>
                    </div>
 
                    <div>
-                     <label className="block text-sm font-medium text-gray-700 mb-2">Plafond de crédit</label>
+                     <label className="block text-sm font-medium text-gray-700 mb-2">Plafond de crÃ©dit</label>
                      <Input
                        type="number"
                        value={newFournisseur.plafondCredit}
@@ -2284,15 +2316,15 @@ const Achats = () => {
                      />
                    </div>
 
-                   {/* Conditions de Règlement */}
+                   {/* Conditions de RÃ¨glement */}
                    <div className="border-t pt-6">
-                     <h3 className="text-lg font-medium text-gray-900 mb-4">Conditions de Règlement</h3>
+                     <h3 className="text-lg font-medium text-gray-900 mb-4">Conditions de RÃ¨glement</h3>
                      
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                       {/* Mode de Règlement */}
+                       {/* Mode de RÃ¨glement */}
                        <div>
                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                           Mode de Règlement
+                           Mode de RÃ¨glement
                          </label>
                          <select
                            value={newFournisseur.modeReglement || 'VIR'}
@@ -2301,24 +2333,24 @@ const Achats = () => {
                              setNewFournisseur({
                                ...newFournisseur, 
                                modeReglement: mode,
-                               // Logique métier : si COMPTANT, jours de décalage = 0
+                               // Logique mÃ©tier : si COMPTANT, jours de dÃ©calage = 0
                                joursDecalage: mode === 'COMPTANT' ? 0 : (newFournisseur.joursDecalage || 30)
                              });
                            }}
                            className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
                          >
-                           <option value="COMPTANT">COMPTANT - Paiement immédiat</option>
+                           <option value="COMPTANT">COMPTANT - Paiement immÃ©diat</option>
                            <option value="VIR">VIR - Virement</option>
-                           <option value="CHQ">CHQ - Chèque</option>
-                           <option value="ESP">ESP - Espèces</option>
+                           <option value="CHQ">CHQ - ChÃ¨que</option>
+                           <option value="ESP">ESP - EspÃ¨ces</option>
                            <option value="CARTE">CARTE - Carte bancaire</option>
                          </select>
                        </div>
 
-                       {/* Échéance type */}
+                       {/* Ã‰chÃ©ance type */}
                        <div>
                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                           Échéance type
+                           Ã‰chÃ©ance type
                          </label>
                          <div className="flex gap-2">
                            <select
@@ -2329,7 +2361,7 @@ const Achats = () => {
                                setNewFournisseur({
                                  ...newFournisseur, 
                                  echeanceType: echeance,
-                                 // Logique métier : si COMPTANT, jours de décalage = 0
+                                 // Logique mÃ©tier : si COMPTANT, jours de dÃ©calage = 0
                                  joursDecalage: echeance === 'COMPTANT' ? 0 : (selectedEcheance?.delai || 30)
                                });
                              }}
@@ -2346,7 +2378,7 @@ const Achats = () => {
                              type="button"
                              onClick={() => setShowCreateEcheanceModal(true)}
                              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center gap-2"
-                             title="Créer une nouvelle échéance"
+                             title="CrÃ©er une nouvelle Ã©chÃ©ance"
                            >
                              <Plus className="h-4 w-4" />
                              <span className="text-sm font-medium">Nouvelle</span>
@@ -2354,7 +2386,7 @@ const Achats = () => {
                          </div>
                        </div>
 
-                       {/* Respect Échéance */}
+                       {/* Respect Ã‰chÃ©ance */}
                        <div className="flex items-center">
                          <input
                            type="checkbox"
@@ -2364,14 +2396,14 @@ const Achats = () => {
                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                          />
                          <label htmlFor="respectEcheance" className="ml-2 block text-sm text-gray-900">
-                           Respect Échéance type
+                           Respect Ã‰chÃ©ance type
                          </label>
                        </div>
 
-                       {/* Jours de décalage */}
+                       {/* Jours de dÃ©calage */}
                        <div>
                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                           Jours de décalage
+                           Jours de dÃ©calage
                          </label>
                          <input
                            type="number"
@@ -2438,7 +2470,7 @@ const Achats = () => {
                       }}
                       className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
                     >
-                      Précédent
+                      PrÃ©cÃ©dent
                     </button>
                   )}
           </div>
@@ -2459,12 +2491,12 @@ const Achats = () => {
                     </button>
                   )}
                   
-                  {/* Bouton Créer visible partout */}
+                  {/* Bouton CrÃ©er visible partout */}
                   <button
                     onClick={handleCreateFournisseur}
                     className="px-6 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-md hover:from-green-600 hover:to-emerald-700 transition-all duration-200 font-medium"
                   >
-                    {selectedFournisseur ? 'Modifier le fournisseur' : 'Créer le fournisseur'}
+                    {selectedFournisseur ? 'Modifier le fournisseur' : 'CrÃ©er le fournisseur'}
                   </button>
                 </div>
               </div>
@@ -2473,7 +2505,7 @@ const Achats = () => {
           </div>
         )}
 
-             {/* Modal de création de compte comptable */}
+             {/* Modal de crÃ©ation de compte comptable */}
        {showCreateCompteModal && (
          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl">
@@ -2484,7 +2516,7 @@ const Achats = () => {
                      <Calculator className="h-5 w-5 text-white" />
                    </div>
                    <div>
-                     <h3 className="text-xl font-semibold text-gray-900">Créer un nouveau compte fournisseur</h3>
+                     <h3 className="text-xl font-semibold text-gray-900">CrÃ©er un nouveau compte fournisseur</h3>
                      <p className="text-sm text-gray-600">Ajoutez un compte au plan comptable</p>
                    </div>
                  </div>
@@ -2499,7 +2531,7 @@ const Achats = () => {
 
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Numéro de compte (F...)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">NumÃ©ro de compte (F...)</label>
                 <Input
                   value={newCompte.numeroCompte}
                   onChange={(e) => setNewCompte({...newCompte, numeroCompte: e.target.value})}
@@ -2510,7 +2542,7 @@ const Achats = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Intitulé du compte</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">IntitulÃ© du compte</label>
                 <Input
                   value={newCompte.intitule}
                   onChange={(e) => setNewCompte({...newCompte, intitule: e.target.value})}
@@ -2529,7 +2561,7 @@ const Achats = () => {
                   <option value="FOURNISSEUR">Fournisseur</option>
                   <option value="SOUS_TRAITANT">Sous-traitant</option>
                   <option value="TRANSPORT">Transport</option>
-                  <option value="DEPOT">Dépôt</option>
+                  <option value="DEPOT">DÃ©pÃ´t</option>
                   <option value="DOUANE">Douane</option>
                 </select>
               </div>
@@ -2546,20 +2578,20 @@ const Achats = () => {
                 onClick={handleCreateCompte}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
               >
-                Créer le compte
+                CrÃ©er le compte
               </button>
             </div>
           </div>
           </div>
         )}
 
-      {/* Modal de création de condition de paiement */}
+      {/* Modal de crÃ©ation de condition de paiement */}
       {showCreateConditionModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl">
             <div className="p-6 border-b border-gray-200">
               <div className="flex justify-between items-center">
-                <h3 className="text-xl font-semibold text-gray-900">Créer une nouvelle condition de paiement</h3>
+                <h3 className="text-xl font-semibold text-gray-900">CrÃ©er une nouvelle condition de paiement</h3>
                 <button
                   onClick={() => setShowCreateConditionModal(false)}
                   className="text-gray-400 hover:text-gray-600"
@@ -2571,7 +2603,7 @@ const Achats = () => {
 
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Libellé</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">LibellÃ©</label>
                 <Input
                   value={newConditionPaiement.libelle}
                   onChange={(e) => setNewConditionPaiement({...newConditionPaiement, libelle: e.target.value})}
@@ -2596,7 +2628,7 @@ const Achats = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Délai (en jours)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">DÃ©lai (en jours)</label>
                   <Input
                     type="number"
                     value={newConditionPaiement.delai}
@@ -2623,7 +2655,7 @@ const Achats = () => {
                 <textarea
                   value={newConditionPaiement.description}
                   onChange={(e) => setNewConditionPaiement({...newConditionPaiement, description: e.target.value})}
-                  placeholder="Description détaillée de la condition..."
+                  placeholder="Description dÃ©taillÃ©e de la condition..."
                   className="w-full border border-gray-300 rounded-md px-3 py-2 h-20"
                 />
               </div>
@@ -2640,19 +2672,19 @@ const Achats = () => {
                 onClick={handleCreateConditionPaiement}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
               >
-                Créer la condition
+                CrÃ©er la condition
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Modal de création d'échéance */}
+      {/* Modal de crÃ©ation d'Ã©chÃ©ance */}
       {showCreateEcheanceModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium text-gray-900">Créer une nouvelle échéance</h3>
+              <h3 className="text-lg font-medium text-gray-900">CrÃ©er une nouvelle Ã©chÃ©ance</h3>
               <button
                 onClick={() => setShowCreateEcheanceModal(false)}
                 className="text-gray-400 hover:text-gray-600"
@@ -2664,7 +2696,7 @@ const Achats = () => {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Libellé de l'échéance
+                  LibellÃ© de l'Ã©chÃ©ance
                 </label>
                 <input
                   type="text"
@@ -2677,7 +2709,7 @@ const Achats = () => {
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Délai en jours
+                  DÃ©lai en jours
                 </label>
                 <input
                   type="number"
@@ -2696,7 +2728,7 @@ const Achats = () => {
                 <textarea
                   value={newEcheance.description}
                   onChange={(e) => setNewEcheance({...newEcheance, description: e.target.value})}
-                  placeholder="ex: 15 jours après la date de facture"
+                  placeholder="ex: 15 jours aprÃ¨s la date de facture"
                   rows="2"
                   className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
                 />
@@ -2715,14 +2747,14 @@ const Achats = () => {
                 disabled={!newEcheance.libelle || !newEcheance.delai}
                 className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
               >
-                Créer l'échéance
+                CrÃ©er l'Ã©chÃ©ance
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Modal de création de produit */}
+      {/* Modal de crÃ©ation de produit */}
       {showCreateProduitModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-y-auto">
@@ -2762,7 +2794,7 @@ const Achats = () => {
                     <div className="flex gap-2">
                       <input
                         type="text"
-                        placeholder="ex: MAT-001 (Matériaux TP)"
+                        placeholder="ex: MAT-001 (MatÃ©riaux TP)"
                         value={newProduit.code}
                         onChange={(e) => {
                           if (!codeAutoGenere) {
@@ -2775,7 +2807,7 @@ const Achats = () => {
                             : 'border-gray-300 focus:border-blue-500'
                         }`}
                         readOnly={codeAutoGenere}
-                        title={codeAutoGenere ? "Code généré automatiquement - non modifiable" : ""}
+                        title={codeAutoGenere ? "Code gÃ©nÃ©rÃ© automatiquement - non modifiable" : ""}
                       />
                       <button
                         type="button"
@@ -2786,14 +2818,14 @@ const Achats = () => {
                         }}
                         className="px-3 py-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors text-sm whitespace-nowrap"
                         disabled={!newProduit.categorie || codeAutoGenere}
-                        title={codeAutoGenere ? "Code déjà généré automatiquement" : "Générer automatiquement le code"}
+                        title={codeAutoGenere ? "Code dÃ©jÃ  gÃ©nÃ©rÃ© automatiquement" : "GÃ©nÃ©rer automatiquement le code"}
                       >
                         <Package className="h-4 w-4 inline mr-1" />
                         Auto
                       </button>
                     </div>
                     <p className="text-xs text-gray-500 mt-1">
-                      Code généré automatiquement selon la catégorie sélectionnée
+                      Code gÃ©nÃ©rÃ© automatiquement selon la catÃ©gorie sÃ©lectionnÃ©e
                     </p>
                   </div>
                   
@@ -2805,7 +2837,7 @@ const Achats = () => {
                     </label>
                     <input
                       type="text"
-                      placeholder="ex: Câble électrique 2.5mm²"
+                      placeholder="ex: CÃ¢ble Ã©lectrique 2.5mmÂ²"
                       value={newProduit.nom}
                       onChange={(e) => setNewProduit({...newProduit, nom: e.target.value})}
                       className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
@@ -2815,7 +2847,7 @@ const Achats = () => {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
                     <textarea
-                      placeholder="Description détaillée du produit..."
+                      placeholder="Description dÃ©taillÃ©e du produit..."
                       value={newProduit.description}
                       onChange={(e) => setNewProduit({...newProduit, description: e.target.value})}
                       className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
@@ -2824,16 +2856,16 @@ const Achats = () => {
                   </div>
                 </div>
 
-                {/* Catégorisation */}
+                {/* CatÃ©gorisation */}
                 <div className="space-y-4">
                   <h4 className="font-medium text-gray-900 flex items-center gap-2">
                     <Filter className="h-4 w-4" />
-                    Catégorisation
+                    CatÃ©gorisation
                   </h4>
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Catégorie <span className="text-red-500">*</span>
+                      CatÃ©gorie <span className="text-red-500">*</span>
                     </label>
                     <select
                       value={newProduit.categorie}
@@ -2844,11 +2876,11 @@ const Achats = () => {
                           categorie: newCategorie, 
                           code: generateProduitCode(newCategorie)
                         });
-                        setCodeAutoGenere(true); // Marquer comme auto-généré
+                        setCodeAutoGenere(true); // Marquer comme auto-gÃ©nÃ©rÃ©
                       }}
                       className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
                     >
-                      <option value="">Sélectionner une catégorie</option>
+                      <option value="">SÃ©lectionner une catÃ©gorie</option>
                       {categoriesProduits.map(cat => (
                         <option key={cat} value={cat}>{cat}</option>
                       ))}
@@ -2858,7 +2890,7 @@ const Achats = () => {
 
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Unité de mesure</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">UnitÃ© de mesure</label>
                     <select
                       value={newProduit.unite}
                       onChange={(e) => setNewProduit({...newProduit, unite: e.target.value})}
@@ -2913,7 +2945,7 @@ const Achats = () => {
                             onChange={(e) => updateProduitFournisseur(index, 'fournisseurId', e.target.value)}
                             className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
                           >
-                            <option value="">Sélectionner un fournisseur</option>
+                            <option value="">SÃ©lectionner un fournisseur</option>
                             {fournisseurs.map(f => (
                               <option key={f.id} value={f.id}>{f.raisonSociale}</option>
                             ))}
@@ -2959,9 +2991,9 @@ const Achats = () => {
                             onChange={(e) => updateProduitFournisseur(index, 'devise', e.target.value)}
                             className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
                           >
-                            <option value="EUR">EUR (€)</option>
+                            <option value="EUR">EUR (â‚¬)</option>
                             <option value="USD">USD ($)</option>
-                            <option value="GBP">GBP (£)</option>
+                            <option value="GBP">GBP (Â£)</option>
                           </select>
                         </div>
                         
@@ -2982,7 +3014,7 @@ const Achats = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Commentaires additionnels</label>
                   <textarea
-                    placeholder="Informations supplémentaires, notes internes..."
+                    placeholder="Informations supplÃ©mentaires, notes internes..."
                     value={newProduit.commentaires}
                     onChange={(e) => setNewProduit({...newProduit, commentaires: e.target.value})}
                     className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
@@ -3007,7 +3039,7 @@ const Achats = () => {
                   className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-500 to-teal-600 hover:from-blue-600 hover:to-teal-700 text-white rounded-lg transition-all duration-200 font-medium"
                 >
                   <Plus className="h-4 w-4 inline mr-2" />
-                  {selectedProduit ? 'Modifier le produit' : 'Créer le produit'}
+                  {selectedProduit ? 'Modifier le produit' : 'CrÃ©er le produit'}
                 </button>
               </div>
             </div>
@@ -3015,14 +3047,14 @@ const Achats = () => {
         </div>
       )}
 
-      {/* Sidebar Comptabilité - Création de compte */}
+      {/* Sidebar ComptabilitÃ© - CrÃ©ation de compte */}
       {showCompteSelectionModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-7xl h-[95vh] flex">
             {/* Contenu principal - Formulaire fournisseur */}
             <div className="flex-1 p-6 overflow-y-auto">
               <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-semibold text-gray-900">Création de fournisseur</h3>
+                <h3 className="text-xl font-semibold text-gray-900">CrÃ©ation de fournisseur</h3>
                 <button
                   onClick={() => setShowCompteSelectionModal(false)}
                   className="text-gray-400 hover:text-gray-600"
@@ -3033,23 +3065,23 @@ const Achats = () => {
               
               {/* Formulaire fournisseur existant */}
               <div className="space-y-6">
-                <p className="text-gray-600">Continuez à remplir le formulaire fournisseur pendant que vous créez le compte comptable à droite.</p>
-                {/* Ici on pourrait afficher un résumé du formulaire fournisseur */}
+                <p className="text-gray-600">Continuez Ã  remplir le formulaire fournisseur pendant que vous crÃ©ez le compte comptable Ã  droite.</p>
+                {/* Ici on pourrait afficher un rÃ©sumÃ© du formulaire fournisseur */}
               </div>
             </div>
 
-            {/* Sidebar droite - Formulaire comptabilité */}
+            {/* Sidebar droite - Formulaire comptabilitÃ© */}
             <div className="w-96 bg-gradient-to-b from-orange-500 to-red-600 p-6 text-white">
               <div className="mb-6">
                 <h3 className="text-2xl font-bold mb-2">Nouveau Compte</h3>
-                <p className="text-orange-100">Créez le compte comptable pour votre fournisseur</p>
+                <p className="text-orange-100">CrÃ©ez le compte comptable pour votre fournisseur</p>
               </div>
               
-              {/* Formulaire de création de compte */}
+              {/* Formulaire de crÃ©ation de compte */}
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-white mb-2">
-                    Numéro de compte <span className="text-red-200">*</span>
+                    NumÃ©ro de compte <span className="text-red-200">*</span>
                   </label>
                   <input
                     type="text"
@@ -3142,7 +3174,7 @@ const Achats = () => {
                     className="flex-1 px-4 py-3 bg-white text-orange-600 rounded-lg hover:bg-gray-100 transition-colors font-medium"
                   >
                     <Plus className="h-4 w-4 inline mr-2" />
-                    Créer et sélectionner
+                    CrÃ©er et sÃ©lectionner
                   </button>
                 </div>
               </div>
@@ -3155,3 +3187,5 @@ const Achats = () => {
 };
 
 export default Achats; 
+
+

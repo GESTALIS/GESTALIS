@@ -35,7 +35,7 @@ const Chantiers = () => {
   const [filteredChantiers, setFilteredChantiers] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // Charger les chantiers depuis localStorage ou créer des données de test
+  // Charger les chantiers depuis localStorage uniquement (pas de données de test)
   useEffect(() => {
     const savedChantiers = localStorage.getItem('gestalis-chantiers');
     if (savedChantiers) {
@@ -43,74 +43,11 @@ const Chantiers = () => {
       setChantiers(parsedChantiers);
       setFilteredChantiers(parsedChantiers);
     } else {
-              // Données de test si aucun chantier n'existe
-        const chantiersTest = [
-          {
-            id: 1,
-            code: 'CH012024-0001',
-            numeroExterne: 'REF-2024-001',
-            nom: 'Rénovation Immeuble Centre-Ville',
-            description: 'Rénovation complète d\'un immeuble de 5 étages dans le centre-ville',
-            type: 'Rénovation',
-            clientNom: 'Immobilier Centre-Ville SARL',
-            adresse: '15 Rue de la République',
-            ville: 'Lyon',
-            codePostal: '69001',
-            dateDebut: '2024-01-15',
-            dateFin: '2024-08-30',
-            dureeEstimee: '7 mois',
-            statut: 'en_cours',
-            montant: 850000,
-            devise: 'EUR',
-            acompte: 170000,
-            chefChantier: 'Jean Dupont',
-            equipe: 12
-          },
-          {
-            id: 2,
-            code: 'CH012024-0002',
-            numeroExterne: 'PROJ-2024-002',
-            nom: 'Construction Maison Individuelle',
-            description: 'Construction d\'une maison moderne de 150m² avec jardin',
-            type: 'Construction',
-            clientNom: 'Famille Martin',
-            adresse: '45 Chemin des Oliviers',
-            ville: 'Aix-en-Provence',
-            codePostal: '13100',
-            dateDebut: '2024-03-01',
-            dateFin: '2024-10-15',
-            dureeEstimee: '7.5 mois',
-            statut: 'en_preparation',
-            montant: 320000,
-            devise: 'EUR',
-            acompte: 64000,
-            chefChantier: 'Marie Laurent',
-            equipe: 8
-          },
-          {
-            id: 3,
-            code: 'CH012024-0003',
-            nom: 'Maintenance Centre Commercial',
-            description: 'Travaux de maintenance et rénovation partielle du centre commercial',
-            type: 'Maintenance',
-            clientNom: 'Centre Commercial Grand Sud',
-            adresse: '123 Avenue du Commerce',
-            ville: 'Marseille',
-            codePostal: '13008',
-            dateDebut: '2024-02-10',
-            dateFin: '2024-04-30',
-            dureeEstimee: '2.5 mois',
-            statut: 'termine',
-            montant: 180000,
-            devise: 'EUR',
-            acompte: 36000,
-            chefChantier: 'Pierre Moreau',
-            equipe: 6
-          }
-        ];
-      setChantiers(chantiersTest);
-      setFilteredChantiers(chantiersTest);
-      localStorage.setItem('gestalis-chantiers', JSON.stringify(chantiersTest));
+      // DÉSACTIVÉ : Plus de données de test automatiques
+      // Les chantiers viennent maintenant uniquement de Supabase
+      console.log('🎯 Aucun chantier en localStorage - chargement depuis Supabase uniquement');
+      setChantiers([]);
+      setFilteredChantiers([]);
     }
   }, []);
 
@@ -534,4 +471,4 @@ const Chantiers = () => {
   );
 };
 
-export default Chantiers; 
+export default Chantiers;

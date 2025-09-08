@@ -1,11 +1,11 @@
-import { create } from 'zustand';
+﻿import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { fournisseursService } from '../services/supabase';
 
 export const useFournisseursStore = create(
   persist(
     (set, get) => ({
-      // État
+      // Ã‰tat
       fournisseurs: [],
       loading: false,
       error: null,
@@ -22,7 +22,7 @@ export const useFournisseursStore = create(
         const { fournisseurs, nextFournisseurCode } = get();
         
         try {
-          // Créer le fournisseur dans Supabase
+          // CrÃ©er le fournisseur dans Supabase
           const fournisseurData = {
             ...fournisseur,
             codeFournisseur: nextFournisseurCode,
@@ -31,12 +31,12 @@ export const useFournisseursStore = create(
           
           const newFournisseur = await fournisseursService.creer(fournisseurData);
           
-          // Générer le prochain code
+          // GÃ©nÃ©rer le prochain code
           const currentNumber = parseInt(nextFournisseurCode.split('-')[1]);
           const nextNumber = currentNumber + 1;
           const newCode = `FPRO97-${String(nextNumber).padStart(4, '0')}`;
           
-          // Recharger toutes les données depuis Supabase pour s'assurer de la cohérence
+          // Recharger toutes les donnÃ©es depuis Supabase pour s'assurer de la cohÃ©rence
           const { loadFromSupabase } = get();
           await loadFromSupabase();
           
@@ -47,7 +47,7 @@ export const useFournisseursStore = create(
           
           return newFournisseur;
         } catch (error) {
-          console.error('❌ Erreur création fournisseur:', error);
+          console.error('âŒ Erreur crÃ©ation fournisseur:', error);
           // Fallback sur localStorage en cas d'erreur
           const newFournisseur = {
             ...fournisseur,
@@ -116,9 +116,9 @@ export const useFournisseursStore = create(
           const data = await fournisseursService.lister();
           setFournisseurs(data);
           
-          console.log('✅ Fournisseurs chargés depuis Supabase:', data.length);
+          console.log('âœ… Fournisseurs chargÃ©s depuis Supabase:', data.length);
         } catch (error) {
-          console.error('❌ Erreur chargement Supabase:', error);
+          console.error('âŒ Erreur chargement Supabase:', error);
           setError(error.message);
         } finally {
           setLoading(false);
@@ -133,14 +133,14 @@ export const useFournisseursStore = create(
           setLoading(true);
           setError(null);
           
-          // Appel API Supabase (à implémenter selon votre API)
+          // Appel API Supabase (Ã  implÃ©menter selon votre API)
           const response = await fetch('/api/fournisseurs');
           if (response.ok) {
             const data = await response.json();
             setFournisseurs(data);
           }
         } catch (error) {
-          console.error('❌ Erreur sync Supabase:', error);
+          console.error('âŒ Erreur sync Supabase:', error);
           setError(error.message);
         } finally {
           setLoading(false);
@@ -157,3 +157,4 @@ export const useFournisseursStore = create(
     }
   )
 );
+

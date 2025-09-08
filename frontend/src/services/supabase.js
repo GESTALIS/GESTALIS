@@ -1,53 +1,54 @@
-// =====================================================
+﻿// =====================================================
 // SERVICE SUPABASE PRINCIPAL GESTALIS
-// Gestion centralisée de toutes les opérations BDD
+// Gestion centralisÃ©e de toutes les opÃ©rations BDD
 // =====================================================
 
 import { createClient } from '@supabase/supabase-js';
 
-// Configuration Supabase (clés du projet GESTALIS BTP)
+// Configuration Supabase (clÃ©s du projet GESTALIS BTP)
 const SUPABASE_URL = 'https://esczdkgknrozwovlfbki.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVzY3pka2drbnJvendvdmxmYmtpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU4MjM2NTIsImV4cCI6MjA3MTM5OTY1Mn0.OUoTvXOayb9u6zjNgp646qYRg6pIVRKFYyFn8u0-zCA';
 
-// Créer une seule instance Supabase partagée
+// CrÃ©er une seule instance Supabase partagÃ©e
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// Fonction de vérification de connexion
+// Fonction de vÃ©rification de connexion
 export const verifierConnexion = async () => {
   try {
     const { data, error } = await supabase.from('fournisseurs').select('count').limit(1);
     if (error) throw error;
     return true;
   } catch (error) {
-    console.error('❌ Erreur connexion Supabase:', error);
+    console.error('âŒ Erreur connexion Supabase:', error);
     return false;
   }
 };
 
 // Fonction de gestion d'erreur Supabase
 export const gererErreurSupabase = (error, operation) => {
-  console.error(`❌ Erreur ${operation}:`, error);
+  console.error(`âŒ Erreur ${operation}:`, error);
   throw new Error(`Erreur ${operation}: ${error.message}`);
 };
 
 // Service des fournisseurs
 export const fournisseursService = {
-  // Récupérer tous les fournisseurs depuis Supabase
+  // RÃ©cupÃ©rer tous les fournisseurs actifs depuis Supabase (soft delete)
   async recupererTous() {
     try {
       const { data, error } = await supabase
         .from('fournisseurs')
         .select('*')
+        .eq('is_deleted', false)
         .order('raison_sociale');
       
       if (error) throw error;
       return data || [];
     } catch (error) {
-      gererErreurSupabase(error, 'récupération fournisseurs');
+      gererErreurSupabase(error, 'rÃ©cupÃ©ration fournisseurs');
     }
   },
 
-  // Créer un fournisseur dans Supabase
+  // CrÃ©er un fournisseur dans Supabase
   async creer(fournisseur) {
     try {
       const { data, error } = await supabase
@@ -65,14 +66,15 @@ export const fournisseursService = {
           contact_principal: fournisseur.contactPrincipal,
           conditions_paiement: fournisseur.conditionsPaiement,
           notes: fournisseur.notes,
-          statut: fournisseur.statut || 'actif'
-          // Utiliser seulement les colonnes qui existent dans la table
+          statut: fournisseur.statut || 'actif',
+          is_deleted: false,
+          updated_at: new Date().toISOString()
         }])
         .select();
       
       if (error) throw error;
       
-      // Transformer la réponse pour correspondre au format local
+      // Transformer la rÃ©ponse pour correspondre au format local
       const createdFournisseur = data[0];
       return {
         id: createdFournisseur.id,
@@ -103,11 +105,11 @@ export const fournisseursService = {
         pasDeTvaGuyane: createdFournisseur.pas_de_tva_guyane || false
       };
     } catch (error) {
-      gererErreurSupabase(error, 'création fournisseur');
+      gererErreurSupabase(error, 'crÃ©ation fournisseur');
     }
   },
 
-  // Mettre à jour un fournisseur dans Supabase
+  // Mettre Ã  jour un fournisseur dans Supabase
   async mettreAJour(id, fournisseur) {
     try {
       const { data, error } = await supabase
@@ -137,14 +139,15 @@ export const fournisseursService = {
           devise: fournisseur.devise,
           est_sous_traitant: fournisseur.estSousTraitant,
           compte_comptable: fournisseur.compteComptable,
-          pas_de_tva_guyane: fournisseur.pasDeTvaGuyane
+          pas_de_tva_guyane: fournisseur.pasDeTvaGuyane,
+          updated_at: new Date().toISOString()
         })
         .eq('id', id)
         .select();
       
       if (error) throw error;
       
-      // Transformer la réponse pour correspondre au format local
+      // Transformer la rÃ©ponse pour correspondre au format local
       const updatedFournisseur = data[0];
       return {
         id: updatedFournisseur.id,
@@ -175,16 +178,19 @@ export const fournisseursService = {
         pasDeTvaGuyane: updatedFournisseur.pas_de_tva_guyane || false
       };
     } catch (error) {
-      gererErreurSupabase(error, 'mise à jour fournisseur');
+      gererErreurSupabase(error, 'mise Ã  jour fournisseur');
     }
   },
 
-  // Supprimer un fournisseur de Supabase
+  // Supprimer un fournisseur de Supabase (soft delete)
   async supprimer(id) {
     try {
       const { error } = await supabase
         .from('fournisseurs')
-        .delete()
+        .update({ 
+          is_deleted: true,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', id);
       
       if (error) throw error;
@@ -204,7 +210,7 @@ export const fournisseursService = {
       
       if (error) throw error;
       
-      // Transformer les données Supabase vers le format local
+      // Transformer les donnÃ©es Supabase vers le format local
       return data.map(fournisseur => ({
         id: fournisseur.id,
         codeFournisseur: fournisseur.code_fournisseur,
@@ -221,7 +227,7 @@ export const fournisseursService = {
         notes: fournisseur.notes,
         statut: fournisseur.statut,
         dateCreation: fournisseur.created_at,
-        // Ajouter les champs manquants avec des valeurs par défaut
+        // Ajouter les champs manquants avec des valeurs par dÃ©faut
         tvaIntracommunautaire: fournisseur.tva_intracommunautaire || '',
         codeApeNaf: fournisseur.code_ape_naf || '',
         formeJuridique: fournisseur.forme_juridique || '',
@@ -235,7 +241,7 @@ export const fournisseursService = {
         pasDeTvaGuyane: fournisseur.pas_de_tva_guyane || false
       }));
     } catch (error) {
-      gererErreurSupabase(error, 'récupération fournisseurs');
+      gererErreurSupabase(error, 'rÃ©cupÃ©ration fournisseurs');
       return [];
     }
   }
@@ -253,7 +259,7 @@ export const chantiersService = {
       if (error) throw error;
       return data || [];
     } catch (error) {
-      gererErreurSupabase(error, 'récupération chantiers');
+      gererErreurSupabase(error, 'rÃ©cupÃ©ration chantiers');
     }
   },
 
@@ -284,7 +290,7 @@ export const chantiersService = {
       if (error) throw error;
       return data[0];
     } catch (error) {
-      gererErreurSupabase(error, 'création chantier');
+      gererErreurSupabase(error, 'crÃ©ation chantier');
     }
   },
 
@@ -315,7 +321,7 @@ export const cessionsService = {
       if (error) throw error;
       return data || [];
     } catch (error) {
-      gererErreurSupabase(error, 'récupération cessions');
+      gererErreurSupabase(error, 'rÃ©cupÃ©ration cessions');
     }
   },
 
@@ -338,7 +344,7 @@ export const cessionsService = {
       if (error) throw error;
       return data[0];
     } catch (error) {
-      gererErreurSupabase(error, 'création cession');
+      gererErreurSupabase(error, 'crÃ©ation cession');
     }
   }
 };
@@ -355,7 +361,7 @@ export const produitsService = {
       if (error) throw error;
       return data || [];
     } catch (error) {
-      gererErreurSupabase(error, 'récupération produits');
+      gererErreurSupabase(error, 'rÃ©cupÃ©ration produits');
     }
   }
 };
@@ -372,7 +378,7 @@ export const facturesService = {
       if (error) throw error;
       return data || [];
     } catch (error) {
-      gererErreurSupabase(error, 'récupération factures');
+      gererErreurSupabase(error, 'rÃ©cupÃ©ration factures');
     }
   }
 };
@@ -388,7 +394,7 @@ export const historiquePrixService = {
           ancien_prix: entry.ancienPrix,
           nouveau_prix: entry.nouveauPrix,
           date_changement: entry.dateChangement,
-          utilisateur: entry.utilisateur || 'système'
+          utilisateur: entry.utilisateur || 'systÃ¨me'
         }])
         .select();
       
@@ -403,3 +409,4 @@ export const historiquePrixService = {
 // Exporter l'instance Supabase unique
 export { supabase };
 export default supabase;
+
