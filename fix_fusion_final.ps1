@@ -1,4 +1,4 @@
-# Script PowerShell pour corriger la fusion localStorage/Supabase dans Achats.jsx
+# Script PowerShell pour supprimer définitivement la fusion localStorage/Supabase
 
 $filePath = "frontend/src/pages/Achats.jsx"
 $content = Get-Content $filePath -Raw
@@ -100,4 +100,4 @@ $content = $content -replace [regex]::Escape($oldLogic), $newLogic
 # Sauvegarder le fichier modifié
 Set-Content $filePath $content -Encoding UTF8
 
-Write-Host "✅ Fusion localStorage/Supabase supprimée dans Achats.jsx" -ForegroundColor Green
+Write-Host "✅ Fusion localStorage/Supabase définitivement supprimée dans Achats.jsx" -ForegroundColor Green
