@@ -109,12 +109,9 @@ const ModifierFournisseur = ({ fournisseur, onClose, onUpdate }) => {
         updatedAt: new Date().toISOString()
       };
       
-      // Mettre à jour dans localStorage
-      const fournisseurs = JSON.parse(localStorage.getItem('gestalis-fournisseurs') || '[]');
-      const updatedFournisseurs = fournisseurs.map(f => 
-        f.id === fournisseur.id ? updatedFournisseur : f
-      );
-      localStorage.setItem('gestalis-fournisseurs', JSON.stringify(updatedFournisseurs));
+      // Mettre à jour dans Supabase (source de vérité)
+      const { fournisseursService } = await import('../../../services/supabase');
+      await fournisseursService.mettreAJour(fournisseur.id, updatedFournisseur);
       
       alert('✅ Fournisseur modifié avec succès !');
       console.log('Fournisseur modifié:', updatedFournisseur);

@@ -61,38 +61,26 @@ const NouveauFournisseur = () => {
   // Store des comptes comptables
   const { comptes, setComptes } = useComptesStore();
   
-  // Charger les comptes depuis localStorage si aucun compte n'est chargé
+  // Charger les comptes depuis Supabase uniquement (source de vérité)
   useEffect(() => {
     console.log('🔍 [NouveauFournisseur] Comptes actuels:', comptes);
     if (comptes.length === 0) {
-      console.log('🔄 [NouveauFournisseur] Chargement des comptes depuis localStorage...');
+      console.log('🔄 [NouveauFournisseur] Chargement des comptes depuis Supabase...');
       
-      // Essayer de charger depuis localStorage
-      const comptesLocal = localStorage.getItem('gestalis-comptes');
-      if (comptesLocal) {
+      // Charger depuis Supabase uniquement
+      const chargerComptes = async () => {
         try {
-          const comptesParsed = JSON.parse(comptesLocal);
-          setComptes(comptesParsed);
-          console.log('✅ [NouveauFournisseur] Comptes chargés depuis localStorage:', comptesParsed);
+          const { comptesService } = await import('../../../services/supabase');
+          const comptesSupabase = await comptesService.recupererTous();
+          setComptes(comptesSupabase);
+          console.log('✅ [NouveauFournisseur] Comptes chargés depuis Supabase:', comptesSupabase);
         } catch (error) {
-          console.error('❌ [NouveauFournisseur] Erreur parsing comptes localStorage:', error);
+          console.error('❌ [NouveauFournisseur] Erreur chargement comptes Supabase:', error);
+          setComptes([]);
         }
-      }
+      };
       
-      // Si toujours aucun compte, ajouter des comptes de test
-      if (comptes.length === 0) {
-        console.log('🔄 [NouveauFournisseur] Ajout de comptes de test...');
-        const comptesTest = [
-          { id: 1, numero: 'F4010005', nom: 'RESO', type: 'passif', classe: '4 - Tiers' },
-          { id: 2, numero: 'FEXE', nom: 'EXEMPLE', type: 'passif', classe: '4 - Tiers' },
-          { id: 3, numero: 'FTESTDPL', nom: 'TESTDPL', type: 'passif', classe: '4 - Tiers' },
-          { id: 4, numero: 'FFDXSQ', nom: 'FDS', type: 'passif', classe: '4 - Tiers' },
-          { id: 5, numero: 'FTETETE', nom: 'TETETE', type: 'passif', classe: '4 - Tiers' },
-          { id: 6, numero: '512000', nom: 'BRED', type: 'actif', classe: '5 - Financier' }
-        ];
-        setComptes(comptesTest);
-        console.log('✅ [NouveauFournisseur] Comptes de test ajoutés:', comptesTest);
-      }
+      chargerComptes();
     }
   }, [comptes.length, setComptes]);
   
@@ -253,10 +241,12 @@ const NouveauFournisseur = () => {
         return;
       }
       
-      const response = await api.post('/api/fournisseurs', fournisseur);
+      // Créer dans Supabase (source de vérité)
+      const { fournisseursService } = await import('../../../services/supabase');
+      const response = await fournisseursService.creer(fournisseur);
       
       alert('✅ Fournisseur créé avec succès !');
-      console.log('Fournisseur créé:', response.data);
+      console.log('Fournisseur créé:', response);
       
       // Retourner à la page précédente
       window.history.back();
